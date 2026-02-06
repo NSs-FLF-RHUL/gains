@@ -6,10 +6,9 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
 authors:
-  - family-names: "surname"
-    given-names: "forename"
-    email: "f.surname@rhul.ac.uk"
-    orcid: "https://orcid.org/0000-0000-0000-0000" # optional, you can delete this line if you don't have an ORCID
-repository-code: "https://github.com/NSs-FLF-RHUL/FIXME" # replace FIXME with the repository name
-title: "FIXME" # name of your package
+  - family-names: "McShane"
+    given-names: "Rebecca"
+    email: "rebecca.mcshane.2025@rhul.ac.uk"
+repository-code: "https://github.com/NSs-FLF-RHUL/gains"
+title: "gains" # name of your package
 license: "GPL-3.0"

@@ -86,7 +86,6 @@ solver.stop_sim_time = PARAMS["stop_sim_time"]
 # density
 rho_y = density(y[0], **PARAMS)
 
-
 rho_init = np.zeros((len(x), len(y[0])))
 # print(len(y))
 for counter, value in enumerate(rho_y):

@@ -6,7 +6,7 @@ McNally et al., 2012, ApJ, 201, 18.
 import numpy as np
 
 
-def density(ys, **parameters):
+def density(ys: np.ndarray, **parameters: float | type) -> list[float]:
     """
     Density function for the initial condition in McNally 2012.
 

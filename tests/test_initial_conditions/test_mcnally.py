@@ -48,3 +48,33 @@ def test_mcnally_density(
     computed_output = density(ys, **params)
 
     assert np.allclose(computed_output, expected_output)
+
+
+@pytest.fixture
+def params() -> dict[str, float]:
+    return {
+        "rho_1": 1.0,
+        "rho_2": 10.0,
+        "L": 1.0,
+        "rho_m": 0.0,
+    }
+
+
+@pytest.mark.parametrize(
+    ("missing_key",),
+    [
+        pytest.param("rho_1"),
+        pytest.param("rho_2"),
+        pytest.param("L"),
+        pytest.param("rho_m"),
+    ],
+)
+def test_mcnally_missing_params(
+    missing_key,
+    params,
+    ys=np.array([0.125, 0.375, 0.625, 0.875]),
+) -> None:
+    del params[missing_key]
+
+    with pytest.raises(KeyError, match=missing_key):
+        density(ys, **params)

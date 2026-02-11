@@ -7,6 +7,13 @@ import numpy as np
 
 
 def density(ys, **parameters):
+    """
+    Density function for the initial condition in McNally 2012.
+
+    :param ys: Y-coordinates on the boundary.
+    :param parameters: Other simulation parameters.
+    :returns density: Density values on the given boundary.
+    """
     out = []
     for el in ys:
         if el < 0.25:

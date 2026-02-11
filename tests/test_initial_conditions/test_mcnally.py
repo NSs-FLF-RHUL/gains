@@ -70,9 +70,9 @@ def params() -> dict[str, float]:
     ],
 )
 def test_mcnally_missing_params(
-    missing_key,
-    params,
-    ys=np.array([0.125, 0.375, 0.625, 0.875]),
+    missing_key: str,
+    params: dict[str, float],
+    ys: np.ndarray = np.array([0.125, 0.375, 0.625, 0.875]),
 ) -> None:
     del params[missing_key]
 

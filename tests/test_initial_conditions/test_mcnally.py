@@ -20,9 +20,25 @@ from gains.initial_conditions.mcnally import density
         ),
         pytest.param(
             np.array([0.125, 0.375, 0.625, 0.875]),
-            {"rho_1": 1.0, "rho_2": 1.0, "L": 1.0, "rho_m": 0.0},
+            {
+                "rho_1": 1.0,
+                "rho_2": 1.0,
+                "L": 1.0,
+                "rho_m": 0.0,
+            },
             np.ones((4,)),
             id="Midpoint of each interval",
+        ),
+        pytest.param(
+            np.array([0.25, 0.5, 0.75]),
+            {
+                "rho_1": 1.0,
+                "rho_2": 10.0,
+                "L": 1.0,
+                "rho_m": 0.0,
+            },
+            np.array([10.0, 10.0, 1.0]),
+            id="On the interval boundaries",
         ),
     ],
 )

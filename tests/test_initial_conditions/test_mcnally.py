@@ -42,7 +42,9 @@ from gains.initial_conditions.mcnally import density
         ),
     ],
 )
-def test_mcnally_density(ys, params, expected_output) -> None:
+def test_mcnally_density(
+    ys: np.ndarray, params: dict[str, float], expected_output: np.ndarray
+) -> None:
     computed_output = density(ys, **params)
 
     assert np.allclose(computed_output, expected_output)

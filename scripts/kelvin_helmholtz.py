@@ -1,10 +1,18 @@
 """
-Solves the incompressible euler equations in 2D to reproduce the kelvin
+Solves the incompressible Navier Stokes equations in 2D to reproduce the kelvin
 helmholtz instability in a shear flow.
 
 Initialised with a real fourier basis to impose periodic boundary conditons
 
 Initial and boundary conditions based on those described by McNally et al., 2012, ApJ, 201, 18
+
+Usage:
+    kelvin_helmholtz.py [--Nx=<xres>] [--Ny=<yres>]
+
+options:
+    --Nx=<xres>     x resolution [default: 16]
+    --Ny=<yres>     y resolution [default: 16]
+
 """
 
 import numpy as np
@@ -13,12 +21,18 @@ import dedalus.public as d3
 import logging
 
 from gains.initial_conditions.mcnally import density
+from docopt import docopt
 
 logger = logging.getLogger(__name__)
 plt.rcParams["savefig.dpi"] = 400
-
+args = docopt(__doc__)
+print(args)
 # Parameters
-
+Nx = int(args['--Nx'])
+Ny = int(args['--Ny'])
+print("Nx found: {}".format(Nx))
+print("Ny found: {}".format(Ny))
+quit()
 dtype = np.float64
 PARAMS = {
     "Lx": 1,

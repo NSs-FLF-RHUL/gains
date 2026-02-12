@@ -1,4 +1,5 @@
 """
+
 Solves the incompressible Navier Stokes equations in 2D to reproduce the kelvin
 helmholtz instability in a shear flow.
 
@@ -7,11 +8,13 @@ Initialised with a real fourier basis to impose periodic boundary conditons
 Initial and boundary conditions based on those described by McNally et al., 2012, ApJ, 201, 18
 
 Usage:
-    kelvin_helmholtz.py [--Nx=<xres>] [--Ny=<yres>]
+    kelvin_helmholtz.py [--Nx=<xres>] [--Ny=<yres>] [--stop_time=<time>] [--viscosity=<visc>]
 
 options:
-    --Nx=<xres>     x resolution [default: 16]
-    --Ny=<yres>     y resolution [default: 16]
+    --Nx=<xres>             x resolution [default: 16]
+    --Ny=<yres>             y resolution [default: 16]
+    --stop_time=<time>      simulation stop time [default: 4.5]
+    --viscosity=<visc>      viscosity used [default: 1e-4]
 
 """
 
@@ -30,17 +33,17 @@ print(args)
 # Parameters
 Nx = int(args['--Nx'])
 Ny = int(args['--Ny'])
-print("Nx found: {}".format(Nx))
-print("Ny found: {}".format(Ny))
-quit()
+stop_time = float(args['--stop_time'])
+nu = float(args['--viscosity'])
+
 dtype = np.float64
 PARAMS = {
     "Lx": 1,
     "Ly": 1,
-    "Nx": 16,
-    "Ny": 16,
+    "Nx": Nx,
+    "Ny": Ny,
     "timestepper": d3.SBDF4,
-    "stop_sim_time": 4.5,
+    "stop_sim_time": stop_time,
     "max_timestep": 1e-4,
     "dealias": 2,
     "gamma": 5 / 3,
@@ -49,7 +52,7 @@ PARAMS = {
     "L": 0.025,
     "U_1": 0.5,
     "U_2": -0.5,
-    "nu": 0.0001,  # Artifical viscosity to prevent shocks
+    "nu": nu,  # Artifical viscosity to prevent shocks
 }
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m

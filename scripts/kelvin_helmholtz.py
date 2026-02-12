@@ -29,7 +29,7 @@ from docopt import docopt
 logger = logging.getLogger(__name__)
 plt.rcParams["savefig.dpi"] = 400
 args = docopt(__doc__)
-print(args)
+
 # Parameters
 Nx = int(args['--Nx'])
 Ny = int(args['--Ny'])
@@ -58,7 +58,7 @@ rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m
 U_m = (PARAMS["U_1"] - PARAMS["U_2"]) / 2
 PARAMS["U_m"] = U_m
-print(PARAMS)
+
 
 # Bases
 
@@ -70,7 +70,7 @@ xbasis = d3.RealFourier(
 ybasis = d3.RealFourier(
     coords["y"], size=PARAMS["Ny"], bounds=(0, PARAMS["Ly"]), dealias=PARAMS["dealias"]
 )
-print(xbasis)
+
 
 # Fields
 
@@ -85,8 +85,7 @@ tau_p = dist.Field(name="tau_p")
 
 x, y = dist.local_grids(xbasis, ybasis)
 ex, ey = coords.unit_vector_fields(dist)
-print("shape of x: {}".format(np.shape(x)))
-print("shape of y: {}".format(np.shape(y)))
+
 # Problem
 problem = d3.IVP([u, rho, p, tau_p], namespace=locals())
 problem.add_equation("div(u) + tau_p = 0")
@@ -104,11 +103,11 @@ solver.stop_sim_time = PARAMS["stop_sim_time"]
 rho_y = density(y[0], **PARAMS)
 
 rho_init = np.zeros((len(x), len(y[0])))
-# print(len(y))
+
 for counter, value in enumerate(rho_y):
     rho_init[counter] = [value for i in rho_init[counter]]
 
-print(np.shape(rho_init))
+
 
 plt.pcolormesh(x.ravel(), y.ravel(), np.array(rho_init))
 plt.title("Density distribution")
@@ -167,9 +166,7 @@ for j in range(0, len(y[0])):
 # plt.show()
 
 u["g"][1] += 0.01 * np.sin(4 * np.pi * x)
-print("u['g'] shape: {}".format(np.shape(u["g"])))
-# Internal energy set to give a uniform pressure of 2.5. Internal energy has been eliminated from equations so just set
-# p = 2.5
+
 
 p_init = np.zeros((len(x), len(y[0])))
 
@@ -185,8 +182,6 @@ for i in range(0, len(x)):
 # Entropy initialised via ideal gas law
 s_init = np.array(p_init) * np.array(rho_init) ** (-PARAMS["gamma"])
 
-print(rho_init)
-
 
 """ plt.pcolormesh(x.ravel(),y.ravel(),s_init)
 plt.title('entropy initial')
@@ -194,7 +189,7 @@ plt.colorbar()
 plt.show() """
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler("snapshots", sim_dt=1e-2, max_writes=10)
+snapshots = solver.evaluator.add_file_handler("snapshots", sim_dt=5e-3, max_writes=10)
 snapshots.add_task(s, name="entropy")
 snapshots.add_task(rho, name="density")
 

@@ -52,7 +52,7 @@ PARAMS = {
     "L": 0.025,
     "U_1": 0.5,
     "U_2": -0.5,
-    "nu": nu,  # Artifical viscosity to prevent shocks
+    "nu": nu,  
 }
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m
@@ -217,7 +217,7 @@ try:
     while solver.proceed:
         timestep = CFL.compute_timestep()
         solver.step(timestep)
-        if (solver.iteration - 1) % 10000 == 0:
+        if (solver.iteration - 1) % 100 == 0:
             logger.info(
                 "Iteration=%i, Time=%e, dt=%e"
                 % (solver.iteration, solver.sim_time, timestep)

@@ -8,7 +8,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Typing :: Typed",
 ]
-dependencies = []
+dependencies = ["numpy"]
 description = "Simulates superfluid dynamics on neutron star interiors using the dedalus3 hydrocode" 
 dynamic = ["version"]
 keywords = []

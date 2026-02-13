@@ -5,7 +5,7 @@ Helmholtz instability in a shear flow.
 
 Initialised with a real fourier basis to impose periodic boundary conditons
 
-Initial and boundary conditions based on those described by McNally et al., 2012, ApJ, 201, 18
+Initial and boundary conditions based on those described by McNally et al 2012, ApJ, 201, 18
 
 Usage:
     kelvin_helmholtz.py [--Nx=<xres>] [--Ny=<yres>] [--stop_time=<time>] [--viscosity=<visc>]
@@ -24,17 +24,43 @@ import dedalus.public as d3
 import logging
 
 from gains.initial_conditions.mcnally import density
-from docopt import docopt
+import argparse
 
 logger = logging.getLogger(__name__)
 plt.rcParams["savefig.dpi"] = 400
-args = docopt(__doc__)
+
+#Command line interface
+parser = argparse.ArgumentParser(description="simulate Klevin-helmholtz instability using initial conditions" \
+" from McNally et al 2012, ApJ, 201, 18 ")
+
+parser.add_argument("--Nx", 
+                    type=int,
+                    default=16,
+                    help="x-direction resolution")
+
+parser.add_argument("--Ny",
+                    type=int,
+                    default=16,
+                    help="y-direction resolution")
+
+parser.add_argument("--stop_time",
+                    type=float,
+                    default=4.5,
+                    help = "Cutoff for the simulated time")
+
+parser.add_argument("--viscosity",
+                    type=float,
+                    default=1e-4,
+                    help="The dynamic viscosity of the fluid")
+
+args = vars(parser.parse_args())
 
 # Parameters
-Nx = int(args['--Nx'])
-Ny = int(args['--Ny'])
-stop_time = float(args['--stop_time'])
-nu = float(args['--viscosity'])
+
+Nx = int(args['Nx'])
+Ny = int(args['Ny'])
+stop_time = float(args['stop_time'])
+nu = float(args['viscosity'])
 
 dtype = np.float64
 PARAMS = {

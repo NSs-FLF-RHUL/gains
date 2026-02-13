@@ -1,7 +1,7 @@
 """
 
-Solves the incompressible Navier Stokes equations in 2D to reproduce the kelvin
-helmholtz instability in a shear flow.
+Solves the incompressible Naiver Stokes equations in 2D to reproduce the Kelvin
+Helmholtz instability in a shear flow.
 
 Initialised with a real fourier basis to impose periodic boundary conditons
 
@@ -52,7 +52,7 @@ PARAMS = {
     "L": 0.025,
     "U_1": 0.5,
     "U_2": -0.5,
-    "nu": nu,  
+    "nu": nu,
 }
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m

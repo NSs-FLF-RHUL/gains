@@ -52,6 +52,11 @@ parser.add_argument("--snapshots_dt",
                     default=5e-4,
                     help = "Gap in simulated time between snapshots")
 
+parser.add_argument("--logger_dt",
+                    type=float,
+                    default=5e-4,
+                    help = "Gap in simulated time between logger ouputs")
+
 args = vars(parser.parse_args())
 dtype = np.float64
 PARAMS = {
@@ -69,7 +74,8 @@ PARAMS = {
 "U_1": 0.5,
 "U_2": -0.5,
 "nu": args['viscosity'],
-"snap_dt", args['snapshots_dt'],
+"snap_dt": args['snapshots_dt'],
+"log_dt": args['logger_dt']
 }
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m
@@ -229,7 +235,7 @@ try:
     while solver.proceed:
         timestep = CFL.compute_timestep()
         solver.step(timestep)
-        if (solver.iteration - 1) % 100 == 0:
+        if (solver.iteration - 1) % PARAMS['log_dt'] == 0:
             logger.info(
                 "Iteration=%i, Time=%e, dt=%e"
                 % (solver.iteration, solver.sim_time, timestep)

@@ -7,14 +7,6 @@ Initialised with a real fourier basis to impose periodic boundary conditons
 
 Initial and boundary conditions based on those described by McNally et al 2012, ApJ, 201, 18
 
-Usage:
-    kelvin_helmholtz.py [--Nx=<xres>] [--Ny=<yres>] [--stop_time=<time>] [--viscosity=<visc>]
-
-options:
-    --Nx=<xres>             x resolution [default: 16]
-    --Ny=<yres>             y resolution [default: 16]
-    --stop_time=<time>      simulation stop time [default: 4.5]
-    --viscosity=<visc>      viscosity used [default: 1e-4]
 
 """
 

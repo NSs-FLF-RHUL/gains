@@ -22,8 +22,10 @@ logger = logging.getLogger(__name__)
 plt.rcParams["savefig.dpi"] = 400
 
 #Command line interface
-parser = argparse.ArgumentParser(description="simulate Klevin-helmholtz instability using initial conditions" \
-" from McNally et al 2012, ApJ, 201, 18 ")
+parser = argparse.ArgumentParser(
+    description="Simulate Klevin-helmholtz instability using initial conditions "
+    "from McNally et al 2012, ApJ, 201, 18"
+)
 
 parser.add_argument("--Nx", 
                     type=int,
@@ -46,31 +48,22 @@ parser.add_argument("--viscosity",
                     help="The dynamic viscosity of the fluid")
 
 args = vars(parser.parse_args())
-
-# Parameters
-
-Nx = int(args['Nx'])
-Ny = int(args['Ny'])
-stop_time = float(args['stop_time'])
-nu = float(args['viscosity'])
-
 dtype = np.float64
 PARAMS = {
-    "Lx": 1,
-    "Ly": 1,
-    "Nx": Nx,
-    "Ny": Ny,
-    "timestepper": d3.SBDF4,
-    "stop_sim_time": stop_time,
-    "max_timestep": 1e-4,
-    "dealias": 2,
-    "gamma": 5 / 3,
-    "rho_1": 1.0,
-    "rho_2": 2.0,
-    "L": 0.025,
-    "U_1": 0.5,
-    "U_2": -0.5,
-    "nu": nu,
+"Lx": 1,
+"Ly": 1,
+"Nx": args['Nx'],
+"Ny": args['Ny'],
+"timestepper": d3.SBDF4,
+"stop_sim_time": args['stop_time'],
+"max_timestep": 1e-4,
+"dealias": 2,
+"gamma": 5 / 3,
+@@ -35,13 +78,13 @@
+"L": 0.025,
+"U_1": 0.5,
+"U_2": -0.5,
+"nu": args['viscosity'],
 }
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m

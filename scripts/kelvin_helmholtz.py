@@ -53,9 +53,9 @@ parser.add_argument("--snapshots_dt",
                     help = "Gap in simulated time between snapshots")
 
 parser.add_argument("--logger_dt",
-                    type=float,
-                    default=5e-4,
-                    help = "Gap in simulated time between logger ouputs")
+                    type=int,
+                    default=100,
+                    help = "How many timesteps between logger outputs")
 
 args = vars(parser.parse_args())
 dtype = np.float64
@@ -69,7 +69,8 @@ PARAMS = {
 "max_timestep": 1e-4,
 "dealias": 2,
 "gamma": 5 / 3,
-@@ -35,13 +78,13 @@
+"rho_1": 1.0,
+"rho_2": 2.0,
 "L": 0.025,
 "U_1": 0.5,
 "U_2": -0.5,

@@ -47,6 +47,11 @@ parser.add_argument("--viscosity",
                     default=1e-4,
                     help="The dynamic viscosity of the fluid")
 
+parser.add_argument("--snapshots_dt",
+                    type=float,
+                    default=5e-4,
+                    help = "Gap in simulated time between snapshots")
+
 args = vars(parser.parse_args())
 dtype = np.float64
 PARAMS = {
@@ -64,6 +69,7 @@ PARAMS = {
 "U_1": 0.5,
 "U_2": -0.5,
 "nu": args['viscosity'],
+"snap_dt", args['snapshots_dt'],
 }
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m
@@ -200,7 +206,7 @@ plt.colorbar()
 plt.show() """
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler("snapshots", sim_dt=5e-3, max_writes=10)
+snapshots = solver.evaluator.add_file_handler("snapshots", sim_dt=PARAMS["snap_dt"], max_writes=10)
 snapshots.add_task(s, name="entropy")
 snapshots.add_task(rho, name="density")
 

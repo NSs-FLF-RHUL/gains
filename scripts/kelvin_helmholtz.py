@@ -101,8 +101,6 @@ ybasis = d3.RealFourier(
 u = dist.VectorField(coords, name="u", bases=(xbasis, ybasis))
 p = dist.Field(name="p", bases=(xbasis, ybasis))
 rho = dist.Field(name="rho", bases=(xbasis, ybasis))
-e = dist.Field(name="e", bases=(xbasis, ybasis))  # Specific internal energy
-s = dist.Field(name="s", bases=(xbasis, ybasis))  # Entropy
 tau_p = dist.Field(name="tau_p")
 
 # Substitutions
@@ -209,8 +207,6 @@ for i in range(0, len(x)):
 
 
 # Entropy initialised via ideal gas law
-s_init = np.array(p_init) * np.array(rho_init) ** (-PARAMS["gamma"])
-
 
 """ plt.pcolormesh(x.ravel(),y.ravel(),s_init)
 plt.title('entropy initial')
@@ -219,7 +215,6 @@ plt.show() """
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler("snapshots", sim_dt=PARAMS["snap_dt"], max_writes=10)
-snapshots.add_task(s, name="entropy")
 snapshots.add_task(rho, name="density")
 
 # CFL

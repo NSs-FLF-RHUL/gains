@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import dedalus.public as d3
 import logging
 
-from gains.initial_conditions.mcnally import density
+from gains.initial_conditions.mcnally import density, velocity_x
 import argparse
 
 logger = logging.getLogger(__name__)
@@ -156,7 +156,7 @@ def v_x(xs):
     return out
 
 
-v_xs = v_x(x)
+v_xs = velocity_x(x, **PARAMS)
 vxs_init = np.zeros((len(x), len(y[0])))
 v_xs = [
     v_xs[i][0] for i in range(0, len(v_xs))
@@ -167,11 +167,13 @@ for counter, value in enumerate(v_xs):
         value for i in vxs_init[counter]
     ]  # More evil list comprehension to produce a matrix where each column is the same
 
-# plt.pcolormesh(x.ravel(), y.ravel(), vxs_init)
-# plt.title("vx distribution")
-# plt.show()
+plt.pcolormesh(x.ravel(), y.ravel(), vxs_init)
+plt.title("vx distribution")
+plt.show()
 
 u["g"][0] = np.array(v_xs)
+
+quit()
 
 # y velocity perturbations
 

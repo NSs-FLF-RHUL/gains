@@ -156,18 +156,21 @@ def v_x(xs):
     return out
 
 
-v_xs = velocity_x(x, **PARAMS)
+v_xs = velocity_x(xs=x, ys=y[0], **PARAMS)
+
+'''
 vxs_init = np.zeros((len(x), len(y[0])))
 v_xs = [
     v_xs[i][0] for i in range(0, len(v_xs))
-]  # evil list comprehension to avoid an array of arrays
+]  
 
 for counter, value in enumerate(v_xs):
     vxs_init[counter] = [
         value for i in vxs_init[counter]
     ]  # More evil list comprehension to produce a matrix where each column is the same
+'''
 
-plt.pcolormesh(x.ravel(), y.ravel(), vxs_init)
+plt.pcolormesh(x.ravel(), y.ravel(), v_xs)
 plt.title("vx distribution")
 plt.show()
 

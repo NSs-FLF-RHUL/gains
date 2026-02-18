@@ -38,11 +38,12 @@ def density(ys: np.ndarray, **parameters: float | type) -> list[float]:
             )
     return out
 
-def velocity_x(xs: np.ndarray, **parameters: float | type) -> list[float]:
+def velocity_x(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.ndarray:
     """
     x-velocity function for the initial condition in McNally 2012.
 
     :param xs: x-coordinates on the boundary.
+    :param ys: y-coordinates
     :param parameters: Other simulation parameters.
     :returns vx: x velocity values on the given boundary.
     """
@@ -56,4 +57,14 @@ def velocity_x(xs: np.ndarray, **parameters: float | type) -> list[float]:
             out.append(parameters["U_2"] + parameters["U_m"] * np.exp(-(0.75 - el) / parameters["L"]))
         else:
             out.append(parameters["U_1"] - parameters["U_m"] * np.exp(-(el - 0.75) / parameters["L"]))
-    return out
+        
+        vxs_init = np.zeros((len(xs), len(ys)))
+        v_xs = [
+        out[i][0] for i in range(0, len(out))
+        ] #Prevents array of arrays
+
+        for counter, value in enumerate(v_xs):
+            vxs_init[counter] = [
+                value for i in vxs_init[counter]
+            ] #Matrix where each column is the same
+    return vxs_init

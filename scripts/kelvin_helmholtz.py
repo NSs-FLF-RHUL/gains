@@ -132,19 +132,6 @@ rho["g"] = rho_y
 
 
 # x velocity
-def v_x(xs):
-    out = []
-    for el in xs:
-        if el < 0.25:
-            out.append(PARAMS["U_1"] - U_m * np.exp((el - 0.25) / PARAMS["L"]))
-        elif 0.25 <= el < 0.5:
-            out.append(PARAMS["U_2"] + U_m * np.exp((-el + 0.25) / PARAMS["L"]))
-        elif 0.5 <= el < 0.75:
-            out.append(PARAMS["U_2"] + U_m * np.exp(-(0.75 - el) / PARAMS["L"]))
-        else:
-            out.append(PARAMS["U_1"] - U_m * np.exp(-(el - 0.75) / PARAMS["L"]))
-    return out
-
 
 v_xs = velocity_x(xs=x, ys=y[0], **PARAMS)
 

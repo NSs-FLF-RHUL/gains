@@ -11,7 +11,6 @@ Initial and boundary conditions based on those described by McNally et al 2012, 
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import dedalus.public as d3
 import logging
 
@@ -19,7 +18,6 @@ from gains.initial_conditions.mcnally import density, velocity_x
 import argparse
 
 logger = logging.getLogger(__name__)
-plt.rcParams["savefig.dpi"] = 400
 
 #Command line interface
 parser = argparse.ArgumentParser(
@@ -49,7 +47,7 @@ parser.add_argument("--viscosity",
 
 parser.add_argument("--snapshots_dt",
                     type=float,
-                    default=5e-4,
+                    default=1e-2,
                     help = "Gap in simulated time between snapshots")
 
 parser.add_argument("--logger_dt",
@@ -126,15 +124,9 @@ rho_y = density(xs=x, ys=y[0], **PARAMS)
 
 rho_init = np.zeros((len(x), len(y[0])))
 
-for counter, value in enumerate(rho_y):
-    rho_init[counter] = [value for i in rho_init[counter]]
+#for counter, value in enumerate(rho_y):
+#    rho_init[counter] = [value for i in rho_init[counter]]
 
-
-
-plt.pcolormesh(x.ravel(), y.ravel(), rho_y)
-plt.title("Density distribution")
-plt.colorbar()
-plt.show()
 
 rho["g"] = rho_y
 
@@ -156,13 +148,7 @@ def v_x(xs):
 
 v_xs = velocity_x(xs=x, ys=y[0], **PARAMS)
 
-plt.pcolormesh(x.ravel(), y.ravel(), v_xs)
-plt.title("vx distribution")
-plt.show()
-
 u["g"][0] = np.array(v_xs)
-
-quit()
 
 # y velocity perturbations
 
@@ -176,9 +162,6 @@ vys_init = np.zeros((len(x), len(y[0])))
 for j in range(0, len(y[0])):
     vys_init[j] = vys
 
-# plt.pcolormesh(x.ravel(), y.ravel(), vys_init)
-# plt.title('vy distribution')
-# plt.show()
 
 u["g"][1] += 0.01 * np.sin(4 * np.pi * x)
 
@@ -189,17 +172,6 @@ for i in range(0, len(x)):
     for j in range(0, len(y[0])):
         p_init[i][j] = 2.5
 
-# plt.pcolormesh(x.ravel(),y.ravel(),p_init)
-# plt.title('initial pressure distribution')
-# plt.show()
-
-
-# Entropy initialised via ideal gas law
-
-""" plt.pcolormesh(x.ravel(),y.ravel(),s_init)
-plt.title('entropy initial')
-plt.colorbar()
-plt.show() """
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler("snapshots", sim_dt=PARAMS["snap_dt"], max_writes=10)

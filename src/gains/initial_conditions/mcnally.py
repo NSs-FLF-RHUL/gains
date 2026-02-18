@@ -38,11 +38,14 @@ def density(xs: np.ndarray ,ys: np.ndarray, **parameters: float | type) -> np.nd
                 - parameters["rho_m"] * np.exp(-(el - 0.75) / parameters["L"])
             )
         
-        rho_init = np.zeros((len(xs),len(ys)))
-        for counter, value in enumerate(out):
-            rho_init[counter] = [value for i in rho_init[counter]] #Flipped matrix for density
+    rho_init = np.zeros((len(xs),len(ys)))
 
-        rho_init = np.transpose(np.array(rho_init))
+    for counter, value in enumerate(out, start=0):
+        print("counter: {}".format(counter))
+        rho_init[counter] = [value for i in rho_init[counter]] #Flipped matrix for density
+        print(rho_init)
+        print('\n')
+    rho_init = np.transpose(np.array(rho_init))
 
     return rho_init
 

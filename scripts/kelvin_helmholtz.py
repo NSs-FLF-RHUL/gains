@@ -122,7 +122,7 @@ solver.stop_sim_time = PARAMS["stop_sim_time"]
 # Initial conditions - see McNally et al., 2012, ApJ, 201, 18 for more details
 
 # density
-rho_y = density(y[0], **PARAMS)
+rho_y = density(xs=x, ys=y[0], **PARAMS)
 
 rho_init = np.zeros((len(x), len(y[0])))
 
@@ -131,12 +131,12 @@ for counter, value in enumerate(rho_y):
 
 
 
-plt.pcolormesh(x.ravel(), y.ravel(), np.array(rho_init))
+plt.pcolormesh(x.ravel(), y.ravel(), rho_y)
 plt.title("Density distribution")
 plt.colorbar()
 plt.show()
 
-rho["g"] = np.transpose(np.array(rho_init))
+rho["g"] = rho_y
 
 
 # x velocity
@@ -155,18 +155,6 @@ def v_x(xs):
 
 
 v_xs = velocity_x(xs=x, ys=y[0], **PARAMS)
-
-'''
-vxs_init = np.zeros((len(x), len(y[0])))
-v_xs = [
-    v_xs[i][0] for i in range(0, len(v_xs))
-]  
-
-for counter, value in enumerate(v_xs):
-    vxs_init[counter] = [
-        value for i in vxs_init[counter]
-    ]  # More evil list comprehension to produce a matrix where each column is the same
-'''
 
 plt.pcolormesh(x.ravel(), y.ravel(), v_xs)
 plt.title("vx distribution")

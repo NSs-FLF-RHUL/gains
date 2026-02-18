@@ -6,11 +6,12 @@ McNally et al., 2012, ApJ, 201, 18.
 import numpy as np
 
 
-def density(ys: np.ndarray, **parameters: float | type) -> list[float]:
+def density(xs: np.ndarray ,ys: np.ndarray, **parameters: float | type) -> np.ndarray:
     """
     Density function for the initial condition in McNally 2012.
 
     :param ys: Y-coordinates on the boundary.
+    :param xs: x-coordinates
     :param parameters: Other simulation parameters.
     :returns density: Density values on the given boundary.
     """
@@ -36,7 +37,14 @@ def density(ys: np.ndarray, **parameters: float | type) -> list[float]:
                 parameters["rho_1"]
                 - parameters["rho_m"] * np.exp(-(el - 0.75) / parameters["L"])
             )
-    return out
+        
+        rho_init = np.zeros((len(xs),len(ys)))
+        for counter, value in enumerate(out):
+            rho_init[counter] = [value for i in rho_init[counter]] #Flipped matrix for density
+
+        rho_init = np.transpose(np.array(rho_init))
+
+    return rho_init
 
 def velocity_x(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.ndarray:
     """

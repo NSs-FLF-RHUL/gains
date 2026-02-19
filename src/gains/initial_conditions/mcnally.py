@@ -40,7 +40,7 @@ def density(xs: np.ndarray ,ys: np.ndarray, **parameters: float | type) -> np.nd
         
     rho_init = np.zeros((len(xs),len(ys)))
 
-    for counter, value in enumerate(out, start=0):
+    for counter, value in enumerate(out):
         print("counter: {}".format(counter))
         rho_init[counter] = [value for i in rho_init[counter]] #Flipped matrix for density
         print(rho_init)

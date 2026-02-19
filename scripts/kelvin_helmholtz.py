@@ -11,15 +11,13 @@ Initial and boundary conditions based on those described by McNally et al 2012, 
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import dedalus.public as d3
 import logging
 
-from gains.initial_conditions.mcnally import density
+from gains.initial_conditions.mcnally import density, velocity_x
 import argparse
 
 logger = logging.getLogger(__name__)
-plt.rcParams["savefig.dpi"] = 400
 
 #Command line interface
 parser = argparse.ArgumentParser(
@@ -49,7 +47,7 @@ parser.add_argument("--viscosity",
 
 parser.add_argument("--snapshots_dt",
                     type=float,
-                    default=5e-4,
+                    default=1e-2,
                     help = "Gap in simulated time between snapshots")
 
 parser.add_argument("--logger_dt",
@@ -101,8 +99,6 @@ ybasis = d3.RealFourier(
 u = dist.VectorField(coords, name="u", bases=(xbasis, ybasis))
 p = dist.Field(name="p", bases=(xbasis, ybasis))
 rho = dist.Field(name="rho", bases=(xbasis, ybasis))
-e = dist.Field(name="e", bases=(xbasis, ybasis))  # Specific internal energy
-s = dist.Field(name="s", bases=(xbasis, ybasis))  # Entropy
 tau_p = dist.Field(name="tau_p")
 
 # Substitutions
@@ -124,52 +120,20 @@ solver.stop_sim_time = PARAMS["stop_sim_time"]
 # Initial conditions - see McNally et al., 2012, ApJ, 201, 18 for more details
 
 # density
-rho_y = density(y[0], **PARAMS)
+rho_y = density(xs=x, ys=y[0], **PARAMS)
 
 rho_init = np.zeros((len(x), len(y[0])))
 
-for counter, value in enumerate(rho_y):
-    rho_init[counter] = [value for i in rho_init[counter]]
+#for counter, value in enumerate(rho_y):
+#    rho_init[counter] = [value for i in rho_init[counter]]
 
 
-
-plt.pcolormesh(x.ravel(), y.ravel(), np.array(rho_init))
-plt.title("Density distribution")
-plt.colorbar()
-plt.show()
-
-rho["g"] = np.transpose(np.array(rho_init))
+rho["g"] = rho_y
 
 
 # x velocity
-def v_x(xs):
-    out = []
-    for el in xs:
-        if el < 0.25:
-            out.append(PARAMS["U_1"] - U_m * np.exp((el - 0.25) / PARAMS["L"]))
-        elif 0.25 <= el < 0.5:
-            out.append(PARAMS["U_2"] + U_m * np.exp((-el + 0.25) / PARAMS["L"]))
-        elif 0.5 <= el < 0.75:
-            out.append(PARAMS["U_2"] + U_m * np.exp(-(0.75 - el) / PARAMS["L"]))
-        else:
-            out.append(PARAMS["U_1"] - U_m * np.exp(-(el - 0.75) / PARAMS["L"]))
-    return out
 
-
-v_xs = v_x(x)
-vxs_init = np.zeros((len(x), len(y[0])))
-v_xs = [
-    v_xs[i][0] for i in range(0, len(v_xs))
-]  # evil list comprehension to avoid an array of arrays
-
-for counter, value in enumerate(v_xs):
-    vxs_init[counter] = [
-        value for i in vxs_init[counter]
-    ]  # More evil list comprehension to produce a matrix where each column is the same
-
-# plt.pcolormesh(x.ravel(), y.ravel(), vxs_init)
-# plt.title("vx distribution")
-# plt.show()
+v_xs = velocity_x(xs=x, ys=y[0], **PARAMS)
 
 u["g"][0] = np.array(v_xs)
 
@@ -185,9 +149,6 @@ vys_init = np.zeros((len(x), len(y[0])))
 for j in range(0, len(y[0])):
     vys_init[j] = vys
 
-# plt.pcolormesh(x.ravel(), y.ravel(), vys_init)
-# plt.title('vy distribution')
-# plt.show()
 
 u["g"][1] += 0.01 * np.sin(4 * np.pi * x)
 
@@ -198,23 +159,9 @@ for i in range(0, len(x)):
     for j in range(0, len(y[0])):
         p_init[i][j] = 2.5
 
-# plt.pcolormesh(x.ravel(),y.ravel(),p_init)
-# plt.title('initial pressure distribution')
-# plt.show()
-
-
-# Entropy initialised via ideal gas law
-s_init = np.array(p_init) * np.array(rho_init) ** (-PARAMS["gamma"])
-
-
-""" plt.pcolormesh(x.ravel(),y.ravel(),s_init)
-plt.title('entropy initial')
-plt.colorbar()
-plt.show() """
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler("snapshots", sim_dt=PARAMS["snap_dt"], max_writes=10)
-snapshots.add_task(s, name="entropy")
 snapshots.add_task(rho, name="density")
 
 # CFL

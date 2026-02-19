@@ -177,3 +177,6 @@ pyrightconfig.json
 
 # IDE settings folders
 **.vscode
+
+#_version.py
+src/**/_version.py

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from gains.initial_conditions.mcnally import density
+from gains.initial_conditions.mcnally import density, velocity_x
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,7 @@ from gains.initial_conditions.mcnally import density
                 "rho_m": 0.0,
             },
             np.zeros((10,10)),
-            id="Every y-coord is 0",
+            id="Every (x,y) is (0,0)",
         ),
         pytest.param(
             np.zeros((4,)), np.array([0.125, 0.375, 0.625, 0.875]),
@@ -79,3 +79,28 @@ def test_mcnally_missing_params(
 
     with pytest.raises(KeyError, match=missing_key):
         density(xs, ys, **params)
+
+
+@pytest.mark.parametrize(
+    ("xs", "ys", "params", "expected_output"),
+    [
+        pytest.param(
+            np.zeros((10,)), np.zeros((10,)),
+            {
+                "U_1": 0.0,
+                "U_2": 0.0,
+                "L": 1.0,
+                "U_m": 0.0,
+            },
+            np.zeros((10,10)),
+            id="Every (x,y) is (0,0)",
+        ),
+    ],
+)
+
+def test_mcnally_vx(
+    xs: np.ndarray, ys: np.ndarray, params: dict[str: float], expected_output: np.ndarray
+) -> None:
+    computed_output = velocity_x(xs,ys,**params)
+
+    assert np.allclose(computed_output, expected_output)

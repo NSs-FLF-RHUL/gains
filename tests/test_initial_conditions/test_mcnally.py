@@ -37,7 +37,7 @@ from gains.initial_conditions.mcnally import density, velocity_x
                 "L": 1.0,
                 "rho_m": 0.0,
             },
-            np.array([10.0, 10.0, 1.0]),
+            np.transpose(np.array([[10.0]*3, [10.0]*3, [1.0]*3])),
             id="On the interval boundaries",
         ),
     ],
@@ -48,6 +48,16 @@ def test_mcnally_density(
     computed_output = density(xs, ys, **params)
 
     assert np.allclose(computed_output, expected_output)
+
+
+@pytest.fixture
+def params_density() -> dict[str, float]:
+    return {
+        "rho_1": 1.0,
+        "rho_2": 10.0,
+        "L": 1.0,
+        "rho_m": 0.0,
+    }
 
 
 @pytest.fixture
@@ -104,8 +114,19 @@ def test_mcnally_missing_params(
                 "U_m": 0.0,
             },
             np.ones((4,4)),
-            id = "Midpoint of each interval"
-        )
+            id = "Midpoint of each interval",
+        ),
+        pytest.param(
+            np.array([0.25, 0.5, 0.75]), np.zeros((3,)),
+            {
+                "U_1": 1.0,
+                "U_2": 10.0,
+                "L": 1.0,
+                "U_m": 0.0,
+            },
+            np.array([[10.0]*3, [10.0]*3, [1.0]*3]),
+            id="On interval boudaries"
+        ),
     ],
 )
 
@@ -115,3 +136,33 @@ def test_mcnally_vx(
     computed_output = velocity_x(xs,ys,**params)
 
     assert np.allclose(computed_output, expected_output)
+
+@pytest.fixture
+def params_vx() -> dict[str: float]:
+    return {
+        "U_1": 1.0,
+        "U_2": 10.0,
+        "L": 1.0,
+        "U_m": 0.0,
+    }
+
+@pytest.mark.parametrize(
+        ("missing_key",),
+        [
+            pytest.param('U_1'),
+            pytest.param('U_2'),
+            pytest.param('L'),
+            pytest.param('U_m'),
+        ]
+)
+
+def test_vx_missing_params(
+        missing_key: str,
+        params_vx: dict[str, float],
+        xs: np.ndarray = np.array([0.125, 0.375, 0.625, 0.875]),
+        ys: np.ndarray = np.zeros((4,))
+) -> None:
+    del params_vx[missing_key]
+
+    with pytest.raises(KeyError, match=missing_key):
+        velocity_x(xs,ys,**params_vx)

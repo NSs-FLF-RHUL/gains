@@ -95,6 +95,17 @@ def test_mcnally_missing_params(
             np.zeros((10,10)),
             id="Every (x,y) is (0,0)",
         ),
+        pytest.param(
+            np.zeros((4,)), np.array([.125, 0.375, 0.625, 0.875]),
+            {
+                "U_1": 1.0,
+                "U_2": 1.0,
+                "L": 1.0,
+                "U_m": 0.0,
+            },
+            np.ones((4,4)),
+            id = "Midpoint of each interval"
+        )
     ],
 )
 

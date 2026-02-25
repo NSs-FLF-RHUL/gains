@@ -1,11 +1,12 @@
 """
+Solves the incompressible Naiver Stokes equations in 2D to reproduce 
+the Kelvin Helmholtz instability in a shear flow.
 
-Solves the incompressible Naiver Stokes equations in 2D to reproduce the Kelvin
-Helmholtz instability in a shear flow.
+Initialised with a real fourier basis to impose periodic boundary 
+conditons
 
-Initialised with a real fourier basis to impose periodic boundary conditons
-
-Initial and boundary conditions based on those described by McNally et al 2012, ApJ, 201, 18
+Initial and boundary conditions based on those described by 
+McNally et al 2012, ApJ, 201, 18
 
 
 """
@@ -181,7 +182,7 @@ try:
                 % (solver.iteration, solver.sim_time, timestep)
             )
 except:
-    logger.error("Exception raised, triggering end of main loop.")
+    logging.exception("Exception raised, triggering end of main loop.")
     raise
 finally:
     solver.log_stats()

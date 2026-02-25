@@ -51,6 +51,9 @@ def test_mcnally_density(
     params: dict[str, float],
     expected_output: np.ndarray,
 ) -> None:
+    """
+    Applies unit tests for the density function in src/gains/mcnally.py
+    """
     computed_output = density(xs, ys, **params)
 
     assert np.allclose(computed_output, expected_output)
@@ -81,6 +84,10 @@ def test_density_missing_params(
     xs: np.ndarray = np.zeros((4,)),
     ys: np.ndarray = np.array([0.125, 0.375, 0.625, 0.875]),
 ) -> None:
+    """
+    Confirms density in src/gains/mcnally.py gives correct keyerror for
+    missing parameters
+    """
     del params_density[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
@@ -131,6 +138,9 @@ def test_density_missing_params(
 def test_mcnally_vx(
     xs: np.ndarray, ys: np.ndarray, params: dict[str:float], expected_output: np.ndarray
 ) -> None:
+    """
+    Applies unit tests for the x-velocity function in src/gains/mcnally.py
+    """
     computed_output = velocity_x(xs, ys, **params)
 
     assert np.allclose(computed_output, expected_output)
@@ -161,6 +171,10 @@ def test_vx_missing_params(
     xs: np.ndarray = np.array([0.125, 0.375, 0.625, 0.875]),
     ys: np.ndarray = np.zeros((4,)),
 ) -> None:
+    """
+    Confirms density in src/gains/mcnally.py gives correct keyerror for
+    missing parameters
+    """
     del params_vx[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):

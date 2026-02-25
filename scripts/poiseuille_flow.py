@@ -1,16 +1,21 @@
 """
-Solves for the steady state solution for a fluid flowing between 2 no slip walls subject to a constant pressure gradient.
+Solves for the steady state solution for a fluid flowing between 2 no slip 
+walls subject to a constant pressure gradient.
 
 Solves the LBVP:
     P + mu*dy(dy(u)) = 0
     u(y=h) = 0
     u(y=-h) = 0
 
-Where P is the pressure gradient (ie -dy(p)=P) and mu is the dynamic viscosiy.
+Where P is the pressure gradient (ie -dy(p)=P) and mu is the dynamic 
+viscosiy.
 
-Need 2 tau terms to impose boundary conditions, which are implemented via a first order reduction, leading to the system of equaions:
+Need 2 tau terms to impose boundary conditions, which are implemented via a 
+first order reduction, leading to the system of equaions:
     uy - dy(u) + tau_1 = 0
     dy(uy) + tau_2 = -P/mu
+
+
 """
 
 import logging
@@ -60,8 +65,6 @@ solver.solve()
 # Analysis
 y = ybasis.global_grid(dist, scale=1)
 ug = -1 * u.allgather_data("g")
-# print("ug post solve: {}".format(ug))
-
 u_an = 9 - y**2
 u_err = (ug - u_an) / u_an
 

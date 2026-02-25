@@ -1,6 +1,7 @@
 """
 Contains functions for generating initial conditions as per
 McNally et al., 2012, ApJ, 201, 18.
+
 """
 
 import numpy as np
@@ -45,9 +46,7 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
             value for i in rho_init[counter]
         ]  # Flipped matrix for density
 
-    rho_init = np.transpose(np.array(rho_init))
-
-    return rho_init
+    return np.transpose(np.array(rho_init))
 
 
 def velocity_x(
@@ -84,17 +83,12 @@ def velocity_x(
                 - parameters["U_m"] * np.exp(-(el - 0.75) / parameters["L"])
             )
 
-        # v_xs = [
-        # out[i][0] for i in range(0, len(out))
-        # ] #Prevents array of arrays
     if np.shape(np.shape(out))[0] == 2:
         out = [out[i][0] for i in range(len(out))]
 
     vx_init = np.zeros((len(xs), len(ys)))
 
     for counter, value in enumerate(out):
-        # print(counter)
-        # print([value for i in vx_init[counter]])
         vx_init[counter] = [
             value for i in vx_init[counter]
         ]  # Flipped matrix for density

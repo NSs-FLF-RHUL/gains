@@ -1,5 +1,6 @@
 """
-Plots output of kelvin_helmholtz.py. Based heavily on the plot_shear example provided with the dedalus3 code.
+Plots output of kelvin_helmholtz.py. Based heavily on the plot_shear example provided
+with the dedalus3 code.
 
 Usage:
     plot_snapshots.py <files>... [--output=<dir>]
@@ -9,14 +10,14 @@ Options:
 """
 
 import h5py
-import matplotlib
+import matplotlib as mpl
 
-matplotlib.use("Agg")
+mpl.use("Agg")
 import matplotlib.pyplot as plt
 from dedalus.extras import plot_tools
 
 
-def main(filename, start, count, output):
+def main(filename: str, start: int, count: int, output: str) -> None:
     """Save plot of specified tasks for given range of analysis writes."""
     # Plot settings
     tasks = ["density"]
@@ -76,7 +77,6 @@ if __name__ == "__main__":
     output_path = pathlib.Path(args["--output"]).absolute()
     # Create output directory if needed
     with Sync() as sync:
-        if sync.comm.rank == 0:
-            if not output_path.exists():
-                output_path.mkdir()
+        if sync.comm.rank == 0 and not output_path.exists():
+            output_path.mkdir()
     post.visit_writes(args["<files>"], main, output=output_path)

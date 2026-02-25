@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from dedalus.extras import plot_tools
 
 
-def main(filename: str, start: int, count: int, output: str) -> None:
+def main(filename: str, start: int, count: int, output: type) -> None:
     """Save plot of specified tasks for given range of analysis writes."""
     # Plot settings
     tasks = ["density"]

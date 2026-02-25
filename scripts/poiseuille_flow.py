@@ -1,5 +1,7 @@
 """
-Solves for the steady state solution for a fluid flowing between 2 no slip 
+Solves and plots a 1D problem.
+
+Solves for the steady state solution for a fluid flowing between 2 no slip
 walls subject to a constant pressure gradient.
 
 Solves the LBVP:
@@ -7,10 +9,10 @@ Solves the LBVP:
     u(y=h) = 0
     u(y=-h) = 0
 
-Where P is the pressure gradient (ie -dy(p)=P) and mu is the dynamic 
+Where P is the pressure gradient (ie -dy(p)=P) and mu is the dynamic
 viscosiy.
 
-Need 2 tau terms to impose boundary conditions, which are implemented via a 
+Need 2 tau terms to impose boundary conditions, which are implemented via a
 first order reduction, leading to the system of equaions:
     uy - dy(u) + tau_1 = 0
     dy(uy) + tau_2 = -P/mu

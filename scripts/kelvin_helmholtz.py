@@ -1,14 +1,14 @@
 """
-Solves the incompressible Naiver Stokes equations in 2D to reproduce 
+Analyses the Kelvin Helmholtz instability.
+
+Solves the incompressible Naiver Stokes equations in 2D to reproduce
 the Kelvin Helmholtz instability in a shear flow.
 
-Initialised with a real fourier basis to impose periodic boundary 
+Initialised with a real fourier basis to impose periodic boundary
 conditons
 
-Initial and boundary conditions based on those described by 
+Initial and boundary conditions based on those described by
 McNally et al 2012, ApJ, 201, 18
-
-
 """
 
 import argparse

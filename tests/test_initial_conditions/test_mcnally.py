@@ -118,7 +118,6 @@ def test_density_missing_params(
         ),
     ],
 )
-
 def test_mcnally_vx(
     xs: np.ndarray, ys: np.ndarray, params: dict[str: float], expected_output: np.ndarray
 ) -> None:
@@ -144,7 +143,6 @@ def params_vx() -> dict[str: float]:
             pytest.param('U_m'),
         ]
 )
-
 def test_vx_missing_params(
         missing_key: str,
         params_vx: dict[str, float],

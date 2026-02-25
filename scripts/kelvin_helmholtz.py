@@ -122,13 +122,7 @@ solver.stop_sim_time = PARAMS["stop_sim_time"]
 # density
 rho_y = density(xs=x, ys=y[0], **PARAMS)
 
-
-#for counter, value in enumerate(rho_y):
-#    rho_init[counter] = [value for i in rho_init[counter]]
-
-
 rho["g"] = rho_y
-
 
 # x velocity
 

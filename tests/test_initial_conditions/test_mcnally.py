@@ -48,7 +48,7 @@ from gains.initial_conditions.mcnally import density, velocity_x
 def test_mcnally_density(
     xs: np.ndarray,
     ys: np.ndarray,
-    params: dict[str:float],
+    params: dict[str, float],
     expected_output: np.ndarray,
 ) -> None:
     """Applies unit tests for the density function in src/gains/mcnally.py."""
@@ -136,7 +136,7 @@ def test_density_missing_params(
     ],
 )
 def test_mcnally_vx(
-    xs: np.ndarray, ys: np.ndarray, params: dict[str:float], expected_output: np.ndarray
+    xs: np.ndarray, ys: np.ndarray, params: dict[str, float], expected_output: np.ndarray
 ) -> None:
     """Applies unit tests for the x-velocity function in src/gains/mcnally.py."""
     computed_output = velocity_x(xs, ys, **params)
@@ -145,7 +145,7 @@ def test_mcnally_vx(
 
 
 @pytest.fixture
-def params_vx() -> dict[str:float]:
+def params_vx() -> dict[str, float]:
     return {
         "U_1": 1.0,
         "U_2": 10.0,
@@ -165,7 +165,7 @@ def params_vx() -> dict[str:float]:
 )
 def test_vx_missing_params(
     missing_key: str,
-    params_vx: dict[str:float],
+    params_vx: dict[str, float],
     xs: np.ndarray = np.array([0.125, 0.375, 0.625, 0.875]),
     ys: np.ndarray = np.zeros((4,)),
 ) -> None:

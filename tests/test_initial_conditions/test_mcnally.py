@@ -79,7 +79,7 @@ def params() -> dict[str, float]:
         pytest.param("rho_m"),
     ],
 )
-def test_mcnally_missing_params(
+def test_density_missing_params(
     missing_key: str,
     params: dict[str, float],
     xs: np.ndarray = np.zeros((4,)),

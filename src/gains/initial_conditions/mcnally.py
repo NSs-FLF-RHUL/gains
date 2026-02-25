@@ -41,10 +41,10 @@ def density(xs: np.ndarray ,ys: np.ndarray, **parameters: float | type) -> np.nd
     rho_init = np.zeros((len(xs),len(ys)))
 
     for counter, value in enumerate(out):
-        print("counter: {}".format(counter))
+        
         rho_init[counter] = [value for i in rho_init[counter]] #Flipped matrix for density
-        print(rho_init)
-        print('\n')
+        
+        
     rho_init = np.transpose(np.array(rho_init))
 
     return rho_init
@@ -69,13 +69,17 @@ def velocity_x(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np
         else:
             out.append(parameters["U_1"] - parameters["U_m"] * np.exp(-(el - 0.75) / parameters["L"]))
         
-        vxs_init = np.zeros((len(xs), len(ys)))
-        v_xs = [
-        out[i][0] for i in range(0, len(out))
-        ] #Prevents array of arrays
+        #v_xs = [
+        #out[i][0] for i in range(0, len(out))
+        #] #Prevents array of arrays
+    if np.shape(np.shape(out))[0] == 2:
+        out = [out[i][0] for i in range(0,len(out))]
 
-        for counter, value in enumerate(v_xs):
-            vxs_init[counter] = [
-                value for i in vxs_init[counter]
-            ] #Matrix where each column is the same
-    return vxs_init
+    vx_init = np.zeros((len(xs),len(ys)))
+
+    for counter, value in enumerate(out):
+        #print(counter)
+        #print([value for i in vx_init[counter]])
+        vx_init[counter] = [value for i in vx_init[counter]] #Flipped matrix for density
+        
+    return vx_init

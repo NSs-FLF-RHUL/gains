@@ -12,14 +12,13 @@ Options:
 
 import h5py
 import matplotlib as mpl
-from pathlib import joinpath
 
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 from dedalus.extras import plot_tools
 
 
-def main(filename: str, start: int, count: int, output: type) -> None:
+def main(filename: str, start: int, count: int, output) -> None:
     """Save plot of specified tasks for given range of analysis writes."""
     # Plot settings
     tasks = ["density"]

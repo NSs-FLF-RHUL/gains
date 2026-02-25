@@ -12,6 +12,7 @@ Options:
 
 import h5py
 import matplotlib as mpl
+from pathlib import joinpath
 
 mpl.use("Agg")
 import matplotlib.pyplot as plt

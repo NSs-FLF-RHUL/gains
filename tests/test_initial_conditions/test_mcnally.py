@@ -136,7 +136,10 @@ def test_density_missing_params(
     ],
 )
 def test_mcnally_vx(
-    xs: np.ndarray, ys: np.ndarray, params: dict[str, float], expected_output: np.ndarray
+    xs: np.ndarray,
+    ys: np.ndarray,
+    params: dict[str, float],
+    expected_output: np.ndarray,
 ) -> None:
     """Applies unit tests for the x-velocity function in src/gains/mcnally.py."""
     computed_output = velocity_x(xs, ys, **params)

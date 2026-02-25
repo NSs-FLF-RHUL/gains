@@ -59,17 +59,6 @@ def params_density() -> dict[str, float]:
         "rho_m": 0.0,
     }
 
-
-@pytest.fixture
-def params() -> dict[str, float]:
-    return {
-        "rho_1": 1.0,
-        "rho_2": 10.0,
-        "L": 1.0,
-        "rho_m": 0.0,
-    }
-
-
 @pytest.mark.parametrize(
     ("missing_key",),
     [
@@ -81,14 +70,14 @@ def params() -> dict[str, float]:
 )
 def test_density_missing_params(
     missing_key: str,
-    params: dict[str, float],
+    params_density: dict[str, float],
     xs: np.ndarray = np.zeros((4,)),
     ys: np.ndarray = np.array([0.125, 0.375, 0.625, 0.875]),
 ) -> None:
-    del params[missing_key]
+    del params_density[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
-        density(xs, ys, **params)
+        density(xs, ys, **params_density)
 
 
 @pytest.mark.parametrize(

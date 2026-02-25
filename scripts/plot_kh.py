@@ -1,5 +1,5 @@
 """
-Plots output of kelvin_helmholtz.py. 
+Plots output of kelvin_helmholtz.py.
 
 Based heavily on the plot_shear example provided with the dedalus3 code.
 

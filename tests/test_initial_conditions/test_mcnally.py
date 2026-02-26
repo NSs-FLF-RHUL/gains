@@ -67,13 +67,16 @@ def params_density() -> dict[str, float]:
         "rho_m": 0.0,
     }
 
+
 @pytest.fixture
 def zeros() -> np.ndarray:
     return np.zeros((4,))
 
+
 @pytest.fixture
 def bounds() -> np.ndarray:
     return np.array([0.125, 0.375, 0.625, 0.875])
+
 
 @pytest.mark.parametrize(
     "missing_key",

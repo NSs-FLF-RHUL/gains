@@ -49,14 +49,18 @@ f["g"] = -P / mu
 tau_1 = dist.Field(name="tau_1")
 tau_2 = dist.Field(name="tau_2")
 
+
 # Substitutions
 def dy(A):
     return d3.Differentiate(A, ycoord)
 
+
 lift_basis = ybasis.derivative_basis(2)
+
 
 def lift(A, n):
     return d3.Lift(A, lift_basis, n)
+
 
 # Problem
 problem = d3.LBVP([u, tau_1, tau_2], namespace=locals())

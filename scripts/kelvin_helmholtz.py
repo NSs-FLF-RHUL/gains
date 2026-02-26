@@ -178,7 +178,7 @@ try:
         solver.step(timestep)
         if (solver.iteration - 1) % PARAMS["log_dt"] == 0:
             logger.info(
-                "Iteration={}, Time={}, dt={}".format(solver.iteration, solver.sim_time, timestep)
+                f"Iteration={solver.iteration}, Time={solver.sim_time}, dt={timestep}"
             )
 except:
     logging.exception("Exception raised, triggering end of main loop.")

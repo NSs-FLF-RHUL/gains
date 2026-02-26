@@ -10,19 +10,23 @@ Options:
     --output=<dir>  Output directory [default: ./frames]
 """
 
+import pathlib
+
 import h5py
 import matplotlib as mpl
-import pathlib
 
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 from dedalus.extras import plot_tools
 
+
 def title_func(sim_time):
     return f"t = {sim_time:.3f}"
 
+
 def savename_func(write):
     return f"write_{write:06}.png"
+
 
 def main(filename: str, start: int, count: int, output: pathlib.Path) -> None:
     """Save plot of specified tasks for given range of analysis writes."""

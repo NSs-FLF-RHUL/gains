@@ -1,5 +1,5 @@
 """
-Initial conditions for kelvin_helmholtz.py
+Initial conditions for kelvin_helmholtz.py.
 
 Contains functions for generating initial conditions as per
 McNally et al., 2012, ApJ, 201, 18.
@@ -18,19 +18,20 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
     :param parameters: Other simulation parameters.
     :returns density: Density values on the given boundary.
     """
+    bounds = [0.25,0.5,0.75]
     out = []
     for el in ys:
-        if el < 0.25:
+        if el < bounds[0]:
             out.append(
                 parameters["rho_1"]
                 - parameters["rho_m"] * np.exp((el - 0.25) / parameters["L"])
             )
-        elif 0.25 <= el < 0.5:
+        elif bounds[0] <= el < bounds[1]:
             out.append(
                 parameters["rho_2"]
                 + parameters["rho_m"] * np.exp((-el + 0.25) / parameters["L"])
             )
-        elif 0.5 <= el < 0.75:
+        elif bounds[1] <= el < bounds[2]:
             out.append(
                 parameters["rho_2"]
                 + parameters["rho_m"] * np.exp(-(0.75 - el) / parameters["L"])
@@ -63,18 +64,19 @@ def velocity_x(
     :returns vx: x velocity values on the given boundary.
     """
     out = []
+    bounds = [0.25,0.5,0.75]
     for el in xs:
-        if el < 0.25:
+        if el < bounds[0]:
             out.append(
                 parameters["U_1"]
                 - parameters["U_m"] * np.exp((el - 0.25) / parameters["L"])
             )
-        elif 0.25 <= el < 0.5:
+        elif bounds[0] <= el < bounds[1]:
             out.append(
                 parameters["U_2"]
                 + parameters["U_m"] * np.exp((-el + 0.25) / parameters["L"])
             )
-        elif 0.5 <= el < 0.75:
+        elif bounds[1] <= el < bounds[2]:
             out.append(
                 parameters["U_2"]
                 + parameters["U_m"] * np.exp(-(0.75 - el) / parameters["L"])

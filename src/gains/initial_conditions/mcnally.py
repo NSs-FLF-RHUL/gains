@@ -86,8 +86,8 @@ def velocity_x(
                 parameters["U_1"]
                 - parameters["U_m"] * np.exp(-(el - 0.75) / parameters["L"])
             )
-            
-    if np.shape(np.shape(out))[0] == 2:
+    
+    if np.shape(np.shape(out))[0] > 1:
         out = [out[i][0] for i in range(len(out))]
 
     vx_init = np.zeros((len(xs), len(ys)))

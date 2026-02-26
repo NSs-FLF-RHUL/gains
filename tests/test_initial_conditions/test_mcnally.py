@@ -59,7 +59,7 @@ def test_mcnally_density(
 
 @pytest.fixture
 def params_density() -> dict[str, float]:
-    """Provides density parameters for keyerror test"""
+    """Provides density parameters for keyerror test."""
     return {
         "rho_1": 1.0,
         "rho_2": 10.0,
@@ -157,6 +157,7 @@ def test_mcnally_vx(
 
 @pytest.fixture
 def params_vx() -> dict[str, float]:
+    """Provides vx parameters for keyerror test."""
     return {
         "U_1": 1.0,
         "U_2": 10.0,

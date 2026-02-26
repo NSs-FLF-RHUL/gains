@@ -70,11 +70,13 @@ def params_density() -> dict[str, float]:
 
 @pytest.fixture
 def zeros() -> np.ndarray:
+    """Array of zeros for x or y axes."""
     return np.zeros((4,))
 
 
 @pytest.fixture
 def bounds() -> np.ndarray:
+    """Value in each bound for x or y axes."""
     return np.array([0.125, 0.375, 0.625, 0.875])
 
 

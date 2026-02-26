@@ -12,20 +12,24 @@ Options:
 
 import h5py
 import matplotlib as mpl
+import pathlib
 
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 from dedalus.extras import plot_tools
 
+def title_func(sim_time):
+    return f"t = {sim_time:.3f}"
 
-def main(filename: str, start: int, count: int, output) -> None:
+def savename_func(write):
+    return f"write_{write:06}.png"
+
+def main(filename: str, start: int, count: int, output: pathlib.Path) -> None:
     """Save plot of specified tasks for given range of analysis writes."""
     # Plot settings
     tasks = ["density"]
     scale = 2
     dpi = 200
-    title_func = lambda sim_time: f"t = {sim_time:.3f}"
-    savename_func = lambda write: f"write_{write:06}.png"
     # Layout
     nrows, ncols = 1, 1
     image = plot_tools.Box(1, 2)

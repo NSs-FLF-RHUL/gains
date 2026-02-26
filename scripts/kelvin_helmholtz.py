@@ -172,7 +172,4 @@ CFL = d3.CFL(
 CFL.add_velocity(u)
 
 # Main loop
-solver.evolve(
-    timestep_function=CFL.compute_timestep,
-    log_cadence=PARAMS["log_dt"]
-)
+solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=PARAMS["log_dt"])

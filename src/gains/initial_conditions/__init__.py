@@ -1,3 +1,1 @@
-"""
-Provides Initial conditions for commonly used problems in the package.
-"""
+"""Holds initial conditions for commonly used problems in the package."""

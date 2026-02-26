@@ -20,6 +20,7 @@ import numpy as np
 from gains.initial_conditions.mcnally import density, velocity_x
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 # Command line interface
 parser = argparse.ArgumentParser(
@@ -171,17 +172,4 @@ CFL = d3.CFL(
 CFL.add_velocity(u)
 
 # Main loop
-try:
-    logger.info("Starting main loop")
-    while solver.proceed:
-        timestep = CFL.compute_timestep()
-        solver.step(timestep)
-        if (solver.iteration - 1) % PARAMS["log_dt"] == 0:
-            logger.info(
-                "Iteration={}, Time={}, dt={}".format(solver.iteration, solver.sim_time, timestep)
-            )
-except:
-    logger.exception("Exception raised, triggering end of main loop.")
-    raise
-finally:
-    solver.log_stats()
+solver.evolve(timestep_function=CFL.compute_timestep(), log_cadence=PARAMS['log_dt'], stop_time = PARAMS["stop_sim_time"])

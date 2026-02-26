@@ -20,11 +20,13 @@ import matplotlib.pyplot as plt
 from dedalus.extras import plot_tools
 
 
-def title_func(sim_time):
+def title_func(sim_time: str):
+    """Title for plots."""
     return f"t = {sim_time:.3f}"
 
 
-def savename_func(write):
+def savename_func(write: str):
+    """Savename for frames."""
     return f"write_{write:06}.png"
 
 

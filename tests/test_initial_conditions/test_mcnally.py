@@ -59,6 +59,7 @@ def test_mcnally_density(
 
 @pytest.fixture
 def params_density() -> dict[str, float]:
+    """Provides density parameters for keyerror test"""
     return {
         "rho_1": 1.0,
         "rho_2": 10.0,
@@ -66,6 +67,13 @@ def params_density() -> dict[str, float]:
         "rho_m": 0.0,
     }
 
+@pytest.fixture
+def zeros() -> np.ndarray:
+    return np.zeros((4,))
+
+@pytest.fixture
+def bounds() -> np.ndarray:
+    return np.array([0.125, 0.375, 0.625, 0.875])
 
 @pytest.mark.parametrize(
     "missing_key",
@@ -79,8 +87,8 @@ def params_density() -> dict[str, float]:
 def test_density_missing_params(
     missing_key: str,
     params_density: dict[str, float],
-    xs: np.ndarray = np.zeros((4,)),
-    ys: np.ndarray = np.array([0.125, 0.375, 0.625, 0.875]),
+    zeros: np.ndarray,
+    bounds: np.ndarray,
 ) -> None:
     """
     Keyerror test for density.
@@ -91,7 +99,7 @@ def test_density_missing_params(
     del params_density[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
-        density(xs, ys, **params_density)
+        density(zeros, bounds, **params_density)
 
 
 @pytest.mark.parametrize(
@@ -169,8 +177,8 @@ def params_vx() -> dict[str, float]:
 def test_vx_missing_params(
     missing_key: str,
     params_vx: dict[str, float],
-    xs: np.ndarray = np.array([0.125, 0.375, 0.625, 0.875]),
-    ys: np.ndarray = np.zeros((4,)),
+    bounds: np.ndarray,
+    zeros: np.ndarray,
 ) -> None:
     """
     Keyerror test for x-velocity.
@@ -181,4 +189,4 @@ def test_vx_missing_params(
     del params_vx[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
-        velocity_x(xs, ys, **params_vx)
+        velocity_x(bounds, zeros, **params_vx)

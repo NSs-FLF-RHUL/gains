@@ -173,7 +173,6 @@ CFL.add_velocity(u)
 
 # Main loop
 solver.evolve(
-    timestep_function=CFL.compute_timestep(),
-    log_cadence=PARAMS["log_dt"],
-    stop_time=PARAMS["stop_sim_time"],
+    timestep_function=CFL.compute_timestep,
+    log_cadence=PARAMS["log_dt"]
 )

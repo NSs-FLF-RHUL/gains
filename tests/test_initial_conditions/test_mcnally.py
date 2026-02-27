@@ -93,7 +93,7 @@ def test_density_missing_params(
     missing_key: str,
     params_density: dict[str, float],
     zeros: np.ndarray,
-    bounds: np.ndarray,
+    midpoints: np.ndarray,
 ) -> None:
     """
     Keyerror test for density.
@@ -104,7 +104,7 @@ def test_density_missing_params(
     del params_density[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
-        density(zeros, bounds, **params_density)
+        density(zeros, midpoints, **params_density)
 
 
 @pytest.mark.parametrize(
@@ -183,7 +183,7 @@ def params_vx() -> dict[str, float]:
 def test_vx_missing_params(
     missing_key: str,
     params_vx: dict[str, float],
-    bounds: np.ndarray,
+    midpoints: np.ndarray,
     zeros: np.ndarray,
 ) -> None:
     """
@@ -195,4 +195,4 @@ def test_vx_missing_params(
     del params_vx[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
-        velocity_x(bounds, zeros, **params_vx)
+        velocity_x(midpoints, zeros, **params_vx)

@@ -134,8 +134,8 @@ def test_density_missing_params(
             id="Every (x,y) is (0,0)",
         ),
         pytest.param(
-            np.zeros((4,)),
             midpoints(),
+            np.zeros((4,)),
             {
                 "U_1": 1.0,
                 "U_2": 1.0,

@@ -21,7 +21,7 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
     :returns density: Density values on the given boundary.
     """
     out = []
-    for el in ys:
+    for el in xs:
         if el < bounds[0]:
             out.append(
                 parameters["rho_1"]
@@ -44,6 +44,9 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
             )
 
     rho_init = np.zeros((len(xs), len(ys)))
+
+    if np.shape(np.shape(out))[0] > 1:
+        out = [out[i][0] for i in range(len(out))]
 
     for counter, value in enumerate(out):
         rho_init[counter] = [

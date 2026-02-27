@@ -32,8 +32,8 @@ from gains.initial_conditions.mcnally import bounds, density, velocity_x
             id="Midpoint of each interval",
         ),
         pytest.param(
-            np.zeros((3,)),
             np.array([0.25, 0.5, 0.75]),
+            np.zeros((3,)),
             {
                 "rho_1": 1.0,
                 "rho_2": 10.0,
@@ -92,8 +92,8 @@ def midpoints() -> np.ndarray:
 def test_density_missing_params(
     missing_key: str,
     params_density: dict[str, float],
-    zeros: np.ndarray,
     midpoints: np.ndarray,
+    zeros: np.ndarray,
 ) -> None:
     """
     Keyerror test for density.
@@ -104,7 +104,7 @@ def test_density_missing_params(
     del params_density[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
-        density(zeros, midpoints, **params_density)
+        density(midpoints, zeros, **params_density)
 
 
 @pytest.mark.parametrize(

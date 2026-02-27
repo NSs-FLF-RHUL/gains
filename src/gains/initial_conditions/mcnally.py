@@ -9,6 +9,8 @@ McNally et al., 2012, ApJ, 201, 18.
 import numpy as np
 
 
+bounds = [0.25, 0.5, 0.75]
+
 def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.ndarray:
     """
     Density function for the initial condition in McNally 2012.
@@ -18,7 +20,6 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
     :param parameters: Other simulation parameters.
     :returns density: Density values on the given boundary.
     """
-    bounds = [0.25, 0.5, 0.75]
     out = []
     for el in ys:
         if el < bounds[0]:
@@ -64,7 +65,6 @@ def velocity_x(
     :returns vx: x velocity values on the given boundary.
     """
     out = []
-    bounds = [0.25, 0.5, 0.75]
     for el in xs:
         if el < bounds[0]:
             out.append(

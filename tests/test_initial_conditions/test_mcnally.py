@@ -43,8 +43,8 @@ def midpoints_fix() -> np.ndarray:
             id="Every (x,y) is (0,0)",
         ),
         pytest.param(
-            np.zeros((4,)),
             midpoints(),
+            np.zeros((4,)),
             {
                 "rho_1": 1.0,
                 "rho_2": 1.0,

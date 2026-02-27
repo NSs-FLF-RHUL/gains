@@ -8,8 +8,8 @@ McNally et al., 2012, ApJ, 201, 18.
 
 import numpy as np
 
-
 bounds = [0.25, 0.5, 0.75]
+
 
 def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.ndarray:
     """

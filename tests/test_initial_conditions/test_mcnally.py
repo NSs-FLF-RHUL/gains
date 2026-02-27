@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from gains.initial_conditions.mcnally import density, velocity_x, bounds
+from gains.initial_conditions.mcnally import bounds, density, velocity_x
 
 
 @pytest.mark.parametrize(

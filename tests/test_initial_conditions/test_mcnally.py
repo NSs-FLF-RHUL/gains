@@ -4,6 +4,29 @@ import pytest
 from gains.initial_conditions.mcnally import bounds, density, velocity_x
 
 
+def midpoints() -> np.ndarray:
+    """Generates midpoints in each bound."""
+    interval = bounds[0] / 2
+    return np.array(
+        [interval, bounds[0] + interval, bounds[1] + interval, bounds[2] + interval]
+    )
+
+
+@pytest.fixture
+def zeros() -> np.ndarray:
+    """Array of zeros for x or y axes."""
+    return np.zeros((4,))
+
+
+@pytest.fixture
+def midpoints_fix() -> np.ndarray:
+    """Same as midpoints, but a fixture."""
+    interval = bounds[0] / 2
+    return np.array(
+        [interval, bounds[0] + interval, bounds[1] + interval, bounds[2] + interval]
+    )
+
+
 @pytest.mark.parametrize(
     ("xs", "ys", "params", "expected_output"),
     [
@@ -21,7 +44,7 @@ from gains.initial_conditions.mcnally import bounds, density, velocity_x
         ),
         pytest.param(
             np.zeros((4,)),
-            np.array([0.125, 0.375, 0.625, 0.875]),
+            midpoints(),
             {
                 "rho_1": 1.0,
                 "rho_2": 1.0,
@@ -32,7 +55,7 @@ from gains.initial_conditions.mcnally import bounds, density, velocity_x
             id="Midpoint of each interval",
         ),
         pytest.param(
-            np.array([0.25, 0.5, 0.75]),
+            bounds,
             np.zeros((3,)),
             {
                 "rho_1": 1.0,
@@ -68,18 +91,6 @@ def params_density() -> dict[str, float]:
     }
 
 
-@pytest.fixture
-def zeros() -> np.ndarray:
-    """Array of zeros for x or y axes."""
-    return np.zeros((4,))
-
-
-@pytest.fixture
-def midpoints() -> np.ndarray:
-    """Value in each bound for x or y axes."""
-    return bounds
-
-
 @pytest.mark.parametrize(
     "missing_key",
     [
@@ -92,7 +103,7 @@ def midpoints() -> np.ndarray:
 def test_density_missing_params(
     missing_key: str,
     params_density: dict[str, float],
-    midpoints: np.ndarray,
+    midpoints_fix: np.ndarray,
     zeros: np.ndarray,
 ) -> None:
     """
@@ -104,7 +115,7 @@ def test_density_missing_params(
     del params_density[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
-        density(midpoints, zeros, **params_density)
+        density(midpoints_fix, zeros, **params_density)
 
 
 @pytest.mark.parametrize(
@@ -124,7 +135,7 @@ def test_density_missing_params(
         ),
         pytest.param(
             np.zeros((4,)),
-            np.array([0.125, 0.375, 0.625, 0.875]),
+            midpoints(),
             {
                 "U_1": 1.0,
                 "U_2": 1.0,
@@ -135,7 +146,7 @@ def test_density_missing_params(
             id="Midpoint of each interval",
         ),
         pytest.param(
-            np.array([0.25, 0.5, 0.75]),
+            bounds,
             np.zeros((3,)),
             {
                 "U_1": 1.0,
@@ -183,7 +194,7 @@ def params_vx() -> dict[str, float]:
 def test_vx_missing_params(
     missing_key: str,
     params_vx: dict[str, float],
-    midpoints: np.ndarray,
+    midpoints_fix: np.ndarray,
     zeros: np.ndarray,
 ) -> None:
     """
@@ -195,4 +206,4 @@ def test_vx_missing_params(
     del params_vx[missing_key]
 
     with pytest.raises(KeyError, match=missing_key):
-        velocity_x(midpoints, zeros, **params_vx)
+        velocity_x(midpoints_fix, zeros, **params_vx)

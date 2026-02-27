@@ -96,8 +96,6 @@ def velocity_x(
     vx_init = np.zeros((len(xs), len(ys)))
 
     for counter, value in enumerate(out):
-        vx_init[counter] = [
-            value for i in vx_init[counter]
-        ]  # Flipped matrix for density
+        vx_init[counter] = [value for i in vx_init[counter]]
 
     return vx_init

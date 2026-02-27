@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from gains.initial_conditions.mcnally import density, velocity_x
+from gains.initial_conditions.mcnally import density, velocity_x, bounds
 
 
 @pytest.mark.parametrize(
@@ -75,9 +75,9 @@ def zeros() -> np.ndarray:
 
 
 @pytest.fixture
-def bounds() -> np.ndarray:
+def midpoints() -> np.ndarray:
     """Value in each bound for x or y axes."""
-    return np.array([0.125, 0.375, 0.625, 0.875])
+    return bounds
 
 
 @pytest.mark.parametrize(

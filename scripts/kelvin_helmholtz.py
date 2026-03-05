@@ -1,80 +1,79 @@
 """
+Analyses the Kelvin Helmholtz instability.
 
-Solves the incompressible Naiver Stokes equations in 2D to reproduce the Kelvin
-Helmholtz instability in a shear flow.
+Solves the incompressible Naiver Stokes equations in 2D to reproduce
+the Kelvin Helmholtz instability in a shear flow.
 
-Initialised with a real fourier basis to impose periodic boundary conditons
+Initialised with a real fourier basis to impose periodic boundary
+conditons
 
-Initial and boundary conditions based on those described by McNally et al 2012, ApJ, 201, 18
-
-
+Initial and boundary conditions based on those described by
+McNally et al 2012, ApJ, 201, 18
 """
 
-import numpy as np
-import dedalus.public as d3
+import argparse
 import logging
 
+import dedalus.public as d3
+import numpy as np
+
 from gains.initial_conditions.mcnally import density, velocity_x
-import argparse
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(message)s", level=logging.INFO)
 
-#Command line interface
+# Command line interface
 parser = argparse.ArgumentParser(
     description="Simulate Klevin-helmholtz instability using initial conditions "
     "from McNally et al 2012, ApJ, 201, 18"
 )
 
-parser.add_argument("--Nx", 
-                    type=int,
-                    default=16,
-                    help="x-direction resolution")
+parser.add_argument("--Nx", type=int, default=16, help="x-direction resolution")
 
-parser.add_argument("--Ny",
-                    type=int,
-                    default=16,
-                    help="y-direction resolution")
+parser.add_argument("--Ny", type=int, default=16, help="y-direction resolution")
 
-parser.add_argument("--stop_time",
-                    type=float,
-                    default=4.5,
-                    help = "Cutoff for the simulated time")
+parser.add_argument(
+    "--stop_time", type=float, default=4.5, help="Cutoff for the simulated time"
+)
 
-parser.add_argument("--viscosity",
-                    type=float,
-                    default=1e-4,
-                    help="The dynamic viscosity of the fluid")
+parser.add_argument(
+    "--viscosity", type=float, default=1e-4, help="The dynamic viscosity of the fluid"
+)
 
-parser.add_argument("--snapshots_dt",
-                    type=float,
-                    default=1e-2,
-                    help = "Gap in simulated time between snapshots")
+parser.add_argument(
+    "--snapshots_dt",
+    type=float,
+    default=1e-2,
+    help="Gap in simulated time between snapshots",
+)
 
-parser.add_argument("--logger_dt",
-                    type=int,
-                    default=100,
-                    help = "How many timesteps between logger outputs")
+parser.add_argument(
+    "--logger_dt",
+    type=int,
+    default=100,
+    help="How many timesteps between logger outputs",
+)
 
 args = vars(parser.parse_args())
 dtype = np.float64
 PARAMS = {
-"Lx": 1,
-"Ly": 1,
-"Nx": args['Nx'],
-"Ny": args['Ny'],
-"timestepper": d3.SBDF4,
-"stop_sim_time": args['stop_time'],
-"max_timestep": 1e-4,
-"dealias": 2,
-"gamma": 5 / 3,
-"rho_1": 1.0,
-"rho_2": 2.0,
-"L": 0.025,
-"U_1": 0.5,
-"U_2": -0.5,
-"nu": args['viscosity'],
-"snap_dt": args['snapshots_dt'],
-"log_dt": args['logger_dt']
+    "Lx": 1,
+    "Ly": 1,
+    "Nx": args["Nx"],
+    "Ny": args["Ny"],
+    "timestepper": d3.SBDF4,
+    "stop_sim_time": args["stop_time"],
+    "max_timestep": 1e-4,
+    "dealias": 2,
+    "gamma": 5 / 3,
+    "rho_1": 1.0,
+    "rho_2": 2.0,
+    "L": 0.025,
+    "U_1": 0.5,
+    "U_2": -0.5,
+    "nu": args["viscosity"],
+    "snap_dt": args["snapshots_dt"],
+    "log_dt": args["logger_dt"],
 }
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m
@@ -134,12 +133,12 @@ u["g"][0] = np.array(v_xs)
 
 vys = 0.01 * np.sin(4 * np.pi * x)
 
-vys = [vys[i][0] for i in range(0, len(vys))]
+vys = [vys[i][0] for i in range(len(vys))]
 
 
 vys_init = np.zeros((len(x), len(y[0])))
 
-for j in range(0, len(y[0])):
+for j in range(len(y[0])):
     vys_init[j] = vys
 
 
@@ -148,13 +147,15 @@ u["g"][1] += 0.01 * np.sin(4 * np.pi * x)
 
 p_init = np.zeros((len(x), len(y[0])))
 
-for i in range(0, len(x)):
-    for j in range(0, len(y[0])):
+for i in range(len(x)):
+    for j in range(len(y[0])):
         p_init[i][j] = 2.5
 
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler("snapshots", sim_dt=PARAMS["snap_dt"], max_writes=10)
+snapshots = solver.evaluator.add_file_handler(
+    "snapshots", sim_dt=PARAMS["snap_dt"], max_writes=10
+)
 snapshots.add_task(rho, name="density")
 
 # CFL
@@ -171,18 +172,4 @@ CFL = d3.CFL(
 CFL.add_velocity(u)
 
 # Main loop
-try:
-    logger.info("Starting main loop")
-    while solver.proceed:
-        timestep = CFL.compute_timestep()
-        solver.step(timestep)
-        if (solver.iteration - 1) % PARAMS['log_dt'] == 0:
-            logger.info(
-                "Iteration=%i, Time=%e, dt=%e"
-                % (solver.iteration, solver.sim_time, timestep)
-            )
-except:
-    logger.error("Exception raised, triggering end of main loop.")
-    raise
-finally:
-    solver.log_stats()
+solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=PARAMS["log_dt"])

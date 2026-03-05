@@ -9,7 +9,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = ["numpy"]
-description = "Simulates superfluid dynamics on neutron star interiors using the dedalus3 hydrocode" 
+description = "Simulates superfluid dynamics on neutron star interiors using the dedalus3 hydrocode"
 dynamic = ["version"]
 keywords = []
 license = "GPL-3.0"
@@ -17,7 +17,7 @@ license-files = ["LICENSE.md"]
 name = "gains" # name of the package. Should match the name of the folder inside src/
 readme = "README.md"
 requires-python = ">=3.11"
-urls.homepage = "https://github.com/NSs-FLF-RHUL/gains" 
+urls.homepage = "https://github.com/NSs-FLF-RHUL/gains"
 
 [project.optional-dependencies]
 dev = ["build", "mypy", "pre-commit", "ruff", "tox", "twine"]

@@ -1,12 +1,17 @@
 """
+Initial conditions for kelvin_helmholtz.py.
+
 Contains functions for generating initial conditions as per
 McNally et al., 2012, ApJ, 201, 18.
+
 """
 
 import numpy as np
 
+bounds = [0.25, 0.5, 0.75]
 
-def density(xs: np.ndarray ,ys: np.ndarray, **parameters: float | type) -> np.ndarray:
+
+def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.ndarray:
     """
     Density function for the initial condition in McNally 2012.
 
@@ -16,18 +21,18 @@ def density(xs: np.ndarray ,ys: np.ndarray, **parameters: float | type) -> np.nd
     :returns density: Density values on the given boundary.
     """
     out = []
-    for el in ys:
-        if el < 0.25:
+    for el in xs:
+        if el < bounds[0]:
             out.append(
                 parameters["rho_1"]
                 - parameters["rho_m"] * np.exp((el - 0.25) / parameters["L"])
             )
-        elif 0.25 <= el < 0.5:
+        elif bounds[0] <= el < bounds[1]:
             out.append(
                 parameters["rho_2"]
                 + parameters["rho_m"] * np.exp((-el + 0.25) / parameters["L"])
             )
-        elif 0.5 <= el < 0.75:
+        elif bounds[1] <= el < bounds[2]:
             out.append(
                 parameters["rho_2"]
                 + parameters["rho_m"] * np.exp(-(0.75 - el) / parameters["L"])
@@ -37,19 +42,23 @@ def density(xs: np.ndarray ,ys: np.ndarray, **parameters: float | type) -> np.nd
                 parameters["rho_1"]
                 - parameters["rho_m"] * np.exp(-(el - 0.75) / parameters["L"])
             )
-        
-    rho_init = np.zeros((len(xs),len(ys)))
+
+    rho_init = np.zeros((len(xs), len(ys)))
+
+    if np.shape(np.shape(out))[0] > 1:
+        out = [out[i][0] for i in range(len(out))]
 
     for counter, value in enumerate(out):
-        
-        rho_init[counter] = [value for i in rho_init[counter]] #Flipped matrix for density
-        
-        
-    rho_init = np.transpose(np.array(rho_init))
+        rho_init[counter] = [
+            value for i in rho_init[counter]
+        ]  # Flipped matrix for density
 
-    return rho_init
+    return np.transpose(np.array(rho_init))
 
-def velocity_x(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.ndarray:
+
+def velocity_x(
+    xs: np.ndarray, ys: np.ndarray, **parameters: float | type
+) -> np.ndarray:
     """
     x-velocity function for the initial condition in McNally 2012.
 
@@ -60,26 +69,33 @@ def velocity_x(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np
     """
     out = []
     for el in xs:
-        if el < 0.25:
-            out.append(parameters["U_1"] - parameters["U_m"] * np.exp((el - 0.25) / parameters["L"]))
-        elif 0.25 <= el < 0.5:
-            out.append(parameters["U_2"] + parameters["U_m"] * np.exp((-el + 0.25) / parameters["L"]))
-        elif 0.5 <= el < 0.75:
-            out.append(parameters["U_2"] + parameters["U_m"] * np.exp(-(0.75 - el) / parameters["L"]))
+        if el < bounds[0]:
+            out.append(
+                parameters["U_1"]
+                - parameters["U_m"] * np.exp((el - 0.25) / parameters["L"])
+            )
+        elif bounds[0] <= el < bounds[1]:
+            out.append(
+                parameters["U_2"]
+                + parameters["U_m"] * np.exp((-el + 0.25) / parameters["L"])
+            )
+        elif bounds[1] <= el < bounds[2]:
+            out.append(
+                parameters["U_2"]
+                + parameters["U_m"] * np.exp(-(0.75 - el) / parameters["L"])
+            )
         else:
-            out.append(parameters["U_1"] - parameters["U_m"] * np.exp(-(el - 0.75) / parameters["L"]))
-        
-        #v_xs = [
-        #out[i][0] for i in range(0, len(out))
-        #] #Prevents array of arrays
-    if np.shape(np.shape(out))[0] == 2:
-        out = [out[i][0] for i in range(0,len(out))]
+            out.append(
+                parameters["U_1"]
+                - parameters["U_m"] * np.exp(-(el - 0.75) / parameters["L"])
+            )
 
-    vx_init = np.zeros((len(xs),len(ys)))
+    if np.shape(np.shape(out))[0] > 1:
+        out = [out[i][0] for i in range(len(out))]
+
+    vx_init = np.zeros((len(xs), len(ys)))
 
     for counter, value in enumerate(out):
-        #print(counter)
-        #print([value for i in vx_init[counter]])
-        vx_init[counter] = [value for i in vx_init[counter]] #Flipped matrix for density
-        
+        vx_init[counter] = [value for i in vx_init[counter]]
+
     return vx_init

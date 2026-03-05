@@ -1,9 +1,9 @@
-site_name: "gains" 
-site_description: "documentation for gains" 
-site_author: "Rebecca McShane" 
-copyright: "Copyright © 2026 Rebecca McShane" 
-repo_url: "https://github.com/NSs-FLF-RHUL/gains" 
-repo_name: "NSs-FLF-RHUL/gains" 
+site_name: "gains"
+site_description: "documentation for gains"
+site_author: "Rebecca McShane"
+copyright: "Copyright © 2026 Rebecca McShane"
+repo_url: "https://github.com/NSs-FLF-RHUL/gains"
+repo_name: "NSs-FLF-RHUL/gains"
 edit_uri: edit/main/docs/
 
 validation:

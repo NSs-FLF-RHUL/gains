@@ -80,9 +80,5 @@ def velocity_x(
         (out[region_3_mask] - 0.25) / parameters["L"]
     )
 
-    vx_init = np.zeros((len(xs), len(ys)))
+    return np.column_stack((out,)*len(ys))
 
-    for counter, value in enumerate(out):
-        vx_init[counter] = [value for i in vx_init[counter]]
-
-    return vx_init

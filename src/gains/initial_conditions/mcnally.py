@@ -44,14 +44,7 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
         -(xs[region_3_mask] - 0.75) / parameters["L"]
     )
 
-    rho_init = np.zeros((len(xs), len(ys)))
-
-    for counter, value in enumerate(out):
-        rho_init[counter] = [
-            value for i in rho_init[counter]
-        ]  # Flipped matrix for density
-
-    return np.transpose(np.array(rho_init))
+    return np.column_stack((out,) * len(ys)).T
 
 
 def velocity_x(

@@ -8,7 +8,7 @@ McNally et al., 2012, ApJ, 201, 18.
 
 import numpy as np
 
-bounds = [0.25, 0.5, 0.75]
+bounds = np.array([0.25, 0.5, 0.75])
 
 
 def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.ndarray:
@@ -23,28 +23,26 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
     :param parameters: Other simulation parameters.
     :returns density: Density values on the given boundary.
     """
-    out = []
-    for el in xs:
-        if el < bounds[0]:
-            out.append(
-                parameters["rho_1"]
-                - parameters["rho_m"] * np.exp((el - 0.25) / parameters["L"])
-            )
-        elif bounds[0] <= el < bounds[1]:
-            out.append(
-                parameters["rho_2"]
-                + parameters["rho_m"] * np.exp((-el + 0.25) / parameters["L"])
-            )
-        elif bounds[1] <= el < bounds[2]:
-            out.append(
-                parameters["rho_2"]
-                + parameters["rho_m"] * np.exp(-(0.75 - el) / parameters["L"])
-            )
-        else:
-            out.append(
-                parameters["rho_1"]
-                - parameters["rho_m"] * np.exp(-(el - 0.75) / parameters["L"])
-            )
+    out = np.zeros((len(xs),))
+
+    # Select all the x-coordinates that are in region 0
+    region_0_mask = xs < bounds[0]
+    region_1_mask = np.logical_and(xs >= bounds[0], xs < bounds[1])
+    region_2_mask = np.logical_and(xs >= bounds[1], xs < bounds[2])
+    region_3_mask = xs >= bounds[2]
+
+    out[region_0_mask] = parameters["rho_1"] - parameters["rho_m"] * np.exp(
+        (xs[region_0_mask] - 0.25) / parameters["L"]
+    )
+    out[region_1_mask] = parameters["rho_2"] + parameters["rho_m"] * np.exp(
+        (-xs[region_1_mask] + 0.25) / parameters["L"]
+    )
+    out[region_2_mask] = parameters["rho_2"] + parameters["rho_m"] * np.exp(
+        -(0.75 - xs[region_2_mask]) / parameters["L"]
+    )
+    out[region_3_mask] = parameters["rho_1"] - parameters["rho_m"] * np.exp(
+        -(xs[region_3_mask] - 0.75) / parameters["L"]
+    )
 
     rho_init = np.zeros((len(xs), len(ys)))
 

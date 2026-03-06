@@ -46,9 +46,6 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
 
     rho_init = np.zeros((len(xs), len(ys)))
 
-    if np.shape(np.shape(out))[0] > 1:
-        out = [out[i][0] for i in range(len(out))]
-
     for counter, value in enumerate(out):
         rho_init[counter] = [
             value for i in rho_init[counter]

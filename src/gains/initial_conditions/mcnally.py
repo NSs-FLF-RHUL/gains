@@ -15,6 +15,9 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
     """
     Density function for the initial condition in McNally 2012.
 
+    density is returned as a 2D array where;
+    density[i, j] = density at coordinate (xs[j], ys[i]).
+
     :param ys: Y-coordinates on the boundary.
     :param xs: x-coordinates
     :param parameters: Other simulation parameters.
@@ -61,6 +64,9 @@ def velocity_x(
 ) -> np.ndarray:
     """
     x-velocity function for the initial condition in McNally 2012.
+
+    velocity is returned as a 2D array where
+    velocity[i, j] = x-velocity component at coordinate (xs[i], ys[j]).
 
     :param xs: x-coordinates on the boundary.
     :param ys: y-coordinates

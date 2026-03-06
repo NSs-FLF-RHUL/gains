@@ -61,31 +61,24 @@ def velocity_x(
     :param parameters: Other simulation parameters.
     :returns vx: x velocity values on the given boundary.
     """
-    out = []
-    for el in xs:
-        if el < bounds[0]:
-            out.append(
-                parameters["U_1"]
-                - parameters["U_m"] * np.exp((el - 0.25) / parameters["L"])
-            )
-        elif bounds[0] <= el < bounds[1]:
-            out.append(
-                parameters["U_2"]
-                + parameters["U_m"] * np.exp((-el + 0.25) / parameters["L"])
-            )
-        elif bounds[1] <= el < bounds[2]:
-            out.append(
-                parameters["U_2"]
-                + parameters["U_m"] * np.exp(-(0.75 - el) / parameters["L"])
-            )
-        else:
-            out.append(
-                parameters["U_1"]
-                - parameters["U_m"] * np.exp(-(el - 0.75) / parameters["L"])
-            )
+    out = np.zeros((len(xs),))
+    region_0_mask = xs < bounds[0]
+    region_1_mask = np.logical_and(xs >= bounds[0], xs < bounds[1])
+    region_2_mask = np.logical_and(xs >= bounds[1], xs < bounds[2])
+    region_3_mask = xs >= bounds[2]
 
-    if np.shape(np.shape(out))[0] > 1:
-        out = [out[i][0] for i in range(len(out))]
+    out[region_0_mask] = parameters["U_1"] - parameters["U_m"] * np.exp(
+        (out[region_0_mask] - 0.25) / parameters["L"]
+    )
+    out[region_1_mask] = parameters["U_2"] - parameters["U_m"] * np.exp(
+        (out[region_1_mask] - 0.25) / parameters["L"]
+    )
+    out[region_2_mask] = parameters["U_2"] - parameters["U_m"] * np.exp(
+        (out[region_2_mask] - 0.25) / parameters["L"]
+    )
+    out[region_3_mask] = parameters["U_1"] - parameters["U_m"] * np.exp(
+        (out[region_3_mask] - 0.25) / parameters["L"]
+    )
 
     vx_init = np.zeros((len(xs), len(ys)))
 

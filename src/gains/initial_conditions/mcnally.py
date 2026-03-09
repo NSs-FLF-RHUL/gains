@@ -80,5 +80,4 @@ def velocity_x(
         (out[region_3_mask] - 0.25) / parameters["L"]
     )
 
-    return np.column_stack((out,)*len(ys))
-
+    return np.column_stack((out,) * len(ys))

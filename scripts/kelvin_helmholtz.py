@@ -104,7 +104,7 @@ tau_p = dist.Field(name="tau_p")
 
 x, y = dist.local_grids(xbasis, ybasis)
 ex, ey = coords.unit_vector_fields(dist)
-
+x = x.ravel()
 # Problem
 problem = d3.IVP([u, rho, p, tau_p], namespace=locals())
 problem.add_equation("div(u) + tau_p = 0")
@@ -119,6 +119,7 @@ solver.stop_sim_time = PARAMS["stop_sim_time"]
 # Initial conditions - see McNally et al., 2012, ApJ, 201, 18 for more details
 
 # density
+
 rho_y = density(xs=x, ys=y[0], **PARAMS)
 
 rho["g"] = rho_y
@@ -127,13 +128,11 @@ rho["g"] = rho_y
 
 v_xs = velocity_x(xs=x, ys=y[0], **PARAMS)
 
-u["g"][0] = np.array(v_xs)
+u["g"][0] = v_xs
 
 # y velocity perturbations
 
 vys = 0.01 * np.sin(4 * np.pi * x)
-
-vys = [vys[i][0] for i in range(len(vys))]
 
 
 vys_init = np.zeros((len(x), len(y[0])))
@@ -142,7 +141,7 @@ for j in range(len(y[0])):
     vys_init[j] = vys
 
 
-u["g"][1] += 0.01 * np.sin(4 * np.pi * x)
+u["g"][1] += np.transpose(vys_init)
 
 
 p_init = np.zeros((len(x), len(y[0])))

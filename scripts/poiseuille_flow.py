@@ -51,7 +51,7 @@ tau_2 = dist.Field(name="tau_2")
 
 
 # Substitutions
-def dy(a: d3.Operand) -> d3.Operand:
+def dy(a: d3.Field) -> d3.Field:
     """Return derivative of field."""
     return d3.Differentiate(a, ycoord)
 
@@ -59,7 +59,7 @@ def dy(a: d3.Operand) -> d3.Operand:
 lift_basis = ybasis.derivative_basis(2)
 
 
-def lift(a: d3.Operand, n: int) -> d3.Operand:
+def lift(a: d3.Field, n: int) -> d3.Field:
     """Lift operand to -nth derivative basis."""
     return d3.Lift(a, lift_basis, n)
 

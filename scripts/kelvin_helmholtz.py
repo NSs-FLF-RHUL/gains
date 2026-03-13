@@ -140,14 +140,6 @@ vys_init = np.vstack((vys,) * x.size)
 
 u["g"][1] += np.transpose(vys_init)
 
-
-p_init = np.zeros((len(x), len(y[0])))
-
-for i in range(len(x)):
-    for j in range(len(y[0])):
-        p_init[i][j] = 2.5
-
-
 # Analysis
 snapshots = solver.evaluator.add_file_handler(
     "snapshots", sim_dt=PARAMS["snap_dt"], max_writes=10

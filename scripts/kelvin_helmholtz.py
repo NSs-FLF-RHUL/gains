@@ -104,7 +104,7 @@ tau_p = dist.Field(name="tau_p")
 
 x, y = dist.local_grids(xbasis, ybasis)
 ex, ey = coords.unit_vector_fields(dist)
-x = x.ravel()
+x = x.squeeze()
 # Problem
 problem = d3.IVP([u, rho, p, tau_p], namespace=locals())
 problem.add_equation("div(u) + tau_p = 0")
@@ -135,10 +135,7 @@ u["g"][0] = v_xs
 vys = 0.01 * np.sin(4 * np.pi * x)
 
 
-vys_init = np.zeros((len(x), len(y[0])))
-
-for j in range(len(y[0])):
-    vys_init[j] = vys
+vys_init = np.vstack((vys,) * x.size)
 
 
 u["g"][1] += np.transpose(vys_init)

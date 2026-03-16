@@ -20,32 +20,61 @@ first order reduction, leading to the system of equaions:
 
 """
 
-import logging
+import argparse
 
 import dedalus.public as d3
 import matplotlib.pyplot as plt
 import numpy as np
 
-logger = logging.getLogger(__name__)
 plt.rcParams["savefig.dpi"] = 400
 
+parser = argparse.ArgumentParser(
+    description="Solve for steady state flow between 2 walls subject "
+    "to a constant pressure gradient"
+)
+
+
+parser.add_argument("--Ny", type=int, default=128, help="y resolution")
+
+parser.add_argument(
+    "--viscosity", type=float, default=1.0, help="The dynamic viscosity of the fluid"
+)
+
+parser.add_argument(
+    "--Pressure_gradient",
+    type=float,
+    default=2.0,
+    help="The constant pressure gradient.",
+)
+
+parser.add_argument(
+    "--height",
+    type=float,
+    default=3.0,
+    help="The distance between y=0 and the planes (ie one at -h and one at +h)",
+)
+
+args = vars(parser.parse_args())
 # Parameters
-Ly = 3  # h=3
-P = 2
-mu = 1
-Ny = 128
+PARAMS = {
+    "Ly": args["height"],
+    "Pgrad": args["Pressure_gradient"],
+    "mu": args["viscosity"],
+    "Ny": args["Ny"],
+}
+
 dtype = np.float64
 
 # Bases
 ycoord = d3.Coordinate("y")
 dist = d3.Distributor(ycoord, dtype=dtype)
-ybasis = d3.Chebyshev(ycoord, size=Ny, bounds=(-Ly, Ly))
+ybasis = d3.Chebyshev(ycoord, size=PARAMS["Ny"], bounds=(-PARAMS["Ly"], PARAMS["Ly"]))
 
 # Fields
 u = dist.Field(name="u", bases=ybasis)
 uy = dist.Field(name="uy", bases=ybasis)
 f = dist.Field(bases=ybasis)
-f["g"] = -P / mu
+f["g"] = -PARAMS["Pgrad"] / PARAMS["mu"]
 tau_1 = dist.Field(name="tau_1")
 tau_2 = dist.Field(name="tau_2")
 
@@ -67,8 +96,8 @@ def lift(a: d3.Field, n: int) -> d3.Field:
 # Problem
 problem = d3.LBVP([u, tau_1, tau_2], namespace=locals())
 problem.add_equation("dy(dy(u)) + lift(tau_1,-1) + lift(tau_2,-2) = -f")
-problem.add_equation("u(y=-Ly) = 0")
-problem.add_equation("u(y=Ly) = 0")
+problem.add_equation("u(y=-PARAMS['Ly']) = 0")
+problem.add_equation("u(y=PARAMS['Ly']) = 0")
 
 # Solver
 solver = problem.build_solver()
@@ -77,7 +106,14 @@ solver.solve()
 # Analysis
 y = ybasis.global_grid(dist, scale=1)
 ug = -1 * u.allgather_data("g")
-u_an = 9 - y**2
+
+
+def u_analytic() -> np.ndarray:
+    """Analytic solution for Poiseuille flow."""
+    return PARAMS["Pgrad"] / (2 * PARAMS["mu"]) * (PARAMS["Ly"] ** 2 - y**2)
+
+
+u_an = u_analytic()
 u_err = (ug - u_an) / u_an
 
 plt.figure(1)

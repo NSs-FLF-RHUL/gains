@@ -20,18 +20,47 @@ first order reduction, leading to the system of equaions:
 
 """
 
+import argparse
+
 import dedalus.public as d3
 import matplotlib.pyplot as plt
 import numpy as np
 
 plt.rcParams["savefig.dpi"] = 400
 
+parser = argparse.ArgumentParser(
+    description="Solve for steady state flow between 2 walls subject "
+    "to a constant pressure gradient"
+)
+
+
+parser.add_argument("--Ny", type=int, default=128, help="y resolution")
+
+parser.add_argument(
+    "--viscosity", type=float, default=1.0, help="The dynamic viscosity of the fluid"
+)
+
+parser.add_argument(
+    "--Pressure_gradient",
+    type=float,
+    default=2.0,
+    help="The constant pressure gradient.",
+)
+
+parser.add_argument(
+    "--height",
+    type=float,
+    default=3.0,
+    help="The distance between y=0 and the planes (ie one at -h and one at +h)",
+)
+
+args = vars(parser.parse_args())
 # Parameters
 PARAMS = {
-    "Ly": 3,
-    "Pgrad": 2,
-    "mu": 1,
-    "Ny": 128,
+    "Ly": args["height"],
+    "Pgrad": args["Pressure_gradient"],
+    "mu": args["viscosity"],
+    "Ny": args["Ny"],
 }
 
 dtype = np.float64
@@ -81,7 +110,7 @@ ug = -1 * u.allgather_data("g")
 
 def u_analytic() -> np.ndarray:
     """Analytic solution for Poiseuille flow."""
-    return (PARAMS["Pgrad"] / 2 * PARAMS["mu"]) * (PARAMS["Ly"] ** 2 - y**2)
+    return PARAMS["Pgrad"] / (2 * PARAMS["mu"]) * (PARAMS["Ly"] ** 2 - y**2)
 
 
 u_an = u_analytic()

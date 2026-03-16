@@ -20,13 +20,10 @@ first order reduction, leading to the system of equaions:
 
 """
 
-import logging
-
 import dedalus.public as d3
 import matplotlib.pyplot as plt
 import numpy as np
 
-logger = logging.getLogger(__name__)
 plt.rcParams["savefig.dpi"] = 400
 
 # Parameters
@@ -77,7 +74,14 @@ solver.solve()
 # Analysis
 y = ybasis.global_grid(dist, scale=1)
 ug = -1 * u.allgather_data("g")
-u_an = 9 - y**2
+
+
+def u_analytic() -> np.ndarray:
+    """Analytic solution for Poiseuille flow."""
+    return (P / 2 * mu) * (Ly**2 - y**2)
+
+
+u_an = u_analytic()
 u_err = (ug - u_an) / u_an
 
 plt.figure(1)

@@ -27,22 +27,25 @@ import numpy as np
 plt.rcParams["savefig.dpi"] = 400
 
 # Parameters
-Ly = 3  # h=3
-P = 2
-mu = 1
-Ny = 128
+PARAMS = {
+    "Ly": 3,
+    "Pgrad": 2,
+    "mu": 1,
+    "Ny": 128,
+}
+
 dtype = np.float64
 
 # Bases
 ycoord = d3.Coordinate("y")
 dist = d3.Distributor(ycoord, dtype=dtype)
-ybasis = d3.Chebyshev(ycoord, size=Ny, bounds=(-Ly, Ly))
+ybasis = d3.Chebyshev(ycoord, size=PARAMS["Ny"], bounds=(-PARAMS["Ly"], PARAMS["Ly"]))
 
 # Fields
 u = dist.Field(name="u", bases=ybasis)
 uy = dist.Field(name="uy", bases=ybasis)
 f = dist.Field(bases=ybasis)
-f["g"] = -P / mu
+f["g"] = -PARAMS["Pgrad"] / PARAMS["mu"]
 tau_1 = dist.Field(name="tau_1")
 tau_2 = dist.Field(name="tau_2")
 
@@ -64,8 +67,8 @@ def lift(a: d3.Field, n: int) -> d3.Field:
 # Problem
 problem = d3.LBVP([u, tau_1, tau_2], namespace=locals())
 problem.add_equation("dy(dy(u)) + lift(tau_1,-1) + lift(tau_2,-2) = -f")
-problem.add_equation("u(y=-Ly) = 0")
-problem.add_equation("u(y=Ly) = 0")
+problem.add_equation("u(y=-PARAMS['Ly']) = 0")
+problem.add_equation("u(y=PARAMS['Ly']) = 0")
 
 # Solver
 solver = problem.build_solver()
@@ -78,7 +81,7 @@ ug = -1 * u.allgather_data("g")
 
 def u_analytic() -> np.ndarray:
     """Analytic solution for Poiseuille flow."""
-    return (P / 2 * mu) * (Ly**2 - y**2)
+    return (PARAMS["Pgrad"] / 2 * PARAMS["mu"]) * (PARAMS["Ly"] ** 2 - y**2)
 
 
 u_an = u_analytic()

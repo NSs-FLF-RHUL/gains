@@ -28,28 +28,16 @@ plot_angular(path_3,90,ax[2],rotating=True)
 #plt.savefig("Angular_5e-3.png")
 plt.show()
 
-file_list = sorted(os.listdir('./AZ_avg_equator'))
-
+file_list = sorted(os.listdir('outputs/su_equator/AZ_avg_equator'))
 path_list = []
 for file in file_list:
     print(file)
-    path = "./AZ_avg_equator/"+file
-    path_list.append(path)
+    extension = file[len(file) - 2: len(file)]
+    print(extension)
+    if extension == 'h5':
+        path = "outputs/su_equator/AZ_avg_equator/"+file
+        path_list.append(path)
 
-def angular_time(r_get: int, n_writes: int) -> np.ndarray | np.ndarray:
-    omega_rs = []
-    times = []
-    for path in path_list:
-        data = h5py.File(path, mode='r')
-        time = np.array(data['scales/sim_time'])
-        r, theta = coords_angular(path)
-        for j in range(0,n_writes):
-            u_n_phi = data['tasks']['u_n_phi'][j,-1,:,:]
-            omega = get_angular(r, theta, u_n_phi)
-            omega_r = omega[63][r_get]
-            omega_rs.append(omega_r)
-            times.append(time[j])
-    return omega_rs, times
 
 path = path_list[0]
 r_check, theta = coords_angular(path)
@@ -61,7 +49,7 @@ rs_checked = [r_check[i] for i in range(35,len(r_check),6)]
 print(rs_checked)
 for i in range(0,len(r_tries)):
     val = r_tries[i]
-    omega_r, times = angular_time(val, 100)
+    omega_r, times = angular_time(val, 100, path_list)
     plt.plot(sorted(times), sorted(omega_r), color = '#024cf7', alpha = alphas[i], label = str(round(rs_checked[i],2)) + 'R')
 
 plt.legend(frameon=False)
@@ -70,8 +58,8 @@ plt.axvline(x=t_ek, linestyle='dashed', color = 'black', lw = 0.5)
 plt.text(15, 0.0001,r'$\tau_{Ek}$', size = 'large')
 plt.xlabel('Time since glitch ($\Omega_{0}^{-1}$)')
 plt.ylabel("$\Delta \Omega$")
-plt.show()
-#plt.savefig("spin_up_time_equator.png", dpi=300)
+#plt.show()
+plt.savefig("outputs/su_equator/spin_up_time_equator.png", dpi=300)
 
 '''
 num_files = len(path_list)

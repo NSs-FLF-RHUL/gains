@@ -101,3 +101,18 @@ def plot_angular(path: str, t: int, ax: matplotlib.projections.polar.PolarAxes, 
     ax.set_yticks([])
     ax.set_title(r'$t =$'+str(time[t])[:4])
 
+def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray | np.ndarray:
+    omega_rs = []
+    times = []
+    for path in path_list:
+        data = h5py.File(path, mode='r')
+        time = np.array(data['scales/sim_time'])
+        r, theta = coords_angular(path)
+        for j in range(0,n_writes):
+            u_n_phi = data['tasks']['u_n_phi'][j,-1,:,:]
+            omega = get_angular(r, theta, u_n_phi)
+            omega_r = omega[32][r_get]
+            omega_rs.append(omega_r)
+            times.append(time[j])
+    return omega_rs, times
+

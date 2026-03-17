@@ -25,6 +25,7 @@ import argparse
 import dedalus.public as d3
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
 
 plt.rcParams["savefig.dpi"] = 400
 
@@ -54,13 +55,27 @@ parser.add_argument(
     help="The distance between y=0 and the planes (ie one at -h and one at +h)",
 )
 
+parser.add_argument(
+    "--name",
+    type=str,
+    default=None,
+    help="Name of the output files.",
+)
+
 args = vars(parser.parse_args())
 # Parameters
+
+if args['name'] == None:
+    name_new = datetime.datetime.now().strftime("%Y-%m-%m-%H:%M")
+    args['name'] = name_new
+
+
 PARAMS = {
     "Ly": args["height"],
     "Pgrad": args["Pressure_gradient"],
     "mu": args["viscosity"],
     "Ny": args["Ny"],
+    "name": args["name"],
 }
 
 dtype = np.float64

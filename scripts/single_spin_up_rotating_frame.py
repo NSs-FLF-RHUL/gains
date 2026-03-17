@@ -4,11 +4,12 @@ import dedalus.public as d3
 import logging
 from mpi4py import MPI
 logger = logging.getLogger(__name__)
-import matplotlib.pyplot as plt
+
 
 # Parameters - load in from parameter file
 
-from control_parameters import parameters
+from gains.params.single_spin_up_rotating import parameters
+from gains.initial_conditions.single_component_spin_up import window
 locals().update(parameters)
 
 # Additional Parameters
@@ -61,14 +62,6 @@ ez = dist.VectorField(coords, bases=ball)
 ez['g'][1] = -np.sin(theta)
 ez['g'][2] = np.cos(theta) # unit vector in z direction
 
-def window(coord, width):
-    a = width/2
-    shift = np.pi/2*np.ones_like(coord)
-    coord = coord - shift
-    mask =  np.tanh((coord + a)/0.1) - np.tanh((coord - a)/0.1)
-    return 0.5*mask
-
-theta_plot = np.squeeze(theta)
 
 
 # This field is for the Boundary Conditions

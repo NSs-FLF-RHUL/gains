@@ -15,6 +15,8 @@ from gains.params.single_spin_up_rotating import parameters
 
 locals().update(parameters)
 
+PARAMS = parameters
+
 # Additional Parameters
 radius = 1
 timestepper = d3.SBDF2
@@ -33,7 +35,7 @@ logger.info(f"running on processor mesh={mesh}")
 coords = d3.SphericalCoordinates("phi", "theta", "r")
 dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
 ball = d3.BallBasis(
-    coords, shape=(Nphi, Ntheta, Nr), radius=1, dealias=dealias, dtype=dtype
+    coords, shape=(PARAMS['Nphi'], PARAMS['Ntheta'], PARAMS['Nr']), radius=1, dealias=PARAMS['dealias'], dtype=dtype
 )
 sphere = ball.surface
 
@@ -74,14 +76,14 @@ domega = dist.Field(name="domega", bases=ball)
 sintheta["g"] = np.sin(theta)
 mask["g"] = window(theta, 0.5)
 
-domega["g"] = Delta_Omega
+domega["g"] = PARAMS['Delta_Omega']
 
 uang_R1 = dist.VectorField(coords, bases=ball)(r=radius).evaluate()
 
-uang_R1["g"][0, :] = (Delta_Omega * sintheta)(r=radius).evaluate()["g"]
+uang_R1["g"][0, :] = (PARAMS['Delta_Omega'] * sintheta)(r=radius).evaluate()["g"]
 
-omega_n["g"][1, :] = Omega_Init * -np.sin(theta)
-omega_n["g"][2, :] = Omega_Init * np.cos(theta)
+omega_n["g"][1, :] = PARAMS['Omega_Init'] * -np.sin(theta)
+omega_n["g"][2, :] = PARAMS['Omega_Init'] * np.cos(theta)
 
 lift = lambda A: d3.Lift(A, ball, -1)
 boundary_product = (mask * (u_n(r=radius) - uang_R1)).evaluate()
@@ -103,7 +105,7 @@ problem.add_equation("integ(p_n) = 0")  # Pressure gauge normal fluid
 
 # Solver
 solver = problem.build_solver(timestepper)
-solver.stop_sim_time = stop_sim_time
+solver.stop_sim_time = PARAMS['stop_sim_time']
 # write, initial_timestep  = solver.load_state('checkpoint/checkpoint_s8.h5', -1)
 use_checkpoint = False
 
@@ -144,7 +146,7 @@ slices = solver.evaluator.add_file_handler(
     "outputs/su_equator/slices", sim_dt=0.025, max_writes=100
 )
 
-slices.add_task(u_n_phi(theta=np.pi / 2), scales=dealias, name="u_n_phi(equator)")
+slices.add_task(u_n_phi(theta=np.pi / 2), scales=PARAMS['dealias'], name="u_n_phi(equator)")
 
 # Checkpoint
 checkpoint = solver.evaluator.add_file_handler(
@@ -160,7 +162,7 @@ CFL.add_velocity(u_n)
 
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
-flow.add_property(np.sqrt(u_n @ u_n) * Ek, name="Re_n")
+flow.add_property(np.sqrt(u_n @ u_n) * PARAMS['Ek'], name="Re_n")
 
 # Main loop
 solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)

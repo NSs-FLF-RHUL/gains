@@ -1,17 +1,20 @@
-'''
+"""
 Analysis and plotting of the results of the single fluid spin up.
-'''
+"""
 
 import os
 import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
+import h5py
 
 warnings.filterwarnings("ignore")
 
-from gains.Analysis.Analyse_spin_up import *
+from gains.Analysis.Analyse_spin_up import plot_angular, coords_angular, angular_time
+from gains.params.single_spin_up_rotating import parameters
 
+anim_check = input("Plot frames for animation? [y/n]: ")
 
 fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
 
@@ -30,9 +33,9 @@ plt.show()
 file_list = sorted(os.listdir("outputs/su_equator/AZ_avg_equator"))
 path_list = []
 for file in file_list:
-    print(file)
+
     extension = file[len(file) - 2 : len(file)]
-    print(extension)
+
     if extension == "h5":
         path = "outputs/su_equator/AZ_avg_equator/" + file
         path_list.append(path)
@@ -58,7 +61,7 @@ for i in range(len(r_tries)):
     )
 
 plt.legend(frameon=False)
-t_ek = 1 / np.sqrt(Ek)
+t_ek = 1 / np.sqrt(parameters['Ek'])
 plt.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
 plt.text(15, 0.0001, r"$\tau_{Ek}$", size="large")
 plt.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
@@ -66,19 +69,19 @@ plt.ylabel(r"$\Delta \Omega$")
 # plt.show()
 plt.savefig("outputs/su_equator/spin_up_time_equator.png", dpi=300)
 
-anim_check = input("Plot frames for animation? [y/n]: ")
-
-if anim_check == 'y':
+if anim_check == "y":
     num_files = len(path_list)
     count = 0
-    for i in range(0,num_files):
+    for i in range(num_files):
         path = path_list[i]
-        data = h5py.File(path, mode='r')
-        time = np.array(data['scales/sim_time'])
-        for j in range(0,len(time)):
-            fig, ax = plt.subplots(1,1,figsize=(16,8),subplot_kw={'projection': 'polar'})
-            plot_angular(path,j,ax,True)
+        data = h5py.File(path, mode="r")
+        time = np.array(data["scales/sim_time"])
+        for j in range(len(time)):
+            fig, ax = plt.subplots(
+                1, 1, figsize=(16, 8), subplot_kw={"projection": "polar"}
+            )
+            plot_angular(path, j, ax, True)
             plt.savefig("frames/equator_rotating_t_%04d.png" % count)
-            count = count+1
+            count = count + 1
             if count % 20 == 0:
                 print("saved frame %04d.png" % count)

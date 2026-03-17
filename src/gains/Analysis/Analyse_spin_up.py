@@ -90,7 +90,7 @@ def plot_angular(
     u_n_background = np.zeros_like(u_n_phi)
     if not rotating:
         for i in range(len(r)):
-            u_n_background[:, i] = Omega_Init * (r[i] * np.sin(theta)[:])
+            u_n_background[:, i] = parameters['Omega_Init'] * (r[i] * np.sin(theta)[:])
 
     du_n_phi = u_n_phi - u_n_background
     omega = get_angular(r, theta, du_n_phi)
@@ -98,7 +98,7 @@ def plot_angular(
     time = np.array(data["scales/sim_time"])
     r_m, theta_m = np.meshgrid(r, theta)
     ax.pcolormesh(
-        theta_m, r_m, omega, clim=(0, Delta_Omega), cmap="RdBu_r", edgecolors="face"
+        theta_m, r_m, omega, clim=(0, parameters['Delta_Omega']), cmap="RdBu_r", edgecolors="face"
     )
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)

@@ -3,6 +3,7 @@ import numpy as np
 import dedalus.public as d3
 import logging
 from mpi4py import MPI
+from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
@@ -100,7 +101,7 @@ solver.stop_sim_time = stop_sim_time
 use_checkpoint = False
 
 if use_checkpoint:
-    write, timestep = solver.load_state('checkpoints/checkpoints_sNumber.h5')
+    write, timestep = solver.load_state('outputs/su_equator/checkpoints/checkpoints_sNumber.h5')
     #Shouldn't the initial condition be solid body rotation?
 else:
     # Initial condition
@@ -118,6 +119,9 @@ vol_avg = lambda A: d3.Integrate(A/volume, coords)
 u_n_r = dot(u_n,er)
 u_n_theta = dot(u_n,etheta)
 u_n_phi = dot(u_n, ephi)
+
+save_path = Path("outputs/su_equator")
+save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler('outputs/su_equator/AZ_avg_equator', sim_dt=0.05, max_writes=100)
 AZ_avg.add_task(dot(er,u_n), name='u_n_r')

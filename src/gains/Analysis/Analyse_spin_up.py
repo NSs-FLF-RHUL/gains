@@ -7,6 +7,11 @@ import numpy as np
 from matplotlib import ticker, font_manager
 import warnings
 import os
+import scipy.interpolate as inp
+
+from gains.params.single_spin_up_rotating import parameters
+
+locals().update(parameters)
 
 def my_interp2d(f, rad, radnew):
     r = rad

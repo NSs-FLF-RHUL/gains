@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import sys
->>>>>>> aa87faf8db0ad2e96bda2cf951b89642bd768d66
 import numpy as np
 import dedalus.public as d3
 import logging
@@ -24,10 +21,6 @@ dtype = np.float64
 ncpu = MPI.COMM_WORLD.size
 log2 = np.log2(ncpu)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> aa87faf8db0ad2e96bda2cf951b89642bd768d66
 if log2 == int(log2):
     mesh = [int(2**np.ceil(log2/2)),int(2**np.floor(log2/2))]
 logger.info("running on processor mesh={}".format(mesh))
@@ -126,30 +119,18 @@ u_n_r = dot(u_n,er)
 u_n_theta = dot(u_n,etheta)
 u_n_phi = dot(u_n, ephi)
 
-<<<<<<< HEAD
 AZ_avg = solver.evaluator.add_file_handler('outputs/su_equator/AZ_avg_equator', sim_dt=0.05, max_writes=100)
-=======
-AZ_avg = solver.evaluator.add_file_handler('AZ_avg_equator', sim_dt=0.05, max_writes=100)
->>>>>>> aa87faf8db0ad2e96bda2cf951b89642bd768d66
 AZ_avg.add_task(dot(er,u_n), name='u_n_r')
 AZ_avg.add_task(dot(etheta,u_n), name='u_n_theta')
 AZ_avg.add_task(az_avg(u_n_phi), name='u_n_phi')
 
 
-<<<<<<< HEAD
 slices = solver.evaluator.add_file_handler('outputs/su_equator/slices', sim_dt=0.025, max_writes=100)
-=======
-slices = solver.evaluator.add_file_handler('slices', sim_dt=0.025, max_writes=100)
->>>>>>> aa87faf8db0ad2e96bda2cf951b89642bd768d66
 
 slices.add_task(u_n_phi(theta=np.pi/2), scales=dealias, name='u_n_phi(equator)')
 
 # Checkpoint
-<<<<<<< HEAD
 checkpoint = solver.evaluator.add_file_handler('outputs/su_equator/checkpoint', wall_dt=3600, max_writes=1, parallel='gather')
-=======
-checkpoint = solver.evaluator.add_file_handler('checkpoint', wall_dt=3600, max_writes=1, parallel='gather')
->>>>>>> aa87faf8db0ad2e96bda2cf951b89642bd768d66
 checkpoint.add_tasks(solver.state, layout='g')
 
 # CFL

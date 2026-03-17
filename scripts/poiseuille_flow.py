@@ -21,6 +21,7 @@ first order reduction, leading to the system of equaions:
 """
 
 import argparse
+import os
 
 import dedalus.public as d3
 import matplotlib.pyplot as plt
@@ -33,7 +34,6 @@ parser = argparse.ArgumentParser(
     description="Solve for steady state flow between 2 walls subject "
     "to a constant pressure gradient"
 )
-
 
 parser.add_argument("--Ny", type=int, default=128, help="y resolution")
 
@@ -66,7 +66,7 @@ args = vars(parser.parse_args())
 # Parameters
 
 if args['name'] == None:
-    name_new = datetime.datetime.now().strftime("%Y-%m-%m-%H:%M")
+    name_new = "poiseuille_flow_" + datetime.datetime.now().strftime("%Y-%m-%m-%H:%M")
     args['name'] = name_new
 
 
@@ -77,6 +77,9 @@ PARAMS = {
     "Ny": args["Ny"],
     "name": args["name"],
 }
+
+os.makedirs("../outputs/{}/".format(args['name']), exist_ok=True)
+
 
 dtype = np.float64
 
@@ -137,11 +140,11 @@ plt.plot(u_an, y, linestyle="dashed", label="analytic solution", color="red")
 plt.legend()
 plt.xlabel("u(y)")
 plt.ylabel("y")
-plt.savefig("flow_solution.png")
+plt.savefig("../outputs/{}/flow_solution.png".format(PARAMS['name']))
 
 plt.figure(2)
 
 plt.scatter(y, u_err, s=4, color="black")
 plt.xlabel("y")
 plt.ylabel("relative error")
-plt.savefig("relative_error.png")
+plt.savefig("../outputs/{}/relative_error.png".format(PARAMS['name']))

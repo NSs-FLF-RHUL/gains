@@ -21,12 +21,12 @@ first order reduction, leading to the system of equaions:
 """
 
 import argparse
-import os
+import datetime
+from pathlib import Path
 
 import dedalus.public as d3
 import matplotlib.pyplot as plt
 import numpy as np
-import datetime
 
 plt.rcParams["savefig.dpi"] = 400
 
@@ -65,9 +65,11 @@ parser.add_argument(
 args = vars(parser.parse_args())
 # Parameters
 
-if args['name'] == None:
-    name_new = "poiseuille_flow_" + datetime.datetime.now().strftime("%Y-%m-%m-%H:%M")
-    args['name'] = name_new
+if args["name"] is None:
+    name_new = "poiseuille_flow_" + datetime.datetime.now().astimezone().strftime(
+        "%Y-%m-%m-%H:%M"
+    )
+    args["name"] = name_new
 
 
 PARAMS = {
@@ -78,7 +80,9 @@ PARAMS = {
     "name": args["name"],
 }
 
-os.makedirs("../outputs/{}/".format(args['name']), exist_ok=True)
+path_new = Path("outputs/{}".format(args["name"]))
+
+path_new.mkdir(parents=True, exist_ok=True)
 
 
 dtype = np.float64
@@ -140,11 +144,11 @@ plt.plot(u_an, y, linestyle="dashed", label="analytic solution", color="red")
 plt.legend()
 plt.xlabel("u(y)")
 plt.ylabel("y")
-plt.savefig("../outputs/{}/flow_solution.png".format(PARAMS['name']))
+plt.savefig("outputs/{}/flow_solution.png".format(PARAMS["name"]))
 
 plt.figure(2)
 
 plt.scatter(y, u_err, s=4, color="black")
 plt.xlabel("y")
 plt.ylabel("relative error")
-plt.savefig("../outputs/{}/relative_error.png".format(PARAMS['name']))
+plt.savefig("outputs/{}/relative_error.png".format(PARAMS["name"]))

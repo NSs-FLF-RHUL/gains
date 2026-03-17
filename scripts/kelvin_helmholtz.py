@@ -12,8 +12,8 @@ McNally et al 2012, ApJ, 201, 18
 """
 
 import argparse
-import logging
 import datetime
+import logging
 
 import dedalus.public as d3
 import numpy as np
@@ -64,9 +64,11 @@ parser.add_argument(
 
 args = vars(parser.parse_args())
 
-if args['name'] == None:
-    name_new = "kelvin_helmholtz" + datetime.datetime.now().strftime("%Y-%m-%m-%H:%M")
-    args['name'] = name_new
+if args["name"] is None:
+    name_new = "kelvin_helmholtz" + datetime.datetime.now().astimezone().strftime(
+        "%Y-%m-%m-%H:%M"
+    )
+    args["name"] = name_new
 
 dtype = np.float64
 PARAMS = {
@@ -87,7 +89,7 @@ PARAMS = {
     "nu": args["viscosity"],
     "snap_dt": args["snapshots_dt"],
     "log_dt": args["logger_dt"],
-    "name": args['name'],
+    "name": args["name"],
 }
 
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
@@ -158,7 +160,9 @@ u["g"][1] += np.transpose(vys_init)
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler(
-    "../outputs/{}/snapshots".format(PARAMS['name']), sim_dt=PARAMS["snap_dt"], max_writes=10
+    "../outputs/{}/snapshots".format(PARAMS["name"]),
+    sim_dt=PARAMS["snap_dt"],
+    max_writes=10,
 )
 snapshots.add_task(rho, name="density")
 

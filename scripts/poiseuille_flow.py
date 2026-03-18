@@ -73,7 +73,7 @@ PARAMS = {
     "name": args["name"]
     if args["name"] is not None
     else "poiseuille_flow_"
-    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
+    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M"),
 }
 
 path_new = Path("outputs") / PARAMS["name"]

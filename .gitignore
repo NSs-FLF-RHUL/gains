@@ -180,3 +180,5 @@ pyrightconfig.json
 
 #_version.py
 src/**/_version.py
+#Outputs
+outputs/**

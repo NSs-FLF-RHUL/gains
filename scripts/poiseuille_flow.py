@@ -21,6 +21,8 @@ first order reduction, leading to the system of equaions:
 """
 
 import argparse
+import datetime
+from pathlib import Path
 
 import dedalus.public as d3
 import matplotlib.pyplot as plt
@@ -32,7 +34,6 @@ parser = argparse.ArgumentParser(
     description="Solve for steady state flow between 2 walls subject "
     "to a constant pressure gradient"
 )
-
 
 parser.add_argument("--Ny", type=int, default=128, help="y resolution")
 
@@ -54,14 +55,30 @@ parser.add_argument(
     help="The distance between y=0 and the planes (ie one at -h and one at +h)",
 )
 
+parser.add_argument(
+    "--name",
+    type=str,
+    default=None,
+    help="Name of the output files.",
+)
+
 args = vars(parser.parse_args())
 # Parameters
+
 PARAMS = {
     "Ly": args["height"],
     "Pgrad": args["Pressure_gradient"],
     "mu": args["viscosity"],
     "Ny": args["Ny"],
+    "name": args["name"]
+    if args["name"] is not None
+    else "poiseuille_flow_"
+    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M"),
 }
+
+path_new = Path("outputs") / PARAMS["name"]
+path_new.mkdir(parents=True, exist_ok=True)
+
 
 dtype = np.float64
 
@@ -122,11 +139,11 @@ plt.plot(u_an, y, linestyle="dashed", label="analytic solution", color="red")
 plt.legend()
 plt.xlabel("u(y)")
 plt.ylabel("y")
-plt.savefig("flow_solution.png")
+plt.savefig(path_new / "flow_solution.png")
 
 plt.figure(2)
 
 plt.scatter(y, u_err, s=4, color="black")
 plt.xlabel("y")
 plt.ylabel("relative error")
-plt.savefig("relative_error.png")
+plt.savefig(path_new / "relative_error.png")

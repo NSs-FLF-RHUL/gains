@@ -12,6 +12,7 @@ McNally et al 2012, ApJ, 201, 18
 """
 
 import argparse
+import datetime
 import logging
 
 import dedalus.public as d3
@@ -54,7 +55,21 @@ parser.add_argument(
     help="How many timesteps between logger outputs",
 )
 
+parser.add_argument(
+    "--name",
+    type=str,
+    default=None,
+    help="Name of the output files.",
+)
+
 args = vars(parser.parse_args())
+
+if args["name"] is None:
+    name_new = "kelvin_helmholtz" + datetime.datetime.now().astimezone().strftime(
+        "%Y-%m-%m-%H:%M"
+    )
+    args["name"] = name_new
+
 dtype = np.float64
 PARAMS = {
     "Lx": 1,
@@ -74,7 +89,12 @@ PARAMS = {
     "nu": args["viscosity"],
     "snap_dt": args["snapshots_dt"],
     "log_dt": args["logger_dt"],
+    "name": args["name"]
+    if args["name"] is not None
+    else "kelvin_helmholtz_"
+    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M"),
 }
+
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m
 U_m = (PARAMS["U_1"] - PARAMS["U_2"]) / 2
@@ -143,7 +163,9 @@ u["g"][1] += np.transpose(vys_init)
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler(
-    "snapshots", sim_dt=PARAMS["snap_dt"], max_writes=10
+    "outputs/{}/snapshots".format(PARAMS["name"]),
+    sim_dt=PARAMS["snap_dt"],
+    max_writes=10,
 )
 snapshots.add_task(rho, name="density")
 

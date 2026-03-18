@@ -3,7 +3,8 @@ import numpy as np
 
 def window(coord: np.ndarray, width: float, dtype: type) -> np.ndarray:
     """
-    Creates window function for use in enforcing boundary conditions on only parts of the sphere.
+    Create window function for use in enforcing boundary conditions on only 
+    parts of the sphere.
 
     :param coord: Coordinate on which to create the window.
     :param width: Width of the window function.

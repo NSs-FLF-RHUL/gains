@@ -19,22 +19,31 @@ def thetas_full_fix() -> np.ndarray:
     return np.linspace(0,np.pi,100)
 
 @pytest.mark.parametrize(
-    ("coords", "width", "expected_output"),
+    ("coords", "width", "dtype", "expected_output"),
     [
         pytest.param(
             thetas_full(),
             0,
+            np.float64,
             np.zeros_like(thetas_full()),
             id="Width is 0",
             ),
+        pytest.param(
+            np.array([0.0,np.pi/4,np.pi/2,3*np.pi/4,np.pi]),
+            1.0,
+            np.float64,
+            np.array([5.00243291e-10, 3.30844430e-03, 9.99909204e-01, 3.30844430e-03, 5.00243291e-10]),
+            id = "Values inside and outside window"
+        ),
     ],
 )
 def test_window(
     coords: np.ndarray ,
     width: float, 
+    dtype: type,
     expected_output: np.ndarray) -> np.ndarray:
     
-    computed_output = window(coords, width)
+    computed_output = window(coords, width, dtype)
     num_negative = (computed_output<0).sum()
 
     assert np.allclose(computed_output, expected_output)

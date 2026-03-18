@@ -121,7 +121,7 @@ def plot_angular(
 def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
-    
+
     :param r_get: Index of the radius we want.
     :param n_writes: Number of writes per .h5 file.
     :param path_list: List of paths to files to analyse.

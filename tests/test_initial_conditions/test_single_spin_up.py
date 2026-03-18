@@ -5,7 +5,7 @@ from gains.initial_conditions.single_component_spin_up import window
 
 
 def thetas_full() -> np.ndarray:
-    """Returns array from zero to pi"""
+    """Returns array from zero to pi."""
     return np.linspace(0, np.pi, 100)
 
 
@@ -17,7 +17,7 @@ def zeros() -> np.ndarray:
 
 @pytest.fixture
 def thetas_full_fix() -> np.ndarray:
-    """Returns array from zero to pi"""
+    """Returns array from zero to pi."""
     return np.linspace(0, np.pi, 100)
 
 

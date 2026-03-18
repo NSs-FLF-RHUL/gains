@@ -89,7 +89,10 @@ PARAMS = {
     "nu": args["viscosity"],
     "snap_dt": args["snapshots_dt"],
     "log_dt": args["logger_dt"],
-    "name": args["name"],
+    "name": args["name"]
+    if args["name"] is not None
+    else "kelvin_helmholtz_"
+    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M"),
 }
 
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
@@ -160,7 +163,7 @@ u["g"][1] += np.transpose(vys_init)
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler(
-    "../outputs/{}/snapshots".format(PARAMS["name"]),
+    "outputs/{}/snapshots".format(PARAMS["name"]),
     sim_dt=PARAMS["snap_dt"],
     max_writes=10,
 )

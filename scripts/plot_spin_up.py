@@ -43,12 +43,11 @@ for file in file_list:
 
 path = path_list[0]
 r_check, theta = coords_angular(path)
-print(len(r_check))
 
 r_tries = [i for i in range(60, len(r_check), 6)]
 alphas = np.linspace(0.40, 1.0, len(r_tries))
 rs_checked = [r_check[i] for i in range(35, len(r_check), 6)]
-print(rs_checked)
+
 for i in range(len(r_tries)):
     val = r_tries[i]
     omega_r, times = angular_time(val, 100, path_list)

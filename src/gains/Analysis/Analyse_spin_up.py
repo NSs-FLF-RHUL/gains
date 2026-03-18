@@ -7,7 +7,7 @@ import scipy.interpolate as inp
 from gains.params.single_spin_up_rotating import parameters
 
 locals().update(parameters)
-
+PARAMS = parameters
 
 def my_interp2d(f, rad, radnew):
     r = rad
@@ -115,6 +115,7 @@ def plot_angular(
 def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
     omega_rs = []
     times = []
+    theta_resolution = PARAMS['Ntheta']
     for path in path_list:
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
@@ -122,7 +123,7 @@ def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
         for j in range(n_writes):
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
             omega = get_angular(r, theta, u_n_phi)
-            omega_r = omega[64][r_get]
+            omega_r = omega[int(theta_resolution/2)][r_get]
             omega_rs.append(omega_r)
             times.append(time[j])
     return omega_rs, times

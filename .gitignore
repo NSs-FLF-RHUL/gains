@@ -182,3 +182,5 @@ pyrightconfig.json
 src/**/_version.py
 #Outputs
 outputs/**
+#Frames
+frames/**

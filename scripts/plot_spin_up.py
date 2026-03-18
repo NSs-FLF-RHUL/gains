@@ -5,13 +5,13 @@ Analysis and plotting of the results of the single fluid spin up.
 import os
 import warnings
 
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-import h5py
 
 warnings.filterwarnings("ignore")
 
-from gains.Analysis.Analyse_spin_up import plot_angular, coords_angular, angular_time
+from gains.Analysis.Analyse_spin_up import angular_time, coords_angular, plot_angular
 from gains.params.single_spin_up_rotating import parameters
 
 anim_check = input("Plot frames for animation? [y/n]: ")
@@ -21,11 +21,10 @@ fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"}
 path_1 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
 p1 = plot_angular(path_1, 10, ax[0], rotating=True)
 
-
 path_2 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5"
 plot_angular(path_2, 40, ax[1], rotating=True)
 
-path_3 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s5.h5"
+path_3 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
 plot_angular(path_3, 90, ax[2], rotating=True)
 # plt.savefig("Angular_5e-3.png")
 plt.show()
@@ -33,7 +32,6 @@ plt.show()
 file_list = sorted(os.listdir("outputs/su_equator/AZ_avg_equator"))
 path_list = []
 for file in file_list:
-
     extension = file[len(file) - 2 : len(file)]
 
     if extension == "h5":
@@ -60,7 +58,7 @@ for i in range(len(r_tries)):
     )
 
 plt.legend(frameon=False)
-t_ek = 1 / np.sqrt(parameters['Ek'])
+t_ek = 1 / np.sqrt(parameters["Ek"])
 plt.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
 plt.text(15, 0.0001, r"$\tau_{Ek}$", size="large")
 plt.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")

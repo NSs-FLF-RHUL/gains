@@ -15,5 +15,7 @@ def window(coord: np.ndarray, width: float, dtype: type) -> np.ndarray:
     coord = coord - shift
     mask = np.tanh((coord + a) / 0.1) - np.tanh((coord - a) / 0.1)
     precision = np.finfo(dtype).eps
-    mask[mask < 1e3*precision] = 0 #about 3 orders of magnitude above dtype precision limit
+    mask[mask < 1e3 * precision] = (
+        0  # about 3 orders of magnitude above dtype precision limit
+    )
     return 0.5 * mask

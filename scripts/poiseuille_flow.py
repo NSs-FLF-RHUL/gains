@@ -65,23 +65,18 @@ parser.add_argument(
 args = vars(parser.parse_args())
 # Parameters
 
-if args["name"] is None:
-    name_new = "poiseuille_flow_" + datetime.datetime.now().astimezone().strftime(
-        "%Y-%m-%m-%H:%M"
-    )
-    args["name"] = name_new
-
-
 PARAMS = {
     "Ly": args["height"],
     "Pgrad": args["Pressure_gradient"],
     "mu": args["viscosity"],
     "Ny": args["Ny"],
-    "name": args["name"],
+    "name": args["name"]
+    if args["name"] is not None
+    else "poiseuille_flow_"
+    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
 }
 
-path_new = Path("outputs/{}".format(args["name"]))
-
+path_new = Path("outputs") / PARAMS["name"]
 path_new.mkdir(parents=True, exist_ok=True)
 
 
@@ -144,11 +139,11 @@ plt.plot(u_an, y, linestyle="dashed", label="analytic solution", color="red")
 plt.legend()
 plt.xlabel("u(y)")
 plt.ylabel("y")
-plt.savefig("outputs/{}/flow_solution.png".format(PARAMS["name"]))
+plt.savefig(path_new / "flow_solution.png")
 
 plt.figure(2)
 
 plt.scatter(y, u_err, s=4, color="black")
 plt.xlabel("y")
 plt.ylabel("relative error")
-plt.savefig("outputs/{}/relative_error.png".format(PARAMS["name"]))
+plt.savefig(path_new / "relative_error.png")

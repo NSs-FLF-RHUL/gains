@@ -160,7 +160,7 @@ u["g"][1] += np.transpose(vys_init)
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler(
-    "../outputs/{}/snapshots".format(PARAMS["name"]),
+    "outputs/{}/snapshots".format(PARAMS["name"]),
     sim_dt=PARAMS["snap_dt"],
     max_writes=10,
 )

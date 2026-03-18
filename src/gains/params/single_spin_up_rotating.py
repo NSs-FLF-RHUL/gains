@@ -3,8 +3,8 @@
 from collections import OrderedDict
 
 parameters = OrderedDict()
-parameters["Nphi"] = 128
-parameters["Ntheta"] = 64
+parameters["Nphi"] = 256
+parameters["Ntheta"] = 128
 parameters["Nr"] = 128
 parameters["omega"] = 1
 parameters["Delta_Omega"] = 1e-3

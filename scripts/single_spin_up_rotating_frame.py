@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 from gains.initial_conditions.single_component_spin_up import window
 from gains.params.single_spin_up_rotating import parameters
 
-locals().update(parameters)
 
 PARAMS = parameters
+
 
 # Additional Parameters
 radius = 1
@@ -25,6 +25,7 @@ max_timestep = 1e-2
 dtype = np.float64
 ncpu = MPI.COMM_WORLD.size
 log2 = np.log2(ncpu)
+Ek = PARAMS['Ek']
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]

@@ -122,7 +122,7 @@ def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
         for j in range(n_writes):
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
             omega = get_angular(r, theta, u_n_phi)
-            omega_r = omega[32][r_get]
+            omega_r = omega[64][r_get]
             omega_rs.append(omega_r)
             times.append(time[j])
     return omega_rs, times

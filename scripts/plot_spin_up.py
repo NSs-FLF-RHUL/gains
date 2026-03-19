@@ -32,12 +32,16 @@ plt.show()
 path = "outputs/su_equator/AZ_avg_equator"
 r_check, theta = coords_angular(path+"/AZ_avg_equator_s1.h5")
 
+return_paths=False
+if anim_check == "y":
+    return_paths = True
 
-plot_against_time(theta, "surface", r"$\theta$", path)
+path_list = plot_against_time(theta, "surface", r"$\theta$", path, return_paths)
 
 if anim_check == "y":
     num_files = len(path_list)
     count = 0
+    os.makedirs("frames", exist_ok=True)
     for i in range(num_files):
         path = path_list[i]
         data = h5py.File(path, mode="r")

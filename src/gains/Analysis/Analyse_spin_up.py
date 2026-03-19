@@ -143,7 +143,7 @@ def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
             times.append(time[j])
     return omega_rs, times
 
-def plot_against_time(coord: np.ndarray, name: str, label: str, path: str):
+def plot_against_time(coord: np.ndarray, name: str, label: str, path: str, return_paths: bool):
 
     file_list = sorted(os.listdir(path))
     path_list = []
@@ -177,3 +177,5 @@ def plot_against_time(coord: np.ndarray, name: str, label: str, path: str):
     # plt.show()
     plt.savefig("outputs/su_equator/{}.png".format(name), dpi=300)
 
+    if return_paths:
+        return path_list

@@ -5,8 +5,6 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
-logger = logging.getLogger(__name__)
-
 
 # Parameters - load in from parameter file
 
@@ -15,6 +13,7 @@ from gains.params.single_spin_up_rotating import parameters
 
 PARAMS = parameters
 
+logger = logging.getLogger(__name__)
 
 # Additional Parameters
 radius = 1
@@ -28,7 +27,7 @@ Ek = PARAMS["Ek"]
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
-logger.info(f"running on processor mesh={mesh}")
+logger.info("running on processor mesh={}".format(mesh))
 
 
 # Bases
@@ -82,15 +81,14 @@ mask["g"] = window(theta, 0.5, np.float64)
 
 domega["g"] = PARAMS["Delta_Omega"]
 
-uang_R1 = dist.VectorField(coords, bases=ball)(r=radius).evaluate()
+uang_r1 = dist.VectorField(coords, bases=ball)(r=radius).evaluate()
 
-uang_R1["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
+uang_r1["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 
 omega_n["g"][1, :] = PARAMS["Omega_Init"] * -np.sin(theta)
 omega_n["g"][2, :] = PARAMS["Omega_Init"] * np.cos(theta)
 
 lift = lambda A: d3.Lift(A, ball, -1)
-boundary_product = (mask * (u_n(r=radius) - uang_R1)).evaluate()
 
 dot = d3.DotProduct
 curl = d3.Curl
@@ -99,10 +97,11 @@ cross = d3.CrossProduct
 problem = d3.IVP([p_n, u_n, tau_p_n, tau_u_n], namespace=locals())
 problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation(
-    "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) -2*cross(omega_n,u_n) - cross(curl(u_n),u_n)"
+    "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
+    "-2*cross(omega_n,u_n) - cross(curl(u_n),u_n)"
 )
 problem.add_equation(
-    "angular(u_n(r=radius)) = mask*angular(uang_R1) + (1-mask)*angular(u_n(r=radius))"
+    "angular(u_n(r=radius)) = mask*angular(uang_r1) + (1-mask)*angular(u_n(r=radius))"
 )  # spin up at outer boundary
 problem.add_equation("radial(u_n(r=radius)) = 0")  # impenetrable bc
 problem.add_equation("integ(p_n) = 0")  # Pressure gauge normal fluid
@@ -110,7 +109,7 @@ problem.add_equation("integ(p_n) = 0")  # Pressure gauge normal fluid
 # Solver
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
-# write, initial_timestep  = solver.load_state('checkpoint/checkpoint_s8.h5', -1)
+
 use_checkpoint = False
 
 if use_checkpoint:

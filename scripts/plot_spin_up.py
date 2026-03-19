@@ -1,18 +1,21 @@
-"""
-Analysis and plotting of the results of the single fluid spin up.
-"""
+"""Analysis and plotting of the results of the single fluid spin up."""
 
-import os
+import pathlib
 import warnings
+import logging
 
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 
-warnings.filterwarnings("ignore")
+from gains.analysis.analyse_spin_up import (
+    coords_angular,
+    plot_against_time,
+    plot_angular,
+)
 
-from gains.Analysis.Analyse_spin_up import angular_time, coords_angular, plot_angular, plot_against_time
-from gains.params.single_spin_up_rotating import parameters
+warnings.filterwarnings("ignore")
+logger = logging.getLogger(__name__)
 
 anim_check = input("Plot frames for animation? [y/n]: ")
 
@@ -26,22 +29,23 @@ plot_angular(path_2, 40, ax[1], rotating=True)
 
 path_3 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
 plot_angular(path_3, 90, ax[2], rotating=True)
-# plt.savefig("Angular_5e-3.png")
-plt.show()
+plt.savefig("outputs/Equator_spin_up_5e-2.png")
 
 path = "outputs/su_equator/AZ_avg_equator"
-r_check, theta = coords_angular(path+"/AZ_avg_equator_s1.h5")
+r_check, theta = coords_angular(path + "/AZ_avg_equator_s1.h5")
 
-return_paths=False
+return_check = False
 if anim_check == "y":
-    return_paths = True
+    return_check = True
 
-path_list = plot_against_time(theta, "surface", r"$\theta$", path, return_paths)
+path_list = plot_against_time(
+    theta, "surface", r"$\theta$", path, return_paths=return_check
+)
 
 if anim_check == "y":
     num_files = len(path_list)
     count = 0
-    os.makedirs("frames", exist_ok=True)
+    pathlib.Path.makedirs("frames", parents=True)
     for i in range(num_files):
         path = path_list[i]
         data = h5py.File(path, mode="r")
@@ -50,8 +54,8 @@ if anim_check == "y":
             fig, ax = plt.subplots(
                 1, 1, figsize=(16, 8), subplot_kw={"projection": "polar"}
             )
-            plot_angular(path, j, ax, True)
-            plt.savefig("frames/equator_rotating_t_%04d.png" % count)
+            plot_angular(path, j, ax, rotating=True)
+            plt.savefig("frames/equator_rotating_t_{%04d}.png".format(count))
             count = count + 1
             if count % 20 == 0:
-                print("saved frame %04d.png" % count)
+                logger.info("saved frame {%04d}.png".format(count))

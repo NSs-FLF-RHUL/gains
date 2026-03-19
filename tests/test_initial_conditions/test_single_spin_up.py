@@ -51,7 +51,7 @@ def thetas_full_fix() -> np.ndarray:
 def test_window(
     coords: np.ndarray, width: float, dtype: type, expected_output: np.ndarray
 ) -> np.ndarray:
-    '''Runs unit tests for window.'''
+    """Runs unit tests for window."""
     computed_output = window(coords, width, dtype)
     num_negative = (computed_output < 0).sum()
 

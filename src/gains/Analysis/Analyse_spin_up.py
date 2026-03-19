@@ -3,7 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
-
+import os
 from gains.params.single_spin_up_rotating import parameters
 
 locals().update(parameters)
@@ -142,3 +142,38 @@ def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
             omega_rs.append(omega_r)
             times.append(time[j])
     return omega_rs, times
+
+def plot_against_time(coord: np.ndarray, name: str, label: str, path: str):
+
+    file_list = sorted(os.listdir(path))
+    path_list = []
+    for file in file_list:
+        extension = file[len(file) - 2 : len(file)]
+        
+        if extension == "h5":
+            path_list.append(path + "/" + file)
+
+    coord_tries = [i for i in range(int(len(coord)/2), len(coord), 6)]
+    alphas = np.linspace(0.40, 1.0, len(coord_tries))
+    coord_checked = [coord[i] for i in range(35, len(coord), 6)]
+
+    for i in range(len(coord_tries)):
+        val = coord_tries[i]
+        omega_r, times = angular_time(val, 100, path_list)
+        plt.plot(
+            sorted(times),
+            sorted(omega_r),
+            color="#024cf7",
+            alpha=alphas[i],
+            label=str(label + " = " + str(round(coord_checked[i], 2))),
+        )
+
+    plt.legend(frameon=False)
+    t_ek = 1 / np.sqrt(parameters["Ek"])
+    plt.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
+    plt.text(t_ek+0.5, 0.0001, r"$\tau_{Ek}$", size="large")
+    plt.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
+    plt.ylabel(r"$\Delta \Omega$")
+    # plt.show()
+    plt.savefig("outputs/su_equator/{}.png".format(name), dpi=300)
+

@@ -39,32 +39,36 @@ for file in file_list:
         path_list.append(path)
 
 
+
 path = path_list[0]
 r_check, theta = coords_angular(path)
+def plot_against_time(coord):
 
-r_tries = [i for i in range(60, len(r_check), 6)]
-alphas = np.linspace(0.40, 1.0, len(r_tries))
-rs_checked = [r_check[i] for i in range(35, len(r_check), 6)]
+    coord_tries = [i for i in range(int(len(coord)/2), len(coord), 6)]
+    alphas = np.linspace(0.40, 1.0, len(coord_tries))
+    coord_checked = [coord[i] for i in range(35, len(coord), 6)]
 
-for i in range(len(r_tries)):
-    val = r_tries[i]
-    omega_r, times = angular_time(val, 100, path_list)
-    plt.plot(
-        sorted(times),
-        sorted(omega_r),
-        color="#024cf7",
-        alpha=alphas[i],
-        label=str(round(rs_checked[i], 2)) + "R",
-    )
+    for i in range(len(coord_tries)):
+        val = coord_tries[i]
+        omega_r, times = angular_time(val, 100, path_list)
+        plt.plot(
+            sorted(times),
+            sorted(omega_r),
+            color="#024cf7",
+            alpha=alphas[i],
+            label=str(round(coord_checked[i], 2)) + "R",
+        )
 
-plt.legend(frameon=False)
-t_ek = 1 / np.sqrt(parameters["Ek"])
-plt.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
-plt.text(15, 0.0001, r"$\tau_{Ek}$", size="large")
-plt.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
-plt.ylabel(r"$\Delta \Omega$")
-# plt.show()
-plt.savefig("outputs/su_equator/spin_up_time_equator.png", dpi=300)
+    plt.legend(frameon=False)
+    t_ek = 1 / np.sqrt(parameters["Ek"])
+    plt.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
+    plt.text(15, 0.0001, r"$\tau_{Ek}$", size="large")
+    plt.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
+    plt.ylabel(r"$\Delta \Omega$")
+    # plt.show()
+    plt.savefig("outputs/su_equator/spin_up_time_equator.png", dpi=300)
+
+plot_against_time(r_check)
 
 if anim_check == "y":
     num_files = len(path_list)

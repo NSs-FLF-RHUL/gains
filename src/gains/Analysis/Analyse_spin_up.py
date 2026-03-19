@@ -11,6 +11,9 @@ PARAMS = parameters
 
 
 def my_interp2d(f, rad, radnew):
+    """
+    Creates a 2D interpolation of a function f.
+    """
     r = rad
     rnew = radnew
     fnew = np.zeros_like(f)
@@ -22,7 +25,13 @@ def my_interp2d(f, rad, radnew):
     return fnew
 
 
-def plot_stream(r, theta, vr_n, vtheta_n, density, label=None, clim=[0, 0]):
+def plot_stream(r: np.ndarray, theta: np.ndarray, vr_n: np.ndarray, 
+                vtheta_n: np.ndarray, density: float,
+                  label=None, clim=[0, 0]) -> None:
+    
+    """
+    Creates streamline plots of the meridional flow.
+    """
     rad = np.linspace(r[-1], r[0], len(r))
     theta = np.linspace(0, np.pi, len(theta))
 
@@ -69,6 +78,9 @@ def coords_angular(path: str) -> np.ndarray:
 
 
 def get_angular(rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray) -> np.ndarray:
+    """
+    Calculate angular speed about the z axis for a given set of phi velocity components.
+    """
     omega = np.zeros((len(thetas), len(rs)))
     for i in range(len(rs)):
         omega[:, i] = u_phi[:, i] / (rs[i] * np.sin(thetas)[:])

@@ -1,7 +1,9 @@
+"""Contains functions to produce plots in scripts/plot_spin_up.py."""
+
 import os
 
 import h5py
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
@@ -12,7 +14,7 @@ locals().update(parameters)
 PARAMS = parameters
 
 
-def my_interp2d(f, rad, radnew):
+def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
     """Create a 2D interpolation of a function f."""
     r = rad
     rnew = radnew
@@ -80,7 +82,7 @@ def coords_angular(path: str) -> np.ndarray:
 
 
 def get_angular(rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray) -> np.ndarray:
-    """Calculate angular speed about the z axis for a given set of phi velocity components."""
+    """Calculate angular speed for a given set of phi velocity components."""
     omega = np.zeros((len(thetas), len(rs)))
     for i in range(len(rs)):
         omega[:, i] = u_phi[:, i] / (rs[i] * np.sin(thetas)[:])
@@ -88,7 +90,7 @@ def get_angular(rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray) -> np.nda
 
 
 def plot_angular(
-    path: str, t: int, ax: matplotlib.projections.polar.PolarAxes, *, rotating: bool
+    path: str, t: int, ax: mpl.projections.polar.PolarAxes, *, rotating: bool
 ) -> None:
     """
     Take an output of viscous_sphere.py and plots the angular velocity.
@@ -159,9 +161,7 @@ def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
 def plot_against_time(
     coord: np.ndarray, name: str, label: str, path: str, *, return_paths: bool
 ) -> None | list[str]:
-    """
-    Plot a range of coordinate values against time.
-    """
+    """Plot a range of coordinate values against time."""
     file_list = sorted(os.listdir(path))
     path_list = []
     for file in file_list:
@@ -170,7 +170,7 @@ def plot_against_time(
         if extension == "h5":
             path_list.append(path + "/" + file)
 
-    coord_tries = list(i for i in range(int(len(coord) / 2), len(coord), 4))
+    coord_tries = list(range(int(len(coord) / 2), len(coord), 4))
     alphas = np.linspace(0.40, 1.0, len(coord_tries))
     coord_checked = [coord[i] for i in range(35, len(coord), 6)]
 

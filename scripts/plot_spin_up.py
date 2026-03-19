@@ -15,6 +15,8 @@ from gains.analysis.analyse_spin_up import (
 )
 
 warnings.filterwarnings("ignore")
+logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 anim_check = input("Plot frames for animation? [y/n]: ")
@@ -45,7 +47,7 @@ path_list = plot_against_time(
 if anim_check == "y":
     num_files = len(path_list)
     count = 0
-    pathlib.Path.mkdir(pathlib.Path("frames"), parents=True)
+    pathlib.Path.mkdir(pathlib.Path("frames"), parents=True, exist_ok=True)
     for i in range(num_files):
         path = path_list[i]
         data = h5py.File(path, mode="r")
@@ -55,7 +57,7 @@ if anim_check == "y":
                 1, 1, figsize=(16, 8), subplot_kw={"projection": "polar"}
             )
             plot_angular(path, j, ax, rotating=True)
-            plt.savefig("frames/equator_rotating_t_{%04d}.png")
+            plt.savefig(f"frames/equator_rotating_t_{count:04d}.png")
             count = count + 1
             if count % 20 == 0:
-                logger.info("saved frame {%04d}.png")
+                logger.info(f"saved frame {count:04d}.png")

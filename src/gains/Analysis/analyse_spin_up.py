@@ -1,4 +1,4 @@
-import pathlib
+import os
 
 import h5py
 import matplotlib
@@ -162,7 +162,7 @@ def plot_against_time(
     """
     Plot a range of coordinate values against time.
     """
-    file_list = sorted(pathlib.Path.iterdir(path))
+    file_list = sorted(os.listdir(path))
     path_list = []
     for file in file_list:
         extension = file[len(file) - 2 : len(file)]
@@ -170,7 +170,7 @@ def plot_against_time(
         if extension == "h5":
             path_list.append(path + "/" + file)
 
-    coord_tries = list(i for i in range(int(len(coord) / 2), len(coord), 6))
+    coord_tries = list(i for i in range(int(len(coord) / 2), len(coord), 4))
     alphas = np.linspace(0.40, 1.0, len(coord_tries))
     coord_checked = [coord[i] for i in range(35, len(coord), 6)]
 

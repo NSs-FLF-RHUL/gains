@@ -1,3 +1,5 @@
+"""Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
+
 import logging
 from pathlib import Path
 
@@ -5,9 +7,7 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
-
 # Parameters - load in from parameter file
-
 from gains.initial_conditions.single_component_spin_up import window
 from gains.params.single_spin_up_rotating import parameters
 
@@ -27,7 +27,7 @@ Ek = PARAMS["Ek"]
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
-logger.info("running on processor mesh={}".format(mesh))
+logger.info(f"running on processor mesh={mesh}")
 
 
 # Bases
@@ -88,7 +88,11 @@ uang_r1["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"
 omega_n["g"][1, :] = PARAMS["Omega_Init"] * -np.sin(theta)
 omega_n["g"][2, :] = PARAMS["Omega_Init"] * np.cos(theta)
 
-lift = lambda A: d3.Lift(A, ball, -1)
+
+def lift(a: d3.Field) -> d3.Field:
+    """Lift operand to derivative basis."""
+    return d3.Lift(a, ball, -1)
+
 
 dot = d3.DotProduct
 curl = d3.Curl
@@ -125,9 +129,22 @@ else:
 # Analysis
 
 volume = (4 / 3) * np.pi * radius**3
-az_avg = lambda A: d3.Average(A, coords.coords[0])
-s2_avg = lambda A: d3.Average(A, coords.S2coordsys)
-vol_avg = lambda A: d3.Integrate(A / volume, coords)
+
+
+def az_avg(a: d3.Field) -> d3.Field:
+    """Average over the phi coordinate."""
+    return d3.Average(a, coords.coords[0])
+
+
+def s2_avg(a: d3.Field) -> d3.Field:
+    """Average over all angular coordinates."""
+    return d3.Average(a, coords.S2coordsys)
+
+
+def vol_avg(a: d3.Field) -> d3.Field:
+    """Average over whole sphere."""
+    return d3.Integrate(a / volume, coords)
+
 
 # define every component of velocity (for output)
 u_n_r = dot(u_n, er)

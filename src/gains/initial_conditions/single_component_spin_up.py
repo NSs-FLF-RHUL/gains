@@ -1,9 +1,17 @@
+"""
+Initial conditions for single_spin_up_rotating_frame.py.
+
+Contains functions for generating initial conditions on
+specific parts of the boundary of a sphere.
+
+"""
+
 import numpy as np
 
 
 def window(coord: np.ndarray, width: float, dtype: type) -> np.ndarray:
     """
-    Create window function for use in enforcing boundary conditions on only parts of the sphere.
+    Create window function to enforce boundary conditions on only parts of the sphere.
 
     :param coord: Coordinate on which to create the window.
     :param width: Width of the window function.

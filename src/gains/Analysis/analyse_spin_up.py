@@ -72,7 +72,7 @@ def plot_stream(
     fig.tight_layout()
 
 
-def coords_angular(path: str) -> np.ndarray:
+def get_angular_coords(path: str) -> np.ndarray:
     """Return r and theta coordinates from a given dedalus output file."""
     data = h5py.File(path, mode="r")
     u_n_phi = data["tasks"]["u_n_phi"]
@@ -81,7 +81,7 @@ def coords_angular(path: str) -> np.ndarray:
     return r, theta
 
 
-def get_angular(rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray) -> np.ndarray:
+def calculate_angular_speed(rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray) -> np.ndarray:
     """Calculate angular speed for a given set of phi velocity components."""
     omega = np.zeros((len(thetas), len(rs)))
     for i in range(len(rs)):
@@ -89,7 +89,7 @@ def get_angular(rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray) -> np.nda
     return omega
 
 
-def plot_angular(
+def plot_angular_velocity(
     path: str, t: int, ax: mpl.projections.polar.PolarAxes, *, rotating: bool
 ) -> None:
     """
@@ -132,7 +132,7 @@ def plot_angular(
     ax.set_title(r"$t =$" + str(time[t])[:4])
 
 
-def angular_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
+def get_angular_speed_vs_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
 

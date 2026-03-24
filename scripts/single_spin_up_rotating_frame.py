@@ -8,7 +8,7 @@ import numpy as np
 from mpi4py import MPI
 
 # Parameters - load in from parameter file
-from gains.initial_conditions.single_component_spin_up import window
+from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters
 
 PARAMS = parameters
@@ -77,7 +77,7 @@ sintheta = dist.Field(name="sintheta", bases=ball)
 mask = dist.Field(name="mask", bases=sphere)
 domega = dist.Field(name="domega", bases=ball)
 sintheta["g"] = np.sin(theta)
-mask["g"] = window(theta, 0.5, np.float64)
+mask["g"] = window_equator(theta, 0.5, np.float64)
 
 domega["g"] = PARAMS["Delta_Omega"]
 

@@ -81,7 +81,9 @@ def get_angular_coords(path: str) -> np.ndarray:
     return r, theta
 
 
-def calculate_angular_speed(rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray) -> np.ndarray:
+def calculate_angular_speed(
+    rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray
+) -> np.ndarray:
     """Calculate angular speed for a given set of phi velocity components."""
     omega = np.zeros((len(thetas), len(rs)))
     for i in range(len(rs)):
@@ -101,14 +103,14 @@ def plot_angular_velocity(
     """
     data = h5py.File(path, mode="r")
     u_n_phi = data["tasks"]["u_n_phi"][t, -1, :, :]
-    r, theta = coords_angular(path)
+    r, theta = get_angular_coords(path)
     u_n_background = np.zeros_like(u_n_phi)
     if not rotating:
         for i in range(len(r)):
             u_n_background[:, i] = parameters["Omega_Init"] * (r[i] * np.sin(theta)[:])
 
     du_n_phi = u_n_phi - u_n_background
-    omega = get_angular(r, theta, du_n_phi)
+    omega = calculate_angular_speed(r, theta, du_n_phi)
 
     time = np.array(data["scales/sim_time"])
     r_m, theta_m = np.meshgrid(r, theta)
@@ -132,7 +134,9 @@ def plot_angular_velocity(
     ax.set_title(r"$t =$" + str(time[t])[:4])
 
 
-def get_angular_speed_vs_time(r_get: int, n_writes: int, path_list: list[str]) -> np.ndarray:
+def get_angular_speed_vs_time(
+    r_get: int, n_writes: int, path_list: list[str]
+) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
 
@@ -148,10 +152,10 @@ def get_angular_speed_vs_time(r_get: int, n_writes: int, path_list: list[str]) -
     for path in path_list:
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
-        r, theta = coords_angular(path)
+        r, theta = get_angular_coords(path)
         for j in range(n_writes):
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
-            omega = get_angular(r, theta, u_n_phi)
+            omega = calculate_angular_speed(r, theta, u_n_phi)
             omega_r = omega[int(theta_resolution / 2)][r_get]
             omega_rs.append(omega_r)
             times.append(time[j])
@@ -176,7 +180,7 @@ def plot_against_time(
 
     for i in range(len(coord_tries)):
         val = coord_tries[i]
-        omega_r, times = angular_time(val, 100, path_list)
+        omega_r, times = get_angular_speed_vs_time(val, 100, path_list)
         plt.plot(
             sorted(times),
             sorted(omega_r),

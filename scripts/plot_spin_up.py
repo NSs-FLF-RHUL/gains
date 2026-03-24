@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.analysis.analyse_spin_up import (
-    coords_angular,
+    get_angular_coords,
     plot_against_time,
-    plot_angular,
+    plot_angular_velocity,
 )
 
 warnings.filterwarnings("ignore")
@@ -24,17 +24,17 @@ anim_check = input("Plot frames for animation? [y/n]: ")
 fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
 
 path_1 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
-p1 = plot_angular(path_1, 10, ax[0], rotating=True)
+p1 = plot_angular_velocity(path_1, 10, ax[0], rotating=True)
 
 path_2 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5"
-plot_angular(path_2, 40, ax[1], rotating=True)
+plot_angular_velocity(path_2, 40, ax[1], rotating=True)
 
 path_3 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
-plot_angular(path_3, 90, ax[2], rotating=True)
+plot_angular_velocity(path_3, 90, ax[2], rotating=True)
 plt.savefig("outputs/Equator_spin_up_5e-2.png")
 
 path = "outputs/su_equator/AZ_avg_equator"
-r_check, theta = coords_angular(path + "/AZ_avg_equator_s1.h5")
+r_check, theta = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
 
 return_check = False
 if anim_check == "y":
@@ -56,7 +56,7 @@ if anim_check == "y":
             fig, ax = plt.subplots(
                 1, 1, figsize=(16, 8), subplot_kw={"projection": "polar"}
             )
-            plot_angular(path, j, ax, rotating=True)
+            plot_angular_velocity(path, j, ax, rotating=True)
             plt.savefig(f"frames/equator_rotating_t_{count:04d}.png")
             count = count + 1
             if count % 20 == 0:

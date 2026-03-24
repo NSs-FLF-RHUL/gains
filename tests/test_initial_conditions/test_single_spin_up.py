@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from gains.initial_conditions.single_component_spin_up import window
+from gains.initial_conditions.single_component_spin_up import window_equator
 
 
 def thetas_full() -> np.ndarray:
@@ -52,7 +52,7 @@ def test_window(
     coords: np.ndarray, width: float, dtype: type, expected_output: np.ndarray
 ) -> np.ndarray:
     """Runs unit tests for window."""
-    computed_output = window(coords, width, dtype)
+    computed_output = window_equator(coords, width, dtype)
     num_negative = (computed_output < 0).sum()
 
     assert np.allclose(computed_output, expected_output)

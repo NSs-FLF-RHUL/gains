@@ -80,7 +80,6 @@ sintheta["g"] = np.sin(theta)
 mask["g"] = window_equator(theta, 0.5, np.float64)
 
 
-
 uang_r1 = dist.VectorField(coords, bases=ball)(r=radius).evaluate()
 
 uang_r1["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]

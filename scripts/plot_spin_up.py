@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.analysis.analyse_spin_up import (
+    LabeledCoordinate,
     get_angular_coords,
     plot_against_time,
     plot_angular_velocity,
@@ -34,14 +35,17 @@ plot_angular_velocity(path_3, 90, ax[2], rotating=True)
 plt.savefig("outputs/Equator_spin_up_5e-2.png")
 plt.close()
 path = "outputs/su_equator/AZ_avg_equator"
-r_check, theta = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
+r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
+
+r = LabeledCoordinate(r_check, "r")
+theta = LabeledCoordinate(theta_check, "theta")
 
 return_check = False
 if anim_check == "y":
     return_check = True
 
 path_list = plot_against_time(
-    "theta",theta, "surface", r"$\theta$", path, return_paths=return_check
+    theta, r"$\theta$", path, return_paths=return_check, name="surface"
 )
 
 if anim_check == "y":

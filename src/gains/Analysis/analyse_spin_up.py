@@ -14,6 +14,23 @@ locals().update(parameters)
 PARAMS = parameters
 
 
+class LabeledCoordinate:
+    """Holds a coordinate (for example r or theta) and its name for use in plotting."""
+
+    def __init__(self, coord: np.ndarray, label: str) -> None:
+        """Apply a specified label to a specified coordinate."""
+        self.coord = coord
+        self.label = label
+
+    def getcoord(self) -> np.ndarray:
+        """Get the coordinate."""
+        return self.coord
+
+    def getlabel(self) -> str:
+        """Get the label."""
+        return self.label
+
+
 def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
     """Create a 2D interpolation of a function f."""
     r = rad
@@ -147,6 +164,7 @@ def get_angular_speed_vs_time(
     :returns omega_rs: List of angular velocities at each time.
     :returns times: List of times data is saved at.
     """
+    err_msg = "coordinate must be r or theta."
     omega_rs = []
     times = []
     theta_resolution = PARAMS["Ntheta"]
@@ -158,18 +176,25 @@ def get_angular_speed_vs_time(
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
             omega = calculate_angular_speed(r, theta, u_n_phi)
             if coord == "r":
-                omega_r = omega[int(theta_resolution / 2)][c_get] # first arg esnures the equator is selected.
+                omega_r = omega[int(theta_resolution / 2)][
+                    c_get
+                ]  # first arg esnures the equator is selected.
             elif coord == "theta":
-                omega_r = omega[c_get][-1] # 2nd arg ensures the surface is selected.
+                omega_r = omega[c_get][-1]  # 2nd arg ensures the surface is selected.
             else:
-                raise Exception("coordinate must be r or theta.")
+                raise NotImplementedError(err_msg)
             omega_rs.append(omega_r)
             times.append(time[j])
     return omega_rs, times
 
 
 def plot_against_time(
-    coord_name: str, coord: np.ndarray, name: str, label: str, path: str, *, return_paths: bool
+    coord: LabeledCoordinate,
+    label: str,
+    path: str,
+    *,
+    return_paths: bool,
+    name: str,
 ) -> None | list[str]:
     """Plot a range of coordinate values against time."""
     file_list = sorted(os.listdir(path))
@@ -180,9 +205,12 @@ def plot_against_time(
         if extension == "h5":
             path_list.append(path + "/" + file)
 
-    coord_tries = list(range(int(len(coord) / 2), len(coord), 4))
+    coord_val = coord.getcoord()
+    coord_name = coord.getlabel()
+
+    coord_tries = list(range(int(len(coord_val) / 2), len(coord_val), 4))
     alphas = np.linspace(0.40, 1.0, len(coord_tries))
-    coord_checked = [coord[i] for i in coord_tries]
+    coord_checked = [coord_val[i] for i in coord_tries]
 
     for i in range(len(coord_tries)):
         val = coord_tries[i]
@@ -195,7 +223,7 @@ def plot_against_time(
             label=str(label + " = " + str(round(coord_checked[i], 2))),
         )
 
-    plt.legend(frameon=False, loc = "center left")
+    plt.legend(frameon=False, loc="center left")
     t_ek = 1 / np.sqrt(parameters["Ek"])
     plt.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
     plt.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")

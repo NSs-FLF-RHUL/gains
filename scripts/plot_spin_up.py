@@ -32,7 +32,7 @@ plot_angular_velocity(path_2, 40, ax[1], rotating=True)
 path_3 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
 plot_angular_velocity(path_3, 90, ax[2], rotating=True)
 plt.savefig("outputs/Equator_spin_up_5e-2.png")
-
+plt.close()
 path = "outputs/su_equator/AZ_avg_equator"
 r_check, theta = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
 

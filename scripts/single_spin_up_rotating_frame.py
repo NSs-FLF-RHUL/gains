@@ -75,18 +75,15 @@ ez["g"][2] = np.cos(theta)  # unit vector in z direction
 # This field is for the Boundary Conditions
 sintheta = dist.Field(name="sintheta", bases=ball)
 mask = dist.Field(name="mask", bases=sphere)
-domega = dist.Field(name="domega", bases=ball)
+
 sintheta["g"] = np.sin(theta)
 mask["g"] = window_equator(theta, 0.5, np.float64)
 
-domega["g"] = PARAMS["Delta_Omega"]
+
 
 uang_r1 = dist.VectorField(coords, bases=ball)(r=radius).evaluate()
 
 uang_r1["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
-
-omega_n["g"][1, :] = PARAMS["Omega_Init"] * -np.sin(theta)
-omega_n["g"][2, :] = PARAMS["Omega_Init"] * np.cos(theta)
 
 
 def lift(a: d3.Field) -> d3.Field:
@@ -102,7 +99,7 @@ problem = d3.IVP([p_n, u_n, tau_p_n, tau_u_n], namespace=locals())
 problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation(
     "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
-    "-2*cross(omega_n,u_n) - cross(curl(u_n),u_n)"
+    "-2*cross(ez,u_n) - cross(curl(u_n),u_n)"
 )
 problem.add_equation(
     "angular(u_n(r=radius)) = mask*angular(uang_r1) + (1-mask)*angular(u_n(r=radius))"

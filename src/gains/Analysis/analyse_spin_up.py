@@ -18,7 +18,12 @@ class LabeledCoordinate:
     """Holds a coordinate (for example r or theta) and its name for use in plotting."""
 
     def __init__(self, coord: np.ndarray, label: str) -> None:
-        """Apply a specified label to a specified coordinate."""
+        """
+        Apply a specified label to a specified coordinate.
+
+        :param coord: The coordinate to be labelled.
+        :param label: The label to give the coordinate (e.g "r" or "theta").
+        """
         self.coord = coord
         self.label = label
 
@@ -32,7 +37,15 @@ class LabeledCoordinate:
 
 
 def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
-    """Create a 2D interpolation of a function f."""
+    """
+    Create a 2D interpolation of a function f.
+
+    The interpolaion is done in 1 dimension in array slices of the other.
+    :param f: The function interpolated over.
+    :param rad: Initial coordinate f is defined over.
+    :param radnew: New coordinate with correct shape.
+    :returns fnew: Interpolation of f defined over new set ofs coords.
+    """
     r = rad
     rnew = radnew
     fnew = np.zeros_like(f)
@@ -49,9 +62,17 @@ def plot_stream(
     theta: np.ndarray,
     vr_n: np.ndarray,
     vtheta_n: np.ndarray,
-    density: float,
+    density: float | tuple[float],
 ) -> None:
-    """Create streamline plots of the meridional flow."""
+    """
+    Create streamline plots of the meridional flow.
+
+    :param r: radial coordinate.
+    :param theta: meridional coordinate.
+    :param vr_n: radial speed.
+    :param vtheta_n: meridional speed.
+    :param density: density of streamplot.
+    """
     rad = np.linspace(r[-1], r[0], len(r))
     theta = np.linspace(0, np.pi, len(theta))
 
@@ -90,7 +111,13 @@ def plot_stream(
 
 
 def get_angular_coords(path: str) -> np.ndarray:
-    """Return r and theta coordinates from a given dedalus output file."""
+    """
+    Return r and theta coordinates from a given dedalus output file.
+
+    :param path: The path to the output file.
+    :returns r: The radial coordinates.
+    :returns theta: The meridional coordinates.
+    """
     data = h5py.File(path, mode="r")
     u_n_phi = data["tasks"]["u_n_phi"]
     r = u_n_phi.dims[3][0][:].ravel()
@@ -101,7 +128,16 @@ def get_angular_coords(path: str) -> np.ndarray:
 def calculate_angular_speed(
     rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray
 ) -> np.ndarray:
-    """Calculate angular speed for a given set of phi velocity components."""
+    """
+    Calculate angular speed for a given set of azimuthal velocity components.
+
+    Assumes the meridional coordinates are defined relative to the rotational axis.
+
+    :param rs: The radial coordinates.
+    :param thetas: The meridional coordinates.
+    :param u_phi: The azimuthal speed.
+    :returns omega: The angular velocity.
+    """
     omega = np.zeros((len(thetas), len(rs)))
     for i in range(len(rs)):
         omega[:, i] = u_phi[:, i] / (rs[i] * np.sin(thetas)[:])
@@ -196,7 +232,17 @@ def plot_against_time(
     return_paths: bool,
     name: str,
 ) -> None | list[str]:
-    """Plot a range of coordinate values against time."""
+    """
+    Plot a range of coordinate values against time.
+
+    :param coord: The coordinate and corrsponding label you want to vary when plotting.
+    :param label: The label to appear on the legend.
+    :param path: The path to the output directory
+    :param return_paths: Sets whether or not a list of paths to output files is
+    returned.
+    :param name: What to name the png file containing the figure.
+    :returns path_list: A list of only .h5 files in the specified path.
+    """
     file_list = sorted(os.listdir(path))
     path_list = []
     for file in file_list:

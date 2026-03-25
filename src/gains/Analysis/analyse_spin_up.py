@@ -135,12 +135,13 @@ def plot_angular_velocity(
 
 
 def get_angular_speed_vs_time(
-    r_get: int, n_writes: int, path_list: list[str]
+    coord: str, c_get: int, n_writes: int, path_list: list[str]
 ) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
 
-    :param r_get: Index of the radius we want.
+    :param coord: The coordinate to be varied - should be r or theta.
+    :param c_get: Index of the coordinate we want.
     :param n_writes: Number of writes per .h5 file.
     :param path_list: List of paths to files to analyse.
     :returns omega_rs: List of angular velocities at each time.
@@ -156,14 +157,19 @@ def get_angular_speed_vs_time(
         for j in range(n_writes):
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
             omega = calculate_angular_speed(r, theta, u_n_phi)
-            omega_r = omega[int(theta_resolution / 2)][r_get]
+            if coord == "r":
+                omega_r = omega[int(theta_resolution / 2)][c_get] # first arg esnures the equator is selected.
+            elif coord == "theta":
+                omega_r = omega[c_get][-1] # 2nd arg ensures the surface is selected.
+            else:
+                raise Exception("coordinate must be r or theta.")
             omega_rs.append(omega_r)
             times.append(time[j])
     return omega_rs, times
 
 
 def plot_against_time(
-    coord: np.ndarray, name: str, label: str, path: str, *, return_paths: bool
+    coord_name: str, coord: np.ndarray, name: str, label: str, path: str, *, return_paths: bool
 ) -> None | list[str]:
     """Plot a range of coordinate values against time."""
     file_list = sorted(os.listdir(path))
@@ -176,11 +182,11 @@ def plot_against_time(
 
     coord_tries = list(range(int(len(coord) / 2), len(coord), 4))
     alphas = np.linspace(0.40, 1.0, len(coord_tries))
-    coord_checked = [coord[i] for i in range(35, len(coord), 6)]
+    coord_checked = [coord[i] for i in coord_tries]
 
     for i in range(len(coord_tries)):
         val = coord_tries[i]
-        omega_r, times = get_angular_speed_vs_time(val, 100, path_list)
+        omega_r, times = get_angular_speed_vs_time(coord_name, val, 100, path_list)
         plt.plot(
             sorted(times),
             sorted(omega_r),
@@ -189,7 +195,7 @@ def plot_against_time(
             label=str(label + " = " + str(round(coord_checked[i], 2))),
         )
 
-    plt.legend(frameon=False)
+    plt.legend(frameon=False, loc = "center left")
     t_ek = 1 / np.sqrt(parameters["Ek"])
     plt.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
     plt.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")

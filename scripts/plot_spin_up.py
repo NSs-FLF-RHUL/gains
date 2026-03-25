@@ -41,7 +41,7 @@ if anim_check == "y":
     return_check = True
 
 path_list = plot_against_time(
-    theta, "surface", r"$\theta$", path, return_paths=return_check
+    "theta",theta, "surface", r"$\theta$", path, return_paths=return_check
 )
 
 if anim_check == "y":

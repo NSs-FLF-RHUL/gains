@@ -19,7 +19,7 @@ def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
     :param theta: Longitudinal coordinate on which to create the window,
     should range from 0 to pi.
     :param width: Width of the window function.
-    :param dtype: Data type of coord
+    :param dtype: Data type of theta
     :returns mask: A smooth function equal to 1 in the window, and 0 everywhere else.
     """
     a = width / 2

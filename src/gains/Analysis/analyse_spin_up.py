@@ -201,11 +201,11 @@ def get_angular_speed_vs_time(
     :returns times: List of times data is saved at.
     """
     err_msg = "coordinate must be r or theta."
-    out_size = len(path_list)*n_writes
+    out_size = len(path_list) * n_writes
     omega_rs = np.zeros((out_size,))
-    times = np.zeros((out_size))
+    times = np.zeros(out_size)
     theta_resolution = PARAMS["Ntheta"]
-    count=0
+    count = 0
     for path in path_list:
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
@@ -224,7 +224,7 @@ def get_angular_speed_vs_time(
             omega_rs[count] = omega_r
             times[count] = time[j]
             count += 1
-            
+
     return omega_rs, times
 
 

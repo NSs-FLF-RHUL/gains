@@ -25,7 +25,7 @@ anim_check = input("Plot frames for animation? [y/n]: ")
 fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
 
 path_1 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
-p1 = plot_angular_velocity(path_1, 10, ax[0], rotating=True)
+plot_angular_velocity(path_1, 10, ax[0], rotating=True)
 
 path_2 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5"
 plot_angular_velocity(path_2, 40, ax[1], rotating=True)

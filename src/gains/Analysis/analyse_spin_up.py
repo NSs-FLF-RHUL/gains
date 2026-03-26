@@ -144,6 +144,28 @@ def calculate_angular_speed(
     return omega
 
 
+def caclculate_angular_speed_single(
+    r_arg: int, theta_arg: int, rs: np.ndarray, thetas: np.ndarray, u_phis: np.ndarray
+) -> float:
+    """
+    Calculate angular speed for a specific radius and longitude.
+
+    The value of r and theta the angular speed is calculated for are found by providing
+    the arguments they have in the full array.
+    :param r_arg: Argument for the desired radius.
+    :param theta_arg: Argument for the desired longitude.
+    :param rs: Full array of radii.
+    :param thetas: Full array of meridional coordinates.
+    :param u_phis: Azimuthally averaged array of azimuthal velocities.
+    :returns: The angular speed at the specified r and theta.
+    """
+    r = rs[r_arg]
+    theta = thetas[theta_arg]
+    u_phi = u_phis[theta_arg][r_arg]
+
+    return u_phi / (r * np.sin(theta))
+
+
 def plot_angular_velocity(
     path: str, t: int, ax: mpl.projections.polar.PolarAxes, *, rotating: bool
 ) -> None:
@@ -212,13 +234,14 @@ def get_angular_speed_vs_time(
         r, theta = get_angular_coords(path)
         for j in range(n_writes):
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
-            omega = calculate_angular_speed(r, theta, u_n_phi)
             if coord == "r":
-                omega_r = omega[int(theta_resolution / 2)][
-                    c_get
-                ]  # first arg esnures the equator is selected.
+                omega_r = caclculate_angular_speed_single(
+                    c_get, int(theta_resolution / 2), r, theta, u_n_phi
+                )  # theta arg esnures the equator is selected.
             elif coord == "theta":
-                omega_r = omega[c_get][-1]  # 2nd arg ensures the surface is selected.
+                omega_r = caclculate_angular_speed_single(
+                    -1, c_get, r, theta, u_n_phi
+                )  # r arg ensures the surface is selected.
             else:
                 raise NotImplementedError(err_msg)
             omega_rs[count] = omega_r
@@ -258,7 +281,7 @@ def plot_against_time(
     coord_val = coord.getcoord()
     coord_name = coord.getlabel()
 
-    coord_tries = list(range(int(len(coord_val) / 2), len(coord_val), 4))
+    coord_tries = list(range(int(len(coord_val) / 2), len(coord_val), 6))
     alphas = np.linspace(0.40, 1.0, len(coord_tries))
     coord_checked = [coord_val[i] for i in coord_tries]
 

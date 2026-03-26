@@ -44,9 +44,7 @@ return_check = False
 if anim_check == "y":
     return_check = True
 
-path_list = plot_against_time(
-    theta, r"$\theta$", path, return_paths=return_check, name="surface"
-)
+path_list = plot_against_time(r, "r", path, return_paths=return_check, name="surface")
 
 if anim_check == "y":
     num_files = len(path_list)

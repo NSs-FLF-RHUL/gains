@@ -46,13 +46,11 @@ def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarra
     :param radnew: New coordinate with correct shape.
     :returns fnew: Interpolation of f defined over new set ofs coords.
     """
-    r = rad
-    rnew = radnew
     fnew = np.zeros_like(f)
     for i in range(f.shape[0]):
         val = f[i, :]
-        tckp = inp.splrep(r, val)
-        fnew[i, :] = inp.splev(rnew, tckp)
+        spl_rep = inp.make_splrep(rad, val)
+        fnew[i, :] = spl_rep(radnew)
 
     return fnew
 

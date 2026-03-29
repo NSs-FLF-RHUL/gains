@@ -233,11 +233,11 @@ def get_angular_speed_vs_time(
         for j in range(n_writes):
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
             if coord == "r":
-                omega_r = caclculate_angular_speed_single(
+                omega_r = calculate_angular_speed_single(
                     c_get, int(theta_resolution / 2), r, theta, u_n_phi
                 )  # theta arg esnures the equator is selected.
             elif coord == "theta":
-                omega_r = caclculate_angular_speed_single(
+                omega_r = calculate_angular_speed_single(
                     -1, c_get, r, theta, u_n_phi
                 )  # r arg ensures the surface is selected.
             else:

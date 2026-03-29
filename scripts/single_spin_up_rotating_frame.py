@@ -1,6 +1,7 @@
 """Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
 
 import argparse
+import datetime
 import logging
 from pathlib import Path
 
@@ -30,13 +31,24 @@ args = vars(parser.parse_args())
 parser.add_argument(
     "--checkpoint_path",
     type=str,
-    default="outputs/su_equator/checkpoints/checkpoints_sNumber.h5",
+    default="outputs/checkpoints/checkpoints_sNumber.h5",
     help="Path to the checkpoint file you want to use.",
 )
+
+parser.add_argument(
+    "--output_dir", type=str, default=None, help="Directory to store simulation outputs"
+)
+
 
 PARAMS = parameters
 PARAMS["use_checkpoint"] = args["use_checkpoint"]
 PARAMS["checkpoint_path"] = args["checkpoint_path"]
+PARAMS["output_dir"] = (
+    args["output_dir"]
+    if args["output_dir"] is not None
+    else "single_spin_up_"
+    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
+)
 # Additional Parameters
 radius = 1
 timestepper = d3.SBDF2
@@ -165,11 +177,13 @@ u_n_r = dot(u_n, er)
 u_n_theta = dot(u_n, etheta)
 u_n_phi = dot(u_n, ephi)
 
-save_path = Path("outputs/su_equator")
+save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
 save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler(
-    "outputs/su_equator/AZ_avg_equator", sim_dt=0.05, max_writes=100
+    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    sim_dt=0.05,
+    max_writes=100,
 )
 AZ_avg.add_task(dot(er, u_n), name="u_n_r")
 AZ_avg.add_task(dot(etheta, u_n), name="u_n_theta")
@@ -177,7 +191,9 @@ AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
 
 
 slices = solver.evaluator.add_file_handler(
-    "outputs/su_equator/slices", sim_dt=0.025, max_writes=100
+    "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
+    sim_dt=0.025,
+    max_writes=100,
 )
 
 slices.add_task(
@@ -186,7 +202,10 @@ slices.add_task(
 
 # Checkpoint
 checkpoint = solver.evaluator.add_file_handler(
-    "outputs/su_equator/checkpoint", wall_dt=3600, max_writes=1, parallel="gather"
+    "outputs/su_equator/checkpoint",
+    wall_dt=3600,
+    max_writes=1,
+    parallel="gather",
 )
 checkpoint.add_tasks(solver.state, layout="g")
 

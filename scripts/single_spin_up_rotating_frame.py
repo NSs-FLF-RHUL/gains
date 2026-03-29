@@ -1,5 +1,6 @@
 """Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
 
+import argparse
 import logging
 from pathlib import Path
 
@@ -11,10 +12,31 @@ from mpi4py import MPI
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters
 
-PARAMS = parameters
-
 logger = logging.getLogger(__name__)
 
+parser = argparse.ArgumentParser(
+    description="Simulate a localised spin up on the surface of a sphere of fluid."
+)
+
+parser.add_argument(
+    "--use_checkpoint",
+    type=bool,
+    default=False,
+    help="Boolean argument to determine if to use a checkpoint file.",
+)
+
+args = vars(parser.parse_args())
+
+parser.add_argument(
+    "--checkpoint_path",
+    type=str,
+    default="outputs/su_equator/checkpoints/checkpoints_sNumber.h5",
+    help="Path to the checkpoint file you want to use.",
+)
+
+PARAMS = parameters
+PARAMS["use_checkpoint"] = args["use_checkpoint"]
+PARAMS["checkpoint_path"] = args["checkpoint_path"]
 # Additional Parameters
 radius = 1
 timestepper = d3.SBDF2
@@ -110,12 +132,8 @@ problem.add_equation("integ(p_n) = 0")  # Pressure gauge normal fluid
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
 
-use_checkpoint = False
-
-if use_checkpoint:
-    write, timestep = solver.load_state(
-        "outputs/su_equator/checkpoints/checkpoints_sNumber.h5"
-    )
+if PARAMS["use_checkpoint"]:
+    write, timestep = solver.load_state(PARAMS["checkpoint_path"])
     # Shouldn't the initial condition be solid body rotation?
 else:
     # Initial condition

@@ -142,7 +142,7 @@ def calculate_angular_speed(
     return omega
 
 
-def caclculate_angular_speed_single(
+def calculate_angular_speed_single(
     r_arg: int, theta_arg: int, rs: np.ndarray, thetas: np.ndarray, u_phis: np.ndarray
 ) -> float:
     """
@@ -150,8 +150,8 @@ def caclculate_angular_speed_single(
 
     The value of r and theta the angular speed is calculated for are found by providing
     the arguments they have in the full array.
-    :param r_arg: Argument for the desired radius.
-    :param theta_arg: Argument for the desired longitude.
+    :param r_arg: Index for the desired radius.
+    :param theta_arg: Index for the desired longitude.
     :param rs: Full array of radii.
     :param thetas: Full array of meridional coordinates.
     :param u_phis: Azimuthally averaged array of azimuthal velocities.

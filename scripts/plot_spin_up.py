@@ -45,7 +45,7 @@ args = vars(parser.parse_args())
 
 logger = logging.getLogger(__name__)
 
-pathlib.Path.mkdir(pathlib.Path(args["fig_path"]), parents=True, exist_ok=True)
+pathlib.Path.mkdir(pathlib.Path(args["fig_dir"]), parents=True, exist_ok=True)
 
 anim_check = input("Plot frames for animation? [y/n]: ")
 
@@ -59,7 +59,7 @@ plot_angular_velocity(path_2, 40, ax[1], rotating=True)
 
 path_3 = "{}/su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5".format(args["output_dir"])
 plot_angular_velocity(path_3, 90, ax[2], rotating=True)
-plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_path"]))
+plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
 plt.close()
 
 path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
@@ -72,12 +72,13 @@ return_check = False
 if anim_check == "y":
     return_check = True
 
-path_list = plot_against_time(r, "r", path, return_paths=return_check, name="surface")
+path_list, fig = plot_against_time(r, "r", path, return_paths=return_check)
+fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
 if anim_check == "y":
     num_files = len(path_list)
     count = 0
-    pathlib.Path.mkdir(pathlib.Path(args["frame_path"]), parents=True, exist_ok=True)
+    pathlib.Path.mkdir(pathlib.Path(args["frame_dir"]), parents=True, exist_ok=True)
     for i in range(num_files):
         path = path_list[i]
         data = h5py.File(path, mode="r")

@@ -297,9 +297,9 @@ def plot_against_time(
     t_ek = 1 / np.sqrt(PARAMS["Ek"])
     ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
     ax.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
-    ax.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
-    ax.ylabel(r"$\Delta \Omega$")
+    ax.set_xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
+    ax.set_ylabel(r"$\Delta \Omega$")
 
     if return_paths:
         return path_list, fig
-    return fig
+    return None, fig

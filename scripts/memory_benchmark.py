@@ -58,15 +58,5 @@ ax[0].set_title("Memory used for different grid sizes and n MPI ranks")
 ax[1].scatter(grids_8, mem_ratio, marker='x', color='green')
 ax[1].set_xlabel("Number of gridpoints")
 ax[1].set_ylabel("Memory usage ratio")
-
-plt.show()
-'''
-ax.scatter(grid_sizes, mem_use, marker='x', color='black')
-ax.set_xscale('log')
-ax.set_yscale('log')
-ax.set_xlabel("Number of gridpoints")
-ax.set_ylabel("Memory usage (GB)")
-ax.set_title("Memory usage for different sized problems at a constant number of mpi ranks")
-
-plt.savefig("/Users/rebecca/Desktop/Mem_grid.png")
-'''
+ax[1].set_title("Memory n=4/Memory n=8")
+plt.savefig("outputs/Mem_grid.png")

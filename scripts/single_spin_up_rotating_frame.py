@@ -9,6 +9,9 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
+from mpi4py import MPI
+import psutil, os
+
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters
@@ -26,7 +29,6 @@ parser.add_argument(
     help="Boolean argument to determine if to use a checkpoint file.",
 )
 
-args = vars(parser.parse_args())
 
 parser.add_argument(
     "--checkpoint_path",
@@ -38,6 +40,8 @@ parser.add_argument(
 parser.add_argument(
     "--output_dir", type=str, default=None, help="Directory to store simulation outputs"
 )
+
+args = vars(parser.parse_args())
 
 
 PARAMS = parameters
@@ -156,6 +160,7 @@ else:
 
 volume = (4 / 3) * np.pi * radius**3
 
+total_grid_points = PARAMS["Nr"]*PARAMS["Ntheta"]*PARAMS["Nphi"]
 
 def az_avg(a: d3.Field) -> d3.Field:
     """Average over the phi coordinate."""
@@ -220,4 +225,40 @@ flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
 # Main loop
-solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+
+from mpi4py import MPI
+import psutil, os
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+process = psutil.Process(os.getpid())
+
+# Main loop
+try:
+    logger.info('Starting main loop')
+    while solver.proceed:
+        timestep = CFL.compute_timestep()
+        solver.step(timestep)
+
+        # Log every 10 iterations
+        if (solver.iteration-1) % 10 == 0:
+            # Compute memory usage in MB
+            mem_gb = process.memory_info().rss / 1024**3
+
+            # Optional: gather max and total memory across ranks
+            max_mem = comm.allreduce(mem_mb, op=MPI.MAX)
+            total_mem = comm.allreduce(mem_mb, op=MPI.SUM)
+
+            # Log info
+            logger.info("Iteration=%i, Time=%e, dt=%e" %
+                        (solver.iteration, solver.sim_time, timestep))
+            logger.info("Memory (this rank) = %.2f MB" % mem_mb)
+            if rank == 0:
+                logger.info("Memory info: max across all ranks = %.2f GB, Total = %.2f GB" %
+                            (max_mem, total_mem))
+
+except Exception as e:
+    logger.error('Exception raised, triggering end of main loop: %s' % e)
+    raise
+finally:
+    solver.log_stats()

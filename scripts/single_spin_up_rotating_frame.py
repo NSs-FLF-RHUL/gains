@@ -26,8 +26,6 @@ parser.add_argument(
     help="Boolean argument to determine if to use a checkpoint file.",
 )
 
-args = vars(parser.parse_args())
-
 parser.add_argument(
     "--checkpoint_path",
     type=str,
@@ -39,6 +37,7 @@ parser.add_argument(
     "--output_dir", type=str, default=None, help="Directory to store simulation outputs"
 )
 
+args = vars(parser.parse_args())
 
 PARAMS = parameters
 PARAMS["use_checkpoint"] = args["use_checkpoint"]

@@ -107,6 +107,8 @@ def plot_stream(
     )
 
     fig.tight_layout()
+    
+    return fig
 
 
 def get_angular_coords(path: str) -> np.ndarray:

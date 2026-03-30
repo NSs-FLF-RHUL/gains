@@ -257,7 +257,7 @@ def plot_against_time(
     path: Path,
     *,
     return_paths: bool,
-) -> tuple[list[Path], type] | list[str]:
+) -> tuple[list[Path], mpl.Figure] | tuple[None, mpl.Figure]:
     """
     Plot a range of coordinate values against time.
 

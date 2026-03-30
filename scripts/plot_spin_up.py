@@ -1,9 +1,9 @@
 """Analysis and plotting of the results of the single fluid spin up."""
 
+import argparse
 import logging
 import pathlib
 import warnings
-import argparse
 
 import h5py
 import matplotlib.pyplot as plt
@@ -24,10 +24,7 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    "output_dir",
-    type = str,
-    default=None,
-    help="Path to output directory."
+    "output_dir", type=str, default=None, help="Path to output directory."
 )
 
 args = vars(parser.parse_args())
@@ -38,10 +35,10 @@ anim_check = input("Plot frames for animation? [y/n]: ")
 
 fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
 
-path_1 = "{}/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5".format(args['output_dir'])
+path_1 = "{}/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5".format(args["output_dir"])
 plot_angular_velocity(path_1, 10, ax[0], rotating=True)
 
-path_2 = "{}/su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5".format(args['output_dir'])
+path_2 = "{}/su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5".format(args["output_dir"])
 plot_angular_velocity(path_2, 40, ax[1], rotating=True)
 
 path_3 = "{}/su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5".format(args["output_dir"])

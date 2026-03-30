@@ -1,7 +1,7 @@
 """Contains functions to produce plots in scripts/plot_spin_up.py."""
 
-import argparse
 from pathlib import Path
+
 import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -11,6 +11,7 @@ import scipy.interpolate as inp
 from gains.params.single_spin_up_rotating import parameters
 
 PARAMS = parameters
+
 
 class LabeledCoordinate:
     """Holds a coordinate (for example r or theta) and its name for use in plotting."""
@@ -104,11 +105,11 @@ def plot_stream(
     )
 
     fig.tight_layout()
-    
+
     return fig
 
 
-def get_angular_coords(path: str) -> np.ndarray:
+def get_angular_coords(path: str | Path) -> np.ndarray:
     """
     Return r and theta coordinates from a given dedalus output file.
 
@@ -165,7 +166,7 @@ def calculate_angular_speed_single(
 
 
 def plot_angular_velocity(
-    path: str, t: int, ax: mpl.projections.polar.PolarAxes, *, rotating: bool
+    path: str | Path, t: int, ax: mpl.projections.polar.PolarAxes, *, rotating: bool
 ) -> None:
     """
     Take an output of viscous_sphere.py and plots the angular velocity.
@@ -209,7 +210,7 @@ def plot_angular_velocity(
 
 
 def get_angular_speed_vs_time(
-    coord: str, c_get: int, n_writes: int, path_list: list[str]
+    coord: str, c_get: int, n_writes: int, path_list: list[Path]
 ) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
@@ -253,11 +254,10 @@ def get_angular_speed_vs_time(
 def plot_against_time(
     coord: LabeledCoordinate,
     label: str,
-    path: str,
+    path: Path,
     *,
     return_paths: bool,
-    name: str,
-) -> None | list[str]:
+) -> tuple[list[Path], type] | list[str]:
     """
     Plot a range of coordinate values against time.
 
@@ -269,13 +269,9 @@ def plot_against_time(
     :param name: What to name the png file containing the figure.
     :returns path_list: A list of only .h5 files in the specified path.
     """
-
     path = Path(path)
-    
-    path_list = sorted(
-        p for p in path.iterdir()
-        if p.suffix == ".h5"
-    )
+
+    path_list = sorted(p for p in path.iterdir() if p.suffix == ".h5")
 
     coord_val = coord.getcoord()
     coord_name = coord.getlabel()
@@ -297,7 +293,6 @@ def plot_against_time(
             alpha=alphas[i],
             label=str(label + " = " + str(round(coord_checked[i], 2))),
         )
-    print(type(fig))
     ax.legend(frameon=False, loc="center left")
     t_ek = 1 / np.sqrt(PARAMS["Ek"])
     ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)

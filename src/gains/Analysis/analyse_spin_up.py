@@ -2,6 +2,7 @@
 
 import os
 
+from pathlib import Path
 import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -172,7 +173,8 @@ def plot_angular_velocity(
 
     :param path: Path to an AZ_avg_s*.h5 file.
     :param t: Integer used to select the time plotted.
-    :param ax: Pre-defined matplotlib polar axis on which to plot the data.
+    :param ax: Pre-defined matplotlib polar axis on which to plot the data. The
+    axis is modified in place by this function.
     """
     data = h5py.File(path, mode="r")
     u_n_phi = data["tasks"]["u_n_phi"][t, -1, :, :]
@@ -268,13 +270,13 @@ def plot_against_time(
     :param name: What to name the png file containing the figure.
     :returns path_list: A list of only .h5 files in the specified path.
     """
-    file_list = sorted(os.listdir(path))
-    path_list = []
-    for file in file_list:
-        extension = file[len(file) - 2 : len(file)]
 
-        if extension == "h5":
-            path_list.append(path + "/" + file)
+    path = Path(path)
+    
+    path_list = sorted(
+        p for p in path.iterdir()
+        if p.suffix == ".h5"
+    )
 
     coord_val = coord.getcoord()
     coord_name = coord.getlabel()

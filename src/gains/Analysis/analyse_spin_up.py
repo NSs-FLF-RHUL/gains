@@ -1,7 +1,6 @@
 """Contains functions to produce plots in scripts/plot_spin_up.py."""
 
-import os
-
+import argparse
 from pathlib import Path
 import h5py
 import matplotlib as mpl
@@ -11,9 +10,7 @@ import scipy.interpolate as inp
 
 from gains.params.single_spin_up_rotating import parameters
 
-locals().update(parameters)
 PARAMS = parameters
-
 
 class LabeledCoordinate:
     """Holds a coordinate (for example r or theta) and its name for use in plotting."""
@@ -184,7 +181,7 @@ def plot_angular_velocity(
     u_n_background = np.zeros_like(u_n_phi)
     if not rotating:
         for i in range(len(r)):
-            u_n_background[:, i] = parameters["Omega_Init"] * (r[i] * np.sin(theta)[:])
+            u_n_background[:, i] = PARAMS["Omega_Init"] * (r[i] * np.sin(theta)[:])
 
     du_n_phi = u_n_phi - u_n_background
     omega = calculate_angular_speed(r, theta, du_n_phi)
@@ -195,7 +192,7 @@ def plot_angular_velocity(
         theta_m,
         r_m,
         omega,
-        clim=(0, parameters["Delta_Omega"]),
+        clim=(0, PARAMS["Delta_Omega"]),
         cmap="RdBu_r",
         edgecolors="face",
     )
@@ -302,7 +299,7 @@ def plot_against_time(
         )
     print(type(fig))
     ax.legend(frameon=False, loc="center left")
-    t_ek = 1 / np.sqrt(parameters["Ek"])
+    t_ek = 1 / np.sqrt(PARAMS["Ek"])
     ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
     ax.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
     ax.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")

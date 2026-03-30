@@ -24,17 +24,17 @@ anim_check = input("Plot frames for animation? [y/n]: ")
 
 fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
 
-path_1 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
+path_1 = "outputs/single_spin_up_2026-03-03-10:16/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
 plot_angular_velocity(path_1, 10, ax[0], rotating=True)
 
-path_2 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5"
+path_2 = "outputs/single_spin_up_2026-03-03-10:16/su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5"
 plot_angular_velocity(path_2, 40, ax[1], rotating=True)
 
-path_3 = "outputs/su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
+path_3 = "outputs/single_spin_up_2026-03-03-10:16/su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
 plot_angular_velocity(path_3, 90, ax[2], rotating=True)
 plt.savefig("outputs/Equator_spin_up_5e-2.png")
 plt.close()
-path = "outputs/su_equator/AZ_avg_equator"
+path = "outputs/single_spin_up_2026-03-03-10:16/su_equator/AZ_avg_equator"
 r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
 
 r = LabeledCoordinate(r_check, "r")

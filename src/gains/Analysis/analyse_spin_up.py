@@ -287,25 +287,27 @@ def plot_against_time(
     alphas = np.linspace(0.40, 1.0, len(coord_tries))
     coord_checked = [coord_val[i] for i in coord_tries]
 
+    fig = plt.figure()
+    ax = fig.gca()
+
     for i in range(len(coord_tries)):
         val = coord_tries[i]
         omega_r, times = get_angular_speed_vs_time(coord_name, val, 100, path_list)
-        plt.plot(
+        ax.plot(
             sorted(times),
             sorted(omega_r),
             color="#024cf7",
             alpha=alphas[i],
             label=str(label + " = " + str(round(coord_checked[i], 2))),
         )
-
-    plt.legend(frameon=False, loc="center left")
+    print(type(fig))
+    ax.legend(frameon=False, loc="center left")
     t_ek = 1 / np.sqrt(parameters["Ek"])
-    plt.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
-    plt.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
-    plt.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
-    plt.ylabel(r"$\Delta \Omega$")
-    plt.savefig(f"outputs/su_equator/{name}.png", dpi=300)
+    ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
+    ax.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
+    ax.xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
+    ax.ylabel(r"$\Delta \Omega$")
 
     if return_paths:
-        return path_list
-    return None
+        return path_list, fig
+    return fig

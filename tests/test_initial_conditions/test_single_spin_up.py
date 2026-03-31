@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from gains.initial_conditions.single_component_spin_up import window_equator
+from gains.initial_conditions.single_component_spin_up import window_equator, ExpectPositiveError
 
 
 def thetas_full() -> np.ndarray:
@@ -24,13 +24,6 @@ def thetas_full_fix() -> np.ndarray:
 @pytest.mark.parametrize(
     ("coords", "width", "dtype", "expected_output"),
     [
-        pytest.param(
-            thetas_full(),
-            0,
-            np.float64,
-            np.zeros_like(thetas_full()),
-            id="Width is 0",
-        ),
         pytest.param(
             np.array([0.0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi]),
             1.0,
@@ -64,3 +57,26 @@ def test_window(
 
     assert np.allclose(computed_output, expected_output)
     assert num_negative == 0
+
+@pytest.mark.parametrize(
+    ("coords", "width", "dtype"),
+    [
+        pytest.param(
+            thetas_full(),
+            -3.0,
+            np.float64,
+            id="Width is negative."
+        ),
+        pytest.param(
+            thetas_full(),
+            0.0,
+            np.float64,
+            id="width is 0"
+        )
+    ]
+)
+def test_error(
+    coords: np.ndarray, width: float, dtype: type
+) -> None:
+    with pytest.raises(ExpectPositiveError):
+        window_equator(coords, width, dtype)

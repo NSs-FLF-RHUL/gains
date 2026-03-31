@@ -124,6 +124,25 @@ def get_angular_coords(path: str | Path) -> np.ndarray:
     return r, theta
 
 
+def get_angular_coords_single(
+    path: str | Path, r_index: int, theta_index: int
+) -> tuple[float, float]:
+    """
+    Return a radial and meridional coordinate of specified independant indicies.
+
+    :param path: path to the u_n_phi data file.
+    :param r_index: Index of the desired radial coordinate.
+    :param theta_index: Index of the desired meridional coordinate.
+    :returns r: The radial coordinate at r_index.
+    :returns theta: The meridional coordinate at theta_index.
+    """
+    data = h5py.File(path, mode="r")
+    u_n_phi = data["tasks"]["u_n_phi"]
+    r = u_n_phi.dims[3][0][r_index]
+    theta = u_n_phi.dims[2][0][theta_index]
+    return r, theta
+
+
 def calculate_angular_speed(
     rs: np.ndarray, thetas: np.ndarray, u_phi: np.ndarray
 ) -> np.ndarray:
@@ -144,7 +163,7 @@ def calculate_angular_speed(
 
 
 def calculate_angular_speed_single(
-    r_arg: int, theta_arg: int, rs: np.ndarray, thetas: np.ndarray, u_phis: np.ndarray
+    path: str | Path, r_arg: int, theta_arg: int, u_phis: np.ndarray
 ) -> float:
     """
     Calculate angular speed for a specific radius and longitude.
@@ -153,15 +172,11 @@ def calculate_angular_speed_single(
     the arguments they have in the full array.
     :param r_arg: Index for the desired radius.
     :param theta_arg: Index for the desired longitude.
-    :param rs: Full array of radii.
-    :param thetas: Full array of meridional coordinates.
     :param u_phis: Azimuthally averaged array of azimuthal velocities.
     :returns: The angular speed at the specified r and theta.
     """
-    r = rs[r_arg]
-    theta = thetas[theta_arg]
+    r, theta = get_angular_coords_single(path, r_arg, theta_arg)
     u_phi = u_phis[theta_arg][r_arg]
-
     return u_phi / (r * np.sin(theta))
 
 
@@ -233,16 +248,15 @@ def get_angular_speed_vs_time(
     for path in path_list:
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
-        r, theta = get_angular_coords(path)
         for j in range(n_writes):
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
             if coord == "r":
                 omega_r = calculate_angular_speed_single(
-                    c_get, int(theta_resolution / 2), r, theta, u_n_phi
+                    path, c_get, int(theta_resolution / 2), u_n_phi
                 )  # theta arg esnures the equator is selected.
             elif coord == "theta":
                 omega_r = calculate_angular_speed_single(
-                    -1, c_get, r, theta, u_n_phi
+                    path, -1, c_get, u_n_phi
                 )  # r arg ensures the surface is selected.
             else:
                 raise NotImplementedError(err_msg)
@@ -257,7 +271,7 @@ def plot_against_time(
     coord: LabeledCoordinate,
     label: str,
     path: Path,
-) -> tuple[list[Path], mpl.figure] | tuple[None, mpl.figure]:
+) -> tuple[list[Path], mpl.figure]:
     """
     Plot a range of coordinate values against time.
 

@@ -175,7 +175,8 @@ def plot_angular_velocity(
     :param t: Integer used to select the time plotted.
     :param ax: Pre-defined matplotlib polar axis on which to plot the data. The
     axis is modified in place by this function.
-    :param rotating: Set true if the simulation was done in the rotating reference frame.
+    :param rotating: Set true if the simulation was done in the
+    rotating reference frame.
     """
     data = h5py.File(path, mode="r")
     u_n_phi = data["tasks"]["u_n_phi"][t, -1, :, :]

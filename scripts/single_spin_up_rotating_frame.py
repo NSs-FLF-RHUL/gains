@@ -98,7 +98,6 @@ er["g"][2] = 1
 etheta["g"][1] = 1
 ephi["g"][0] = 1
 
-# This is never actually used
 
 ez = dist.VectorField(coords, bases=ball)
 ez["g"][1] = -np.sin(theta)

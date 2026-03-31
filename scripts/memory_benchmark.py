@@ -45,7 +45,7 @@ mems_8, grids_8 = get_vals(mem_usage_grid_8)
 mems_4, grids_4 = get_vals(mem_usage_grid_4)
 
 mem_ratio = mems_4/mems_8
-
+breakpoint()
 ax[0].scatter(grids_8, mems_8, marker='x', label=labels[0])
 ax[0].scatter(grids_4, mems_4, marker='x', label=labels[1])
 

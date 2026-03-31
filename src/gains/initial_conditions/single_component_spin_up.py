@@ -9,6 +9,14 @@ specific parts of the boundary of a sphere.
 import numpy as np
 
 
+class ExpectPositiveError(Exception):
+    """Exception for negative values in instances they should be positive."""
+
+    def __init__(self, var: str | float) -> None:
+        """:param var: The variable that should be positive."""
+        super().__init__(f"{var} should be positive.")
+
+
 def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
     """
     Create window function to enforce boundary conditions on only parts of the sphere.
@@ -22,6 +30,10 @@ def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
     :param dtype: Data type of theta
     :returns mask: A smooth function equal to 1 in the window, and 0 everywhere else.
     """
+    check = "width"
+    if width <= 0:
+        raise ExpectPositiveError(check)
+
     a = width / 2
     shift = np.pi / 2 * np.ones_like(theta)
     theta = theta - shift

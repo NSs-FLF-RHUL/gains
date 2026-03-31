@@ -175,14 +175,15 @@ def plot_angular_velocity(
     :param t: Integer used to select the time plotted.
     :param ax: Pre-defined matplotlib polar axis on which to plot the data. The
     axis is modified in place by this function.
+    :param rotating: Set true if the simulation was done in the rotating reference frame.
     """
     data = h5py.File(path, mode="r")
     u_n_phi = data["tasks"]["u_n_phi"][t, -1, :, :]
     r, theta = get_angular_coords(path)
-    u_n_background = np.zeros_like(u_n_phi)
     if not rotating:
-        for i in range(len(r)):
-            u_n_background[:, i] = PARAMS["Omega_Init"] * (r[i] * np.sin(theta)[:])
+        u_n_background = 1.0 * np.outer(np.sin(theta), r)
+    else:
+        u_n_background = np.zeros_like(u_n_phi)
 
     du_n_phi = u_n_phi - u_n_background
     omega = calculate_angular_speed(r, theta, du_n_phi)

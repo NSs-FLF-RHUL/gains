@@ -164,7 +164,7 @@ u["g"][0] = v_xs
 vys = 0.01 * np.sin(4 * np.pi * x)
 
 
-u["g"][1] += vys[:,None]
+u["g"][1] += vys[:, None]
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler(

@@ -44,11 +44,11 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
         -(ys[region_3_mask] - 0.75) / parameters["L"]
     )
 
-    return out[None, : ] * np.ones((len(xs), 1))
+    return out[None, :] * np.ones((len(xs), 1))
 
 
 def velocity_x(
-   xs: np.ndarray, ys: np.ndarray, **parameters: float | type
+    xs: np.ndarray, ys: np.ndarray, **parameters: float | type
 ) -> np.ndarray:
     """
     x-velocity function for the initial condition in McNally 2012.
@@ -79,4 +79,4 @@ def velocity_x(
     out[region_3_mask] = parameters["U_1"] - parameters["U_m"] * np.exp(
         -(ys[region_3_mask] - 0.75) / parameters["L"]
     )
-    return out[None, : ] * np.ones((len(xs), 1))
+    return out[None, :] * np.ones((len(xs), 1))

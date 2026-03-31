@@ -60,7 +60,7 @@ def plot_stream(
     vr_n: np.ndarray,
     vtheta_n: np.ndarray,
     density: float | tuple[float],
-) -> None:
+) -> mpl.figure:
     """
     Create streamline plots of the meridional flow.
 
@@ -169,7 +169,7 @@ def plot_angular_velocity(
     path: str | Path, t: int, ax: mpl.projections.polar.PolarAxes, *, rotating: bool
 ) -> None:
     """
-    Take an output of viscous_sphere.py and plots the angular velocity.
+    Take an output of single_spin_up_rotating_frame.py and plots the angular velocity.
 
     :param path: Path to an AZ_avg_s*.h5 file.
     :param t: Integer used to select the time plotted.

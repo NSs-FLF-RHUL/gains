@@ -182,3 +182,5 @@ pyrightconfig.json
 src/**/_version.py
 #Outputs
 outputs/**
+#DS_Store
+.DS_store

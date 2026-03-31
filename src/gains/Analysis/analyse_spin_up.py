@@ -255,8 +255,6 @@ def plot_against_time(
     coord: LabeledCoordinate,
     label: str,
     path: Path,
-    *,
-    return_paths: bool,
 ) -> tuple[list[Path], mpl.figure] | tuple[None, mpl.figure]:
     """
     Plot a range of coordinate values against time.
@@ -300,6 +298,4 @@ def plot_against_time(
     ax.set_xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
     ax.set_ylabel(r"$\Delta \Omega$")
 
-    if return_paths:
-        return path_list, fig
-    return None, fig
+    return path_list, fig

@@ -68,11 +68,7 @@ r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
 r = LabeledCoordinate(r_check, "r")
 theta = LabeledCoordinate(theta_check, "theta")
 
-return_check = False
-if anim_check == "y":
-    return_check = True
-
-path_list, fig = plot_against_time(r, "r", path, return_paths=return_check)
+path_list, fig = plot_against_time(r, "r", path)
 fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
 if anim_check == "y":

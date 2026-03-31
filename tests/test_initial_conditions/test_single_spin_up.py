@@ -46,6 +46,13 @@ def thetas_full_fix() -> np.ndarray:
             ),
             id="Values inside and outside window",
         ),
+        pytest.param(
+            thetas_full(),
+            10,
+            np.float64,
+            np.ones_like(thetas_full()),
+            id="width is greater than pi",
+        ),
     ],
 )
 def test_window(

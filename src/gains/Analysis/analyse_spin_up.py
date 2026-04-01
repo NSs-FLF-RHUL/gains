@@ -26,13 +26,6 @@ class LabeledCoordinate:
         self.coord = coord
         self.label = label
 
-    def getcoord(self) -> np.ndarray:
-        """Get the coordinate."""
-        return self.coord
-
-    def getlabel(self) -> str:
-        """Get the label."""
-        return self.label
 
 
 def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
@@ -287,8 +280,8 @@ def plot_against_time(
 
     path_list = sorted(p for p in path.iterdir() if p.suffix == ".h5")
 
-    coord_val = coord.getcoord()
-    coord_name = coord.getlabel()
+    coord_val = coord.coord
+    coord_name = coord.label
 
     coord_tries = list(range(int(len(coord_val) / 2), len(coord_val), 6))
     alphas = np.linspace(0.40, 1.0, len(coord_tries))

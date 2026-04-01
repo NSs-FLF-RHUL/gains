@@ -1,7 +1,14 @@
 import numpy as np
 import pytest
 
+<<<<<<< HEAD
 from gains.initial_conditions.single_component_spin_up import window
+=======
+from gains.initial_conditions.single_component_spin_up import (
+    ExpectPositiveError,
+    window_equator,
+)
+>>>>>>> main
 
 
 def thetas_full() -> np.ndarray:
@@ -25,6 +32,7 @@ def thetas_full_fix() -> np.ndarray:
     ("coords", "width", "dtype", "expected_output"),
     [
         pytest.param(
+<<<<<<< HEAD
             thetas_full(),
             0,
             np.float64,
@@ -32,6 +40,8 @@ def thetas_full_fix() -> np.ndarray:
             id="Width is 0",
         ),
         pytest.param(
+=======
+>>>>>>> main
             np.array([0.0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi]),
             1.0,
             np.float64,
@@ -46,14 +56,44 @@ def thetas_full_fix() -> np.ndarray:
             ),
             id="Values inside and outside window",
         ),
+<<<<<<< HEAD
+=======
+        pytest.param(
+            thetas_full(),
+            10,
+            np.float64,
+            np.ones_like(thetas_full()),
+            id="width is greater than pi",
+        ),
+>>>>>>> main
     ],
 )
 def test_window(
     coords: np.ndarray, width: float, dtype: type, expected_output: np.ndarray
 ) -> np.ndarray:
     """Runs unit tests for window."""
+<<<<<<< HEAD
     computed_output = window(coords, width, dtype)
+=======
+    computed_output = window_equator(coords, width, dtype)
+>>>>>>> main
     num_negative = (computed_output < 0).sum()
 
     assert np.allclose(computed_output, expected_output)
     assert num_negative == 0
+<<<<<<< HEAD
+=======
+
+
+@pytest.mark.parametrize(
+    ("coords", "width", "dtype"),
+    [
+        pytest.param(thetas_full(), -3.0, np.float64, id="Width is negative."),
+        pytest.param(thetas_full(), 0.0, np.float64, id="width is 0"),
+    ],
+)
+def test_error(coords: np.ndarray, width: float, dtype: type) -> None:
+    """Confirms correct error is raised if width not configured correctly."""
+    with pytest.raises(ExpectPositiveError):
+        window_equator(coords, width, dtype)
+>>>>>>> main

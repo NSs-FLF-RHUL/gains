@@ -184,3 +184,8 @@ src/**/_version.py
 outputs/**
 #Frames
 frames/**
+<<<<<<< HEAD
+=======
+#DS_Store
+.DS_store
+>>>>>>> main

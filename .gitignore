@@ -182,5 +182,7 @@ pyrightconfig.json
 src/**/_version.py
 #Outputs
 outputs/**
+#Frames
+frames/**
 #DS_Store
 .DS_store

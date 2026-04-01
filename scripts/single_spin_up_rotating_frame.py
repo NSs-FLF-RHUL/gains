@@ -125,7 +125,7 @@ dot = d3.DotProduct
 curl = d3.Curl
 cross = d3.CrossProduct
 
-Ek = PARAMS["Ek"] #Seperately defined for use in equations
+Ek = PARAMS["Ek"]  # Seperately defined for use in equations
 
 problem = d3.IVP([p_n, u_n, tau_p_n, tau_u_n], namespace=locals())
 problem.add_equation("div(u_n) + tau_p_n = 0")

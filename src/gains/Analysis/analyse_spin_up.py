@@ -27,7 +27,6 @@ class LabeledCoordinate:
         self.label = label
 
 
-
 def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
     """
     Create a 2D interpolation of a function f.

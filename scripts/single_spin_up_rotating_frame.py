@@ -48,7 +48,7 @@ PARAMS["output_dir"] = (
     else "single_spin_up_"
     + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
 )
-# Additional Parameters
+# Additional Parameters - not likely to change between runs
 radius = 1
 timestepper = d3.SBDF2
 cfl_safety = 0.2
@@ -56,7 +56,6 @@ max_timestep = 1e-2
 dtype = np.float64
 ncpu = MPI.COMM_WORLD.size
 log2 = np.log2(ncpu)
-Ek = PARAMS["Ek"]
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
@@ -125,6 +124,8 @@ def lift(a: d3.Field) -> d3.Field:
 dot = d3.DotProduct
 curl = d3.Curl
 cross = d3.CrossProduct
+
+Ek = PARAMS["Ek"] #Seperately defined for use in equations
 
 problem = d3.IVP([p_n, u_n, tau_p_n, tau_u_n], namespace=locals())
 problem.add_equation("div(u_n) + tau_p_n = 0")

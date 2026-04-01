@@ -25,7 +25,6 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
     """
     out = np.zeros((len(ys),))
 
-    # Select all the x-coordinates that are in region 0
     region_0_mask = ys < bounds[0]
     region_1_mask = np.logical_and(ys >= bounds[0], ys < bounds[1])
     region_2_mask = np.logical_and(ys >= bounds[1], ys < bounds[2])

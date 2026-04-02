@@ -1,6 +1,7 @@
 """Contains functions to produce plots in scripts/plot_spin_up.py."""
 
 from pathlib import Path
+import re
 
 import h5py
 import matplotlib as mpl
@@ -26,6 +27,9 @@ class LabeledCoordinate:
         self.coord = coord
         self.label = label
 
+def extract_suffix(path):
+    match = re.search(r'(\d+)$', path.stem)
+    return int(match.group(1))
 
 def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
     """
@@ -277,7 +281,9 @@ def plot_against_time(
     """
     path = Path(path)
 
-    path_list = sorted(p for p in path.iterdir() if p.suffix == ".h5")
+    path_list = sorted((p for p in path.iterdir() if p.suffix == ".h5"), 
+                       key = extract_suffix)
+    print(path_list)
 
     coord_val = coord.coord
     coord_name = coord.label

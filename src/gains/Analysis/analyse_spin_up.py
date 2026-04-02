@@ -30,7 +30,9 @@ class LabeledCoordinate:
 
 def extract_suffix(path: Path) -> int | float:
     """
-    Take a path to a file saved in the form /output_dir/file_name[num].extension
+    Extract an integer at the end of a filename.
+
+    Takes a path to a file saved in the form /output_dir/file_name[num].extension
     and return num. Files that don't fit this format will be assigned inf, so
     placed at the end of a list when sorting.
 

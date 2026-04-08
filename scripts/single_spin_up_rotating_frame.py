@@ -39,7 +39,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--parameter_file",
-    type=Path,
+    type=str,
     default=None,
     help="relative path to parameter file to use for this run",
 )
@@ -54,7 +54,6 @@ else:
     from gains.params.single_spin_up_rotating import parameters
 
     PARAMS = parameters
-
 
 PARAMS["use_checkpoint"] = args["use_checkpoint"]
 PARAMS["checkpoint_path"] = args["checkpoint_path"]

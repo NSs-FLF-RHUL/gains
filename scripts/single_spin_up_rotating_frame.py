@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import logging
+from importlib.machinery import SourceFileLoader
 from pathlib import Path
 
 import dedalus.public as d3
@@ -11,7 +12,6 @@ from mpi4py import MPI
 
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
-from gains.params.single_spin_up_rotating import parameters
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +37,25 @@ parser.add_argument(
     "--output_dir", type=str, default=None, help="Directory to store simulation outputs"
 )
 
+parser.add_argument(
+    "--parameter_file",
+    type=Path,
+    default=None,
+    help="relative path to parameter file to use for this run",
+)
+
 args = vars(parser.parse_args())
 
-PARAMS = parameters
+if args["parameter_file"] is not None:
+    param_path = args["parameter_file"]
+    param_file = SourceFileLoader("param_file", param_path).load_module()
+    PARAMS = param_file.parameters
+else:
+    from gains.params.single_spin_up_rotating import parameters
+
+    PARAMS = parameters
+
+
 PARAMS["use_checkpoint"] = args["use_checkpoint"]
 PARAMS["checkpoint_path"] = args["checkpoint_path"]
 PARAMS["output_dir"] = (

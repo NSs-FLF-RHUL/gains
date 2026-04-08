@@ -17,6 +17,7 @@ import logging
 
 import dedalus.public as d3
 import numpy as np
+from mpi4py import MPI
 
 from gains.initial_conditions.mcnally import density, velocity_x
 
@@ -95,6 +96,13 @@ PARAMS = {
     + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M"),
 }
 
+ncpu = MPI.COMM_WORLD.size
+log2 = np.log2(ncpu)
+
+if log2 == int(log2):
+    mesh = [ncpu]
+logger.info(f"running on processor mesh={mesh}")
+
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2
 PARAMS["rho_m"] = rho_m
 U_m = (PARAMS["U_1"] - PARAMS["U_2"]) / 2
@@ -104,7 +112,7 @@ PARAMS["U_m"] = U_m
 # Bases
 
 coords = d3.CartesianCoordinates("x", "y")
-dist = d3.Distributor(coords, dtype=dtype)
+dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
 xbasis = d3.RealFourier(
     coords["x"], size=PARAMS["Nx"], bounds=(0, PARAMS["Lx"]), dealias=PARAMS["dealias"]
 )
@@ -156,10 +164,7 @@ u["g"][0] = v_xs
 vys = 0.01 * np.sin(4 * np.pi * x)
 
 
-vys_init = np.vstack((vys,) * x.size)
-
-
-u["g"][1] += np.transpose(vys_init)
+u["g"][1] += vys[:, None]
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler(

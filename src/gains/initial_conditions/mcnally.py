@@ -23,28 +23,27 @@ def density(xs: np.ndarray, ys: np.ndarray, **parameters: float | type) -> np.nd
     :param parameters: Other simulation parameters.
     :returns density: Density values on the given boundary.
     """
-    out = np.zeros((len(xs),))
+    out = np.zeros((len(ys),))
 
-    # Select all the x-coordinates that are in region 0
-    region_0_mask = xs < bounds[0]
-    region_1_mask = np.logical_and(xs >= bounds[0], xs < bounds[1])
-    region_2_mask = np.logical_and(xs >= bounds[1], xs < bounds[2])
-    region_3_mask = xs >= bounds[2]
+    region_0_mask = ys < bounds[0]
+    region_1_mask = np.logical_and(ys >= bounds[0], ys < bounds[1])
+    region_2_mask = np.logical_and(ys >= bounds[1], ys < bounds[2])
+    region_3_mask = ys >= bounds[2]
 
     out[region_0_mask] = parameters["rho_1"] - parameters["rho_m"] * np.exp(
-        (xs[region_0_mask] - 0.25) / parameters["L"]
+        (ys[region_0_mask] - 0.25) / parameters["L"]
     )
     out[region_1_mask] = parameters["rho_2"] + parameters["rho_m"] * np.exp(
-        (-xs[region_1_mask] + 0.25) / parameters["L"]
+        (-ys[region_1_mask] + 0.25) / parameters["L"]
     )
     out[region_2_mask] = parameters["rho_2"] + parameters["rho_m"] * np.exp(
-        -(0.75 - xs[region_2_mask]) / parameters["L"]
+        -(0.75 - ys[region_2_mask]) / parameters["L"]
     )
     out[region_3_mask] = parameters["rho_1"] - parameters["rho_m"] * np.exp(
-        -(xs[region_3_mask] - 0.75) / parameters["L"]
+        -(ys[region_3_mask] - 0.75) / parameters["L"]
     )
 
-    return np.column_stack((out,) * len(ys)).T
+    return out[None, :] * np.ones((len(xs), 1))
 
 
 def velocity_x(
@@ -61,23 +60,22 @@ def velocity_x(
     :param parameters: Other simulation parameters.
     :returns vx: x velocity values on the given boundary.
     """
-    out = np.zeros((len(xs),))
-    region_0_mask = xs < bounds[0]
-    region_1_mask = np.logical_and(xs >= bounds[0], xs < bounds[1])
-    region_2_mask = np.logical_and(xs >= bounds[1], xs < bounds[2])
-    region_3_mask = xs >= bounds[2]
+    out = np.zeros((len(ys),))
+    region_0_mask = ys < bounds[0]
+    region_1_mask = np.logical_and(ys >= bounds[0], ys < bounds[1])
+    region_2_mask = np.logical_and(ys >= bounds[1], ys < bounds[2])
+    region_3_mask = ys >= bounds[2]
 
     out[region_0_mask] = parameters["U_1"] - parameters["U_m"] * np.exp(
-        (out[region_0_mask] - 0.25) / parameters["L"]
+        (ys[region_0_mask] - 0.25) / parameters["L"]
     )
     out[region_1_mask] = parameters["U_2"] - parameters["U_m"] * np.exp(
-        (out[region_1_mask] - 0.25) / parameters["L"]
+        (-ys[region_1_mask] + 0.25) / parameters["L"]
     )
     out[region_2_mask] = parameters["U_2"] - parameters["U_m"] * np.exp(
-        (out[region_2_mask] - 0.25) / parameters["L"]
+        -(0.75 - ys[region_2_mask]) / parameters["L"]
     )
     out[region_3_mask] = parameters["U_1"] - parameters["U_m"] * np.exp(
-        (out[region_3_mask] - 0.25) / parameters["L"]
+        -(ys[region_3_mask] - 0.75) / parameters["L"]
     )
-
-    return np.column_stack((out,) * len(ys))
+    return out[None, :] * np.ones((len(xs), 1))

@@ -55,8 +55,8 @@ def midpoints_fix() -> np.ndarray:
             id="Midpoint of each interval",
         ),
         pytest.param(
-            bounds,
             np.zeros((3,)),
+            bounds,
             {
                 "rho_1": 1.0,
                 "rho_2": 10.0,
@@ -75,7 +75,7 @@ def midpoints_fix() -> np.ndarray:
                 "L": 1.0,
                 "rho_m": 0.0,
             },
-            np.zeros((3, 4)),
+            np.zeros((4, 3)),
             id="Output array has correct shape",
         ),
     ],
@@ -158,15 +158,15 @@ def test_density_missing_params(
             id="Midpoint of each interval",
         ),
         pytest.param(
-            bounds,
             np.zeros((3,)),
+            bounds,
             {
                 "U_1": 1.0,
                 "U_2": 10.0,
                 "L": 1.0,
                 "U_m": 0.0,
             },
-            np.array([[10.0] * 3, [10.0] * 3, [1.0] * 3]),
+            np.transpose(np.array([[10.0] * 3, [10.0] * 3, [1.0] * 3])),
             id="On interval boudaries",
         ),
         pytest.param(

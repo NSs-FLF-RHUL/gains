@@ -28,7 +28,7 @@ class LabeledCoordinate:
         self.label = label
 
 
-def extract_suffix(path: Path) -> int | float:
+def extract_numerical_suffix(path: Path) -> int | float:
     """
     Extract an integer at the end of a filename.
 
@@ -295,7 +295,7 @@ def plot_against_time(
     path = Path(path)
 
     path_list = sorted(
-        (p for p in path.iterdir() if p.suffix == ".h5"), key=extract_suffix
+        (p for p in path.iterdir() if p.suffix == ".h5"), key=extract_numerical_suffix
     )
 
     coord_val = coord.coord

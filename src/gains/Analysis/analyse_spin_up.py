@@ -1,5 +1,6 @@
 """Contains functions to produce plots in scripts/plot_spin_up.py."""
 
+import re
 from pathlib import Path
 
 import h5py
@@ -25,6 +26,22 @@ class LabeledCoordinate:
         """
         self.coord = coord
         self.label = label
+
+
+def extract_numerical_suffix(path: Path) -> int | float:
+    """
+    Extract an integer at the end of a filename.
+
+    Takes a path to a file saved in the form /output_dir/file_name[num].extension
+    and return num. Files that don't fit this format will be assigned inf, so
+    placed at the end of a list when sorting.
+
+    :param path: path to the output file, in the form
+    /output_dir/file_name[num].extension.
+    :returns suffix: Integer at the end of the file name.
+    """
+    match = re.search(r"(\d+)$", path.stem)
+    return int(match.group(1)) if match else float("inf")
 
 
 def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
@@ -277,7 +294,9 @@ def plot_against_time(
     """
     path = Path(path)
 
-    path_list = sorted(p for p in path.iterdir() if p.suffix == ".h5")
+    path_list = sorted(
+        (p for p in path.iterdir() if p.suffix == ".h5"), key=extract_numerical_suffix
+    )
 
     coord_val = coord.coord
     coord_name = coord.label

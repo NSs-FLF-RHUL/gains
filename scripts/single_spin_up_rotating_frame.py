@@ -3,8 +3,8 @@
 import argparse
 import datetime
 import logging
-from importlib.machinery import SourceFileLoader
 from pathlib import Path
+import json
 
 import dedalus.public as d3
 import numpy as np
@@ -48,9 +48,9 @@ parser.add_argument(
 args = vars(parser.parse_args())
 
 if args["parameter_file"] is not None:
-    param_path = args["parameter_file"]
-    param_file = SourceFileLoader("param_file", param_path).load_module()
-    PARAMS = param_file.parameters
+    with open(args["parameter_file"], "r") as param_file:
+        PARAMS = json.load(param_file)
+    
 else:
     PARAMS = default_params
 

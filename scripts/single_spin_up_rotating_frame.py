@@ -2,9 +2,9 @@
 
 import argparse
 import datetime
+import json
 import logging
 from pathlib import Path
-import json
 
 import dedalus.public as d3
 import numpy as np
@@ -40,17 +40,17 @@ parser.add_argument(
 
 parser.add_argument(
     "--parameter_file",
-    type=str,
+    type=Path,
     default=None,
-    help="relative path to parameter file to use for this run",
+    help="relative path to parameter file to use for this run, saved in json format.",
 )
 
 args = vars(parser.parse_args())
 
 if args["parameter_file"] is not None:
-    with open(args["parameter_file"], "r") as param_file:
+    with Path.open(args["parameter_file"]) as param_file:
         PARAMS = json.load(param_file)
-    
+
 else:
     PARAMS = default_params
 

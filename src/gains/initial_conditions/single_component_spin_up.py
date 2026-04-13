@@ -7,7 +7,9 @@ specific parts of the boundary of a sphere.
 """
 
 import numpy as np
+
 from gains.exceptions import ExpectPositiveError
+
 
 def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
     """

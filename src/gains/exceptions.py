@@ -1,5 +1,6 @@
 """Holds custom exceptions used in the package."""
 
+
 class MeshError(Exception):
     """Exception for negative values in instances they should be positive."""
 

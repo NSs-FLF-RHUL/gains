@@ -10,7 +10,7 @@ import numpy as np
 
 from gains.analysis.analyse_spin_up import (
     LabeledCoordinate,
-    args,
+    create_parser,
     get_angular_coords,
     plot_against_time,
     plot_angular_velocity,
@@ -18,6 +18,19 @@ from gains.analysis.analyse_spin_up import (
 
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)
+
+parser = create_parser()
+args = vars(parser.parse_args())
+
+# Alternatively if you prefer one-liners:
+# args = vars(create_parser().parse_args())
+
+if args["parameter_file"] is not None:
+    with Path.open(args["parameter_file"]) as param_file:
+        PARAMS = json.load(param_file)
+
+else:
+    PARAMS = default_params
 
 args["output_dir"] = Path(args["output_dir"])
 args["frame_dir"] = Path(args["frame_dir"])

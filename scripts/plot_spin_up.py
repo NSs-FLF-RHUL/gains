@@ -1,6 +1,5 @@
 """Analysis and plotting of the results of the single fluid spin up."""
 
-import argparse
 import logging
 import warnings
 from pathlib import Path
@@ -11,10 +10,10 @@ import numpy as np
 
 from gains.analysis.analyse_spin_up import (
     LabeledCoordinate,
+    args,
     get_angular_coords,
     plot_against_time,
     plot_angular_velocity,
-    args
 )
 
 warnings.filterwarnings("ignore")

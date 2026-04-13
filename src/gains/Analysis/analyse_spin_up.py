@@ -1,9 +1,9 @@
 """Contains functions to produce plots in scripts/plot_spin_up.py."""
 
-import re
-from pathlib import Path
 import argparse
 import json
+import re
+from pathlib import Path
 
 import h5py
 import matplotlib as mpl
@@ -13,13 +13,15 @@ import scipy.interpolate as inp
 
 from gains.params.single_spin_up_rotating import parameters as default_params
 
-parser = argparse.ArgumentParser(description="Full analysis of a single component spin up simulation")
+parser = argparse.ArgumentParser(
+    description="Full analysis of a single component spin up simulation"
+)
 
 parser.add_argument(
     "--parameter_file",
-    type = str,
+    type=str,
     default=None,
-    help = "relative path to parameter file to use for this run, saved in json format."
+    help="relative path to parameter file to use for this run, saved in json format.",
 )
 
 parser.add_argument(
@@ -43,7 +45,6 @@ parser.add_argument(
 args = vars(parser.parse_args())
 
 
-
 if args["parameter_file"] is not None:
     with Path.open(args["parameter_file"]) as param_file:
         PARAMS = json.load(param_file)
@@ -51,7 +52,6 @@ if args["parameter_file"] is not None:
 else:
     PARAMS = default_params
 
-breakpoint()
 
 class LabeledCoordinate:
     """Holds a coordinate (for example r or theta) and its name for use in plotting."""

@@ -2,6 +2,7 @@
 
 import argparse
 import datetime
+import json
 import logging
 from pathlib import Path
 
@@ -11,7 +12,7 @@ from mpi4py import MPI
 
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
-from gains.params.single_spin_up_rotating import parameters
+from gains.params.single_spin_up_rotating import parameters as default_params
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,22 @@ parser.add_argument(
     "--output_dir", type=str, default=None, help="Directory to store simulation outputs"
 )
 
+parser.add_argument(
+    "--parameter_file",
+    type=Path,
+    default=None,
+    help="relative path to parameter file to use for this run, saved in json format.",
+)
+
 args = vars(parser.parse_args())
 
-PARAMS = parameters
+if args["parameter_file"] is not None:
+    with Path.open(args["parameter_file"]) as param_file:
+        PARAMS = json.load(param_file)
+
+else:
+    PARAMS = default_params
+
 PARAMS["use_checkpoint"] = args["use_checkpoint"]
 PARAMS["checkpoint_path"] = args["checkpoint_path"]
 PARAMS["output_dir"] = (

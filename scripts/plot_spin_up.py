@@ -14,34 +14,12 @@ from gains.analysis.analyse_spin_up import (
     get_angular_coords,
     plot_against_time,
     plot_angular_velocity,
+    args
 )
 
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)
 
-parser = argparse.ArgumentParser(
-    description="Analyse the output of single_spin_up_rotating_frame."
-)
-
-parser.add_argument(
-    "output_dir", type=str, default=None, help="Path to output directory."
-)
-
-parser.add_argument(
-    "--fig_dir",
-    type=str,
-    default="outputs",
-    help="The directory in which to save figures.",
-)
-
-parser.add_argument(
-    "--frame_dir",
-    type=str,
-    default="frames",
-    help="The directory in which to save frames.",
-)
-
-args = vars(parser.parse_args())
 args["output_dir"] = Path(args["output_dir"])
 args["frame_dir"] = Path(args["frame_dir"])
 

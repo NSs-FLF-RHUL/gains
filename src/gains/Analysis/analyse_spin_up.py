@@ -2,6 +2,8 @@
 
 import re
 from pathlib import Path
+import argparse
+import json
 
 import h5py
 import matplotlib as mpl
@@ -9,10 +11,47 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
 
-from gains.params.single_spin_up_rotating import parameters
+from gains.params.single_spin_up_rotating import parameters as default_params
 
-PARAMS = parameters
+parser = argparse.ArgumentParser(description="Full analysis of a single component spin up simulation")
 
+parser.add_argument(
+    "--parameter_file",
+    type = str,
+    default=None,
+    help = "relative path to parameter file to use for this run, saved in json format."
+)
+
+parser.add_argument(
+    "output_dir", type=str, default=None, help="Path to output directory."
+)
+
+parser.add_argument(
+    "--fig_dir",
+    type=str,
+    default="outputs",
+    help="The directory in which to save figures.",
+)
+
+parser.add_argument(
+    "--frame_dir",
+    type=str,
+    default="frames",
+    help="The directory in which to save frames.",
+)
+
+args = vars(parser.parse_args())
+
+
+
+if args["parameter_file"] is not None:
+    with Path.open(args["parameter_file"]) as param_file:
+        PARAMS = json.load(param_file)
+
+else:
+    PARAMS = default_params
+
+breakpoint()
 
 class LabeledCoordinate:
     """Holds a coordinate (for example r or theta) and its name for use in plotting."""

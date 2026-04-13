@@ -1,6 +1,8 @@
 """Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
 
 import argparse
+import warnings
+import sys
 import datetime
 import json
 import logging
@@ -13,6 +15,14 @@ from mpi4py import MPI
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
+
+class MeshError(Exception):
+    """Exception for negative values in instances they should be positive."""
+
+    def __init__(self) -> None:
+        """Error message."""
+        super().__init__("Number of cpus should be a power of 2")
+
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +83,9 @@ log2 = np.log2(ncpu)
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
+else:
+    raise(MeshError)
+
 logger.info(f"running on processor mesh={mesh}")
 
 

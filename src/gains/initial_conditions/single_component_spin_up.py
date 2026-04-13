@@ -7,15 +7,7 @@ specific parts of the boundary of a sphere.
 """
 
 import numpy as np
-
-
-class ExpectPositiveError(Exception):
-    """Exception for negative values in instances they should be positive."""
-
-    def __init__(self, var: str | float) -> None:
-        """:param var: The variable that should be positive."""
-        super().__init__(f"{var} should be positive.")
-
+from gains.exceptions import ExpectPositiveError
 
 def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
     """

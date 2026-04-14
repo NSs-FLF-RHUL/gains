@@ -1,5 +1,6 @@
 """Contains functions to produce plots in scripts/plot_spin_up.py."""
 
+import argparse
 import re
 from pathlib import Path
 
@@ -9,9 +10,39 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
 
-from gains.params.single_spin_up_rotating import parameters
 
-PARAMS = parameters
+def create_parser() -> argparse.ArgumentParser:
+    """Create parser for command line arguments in plotting code."""
+    parser = argparse.ArgumentParser(
+        description="Full analysis of a single component spin up simulation"
+    )
+    parser.add_argument(
+        "--parameter_file",
+        type=str,
+        default=None,
+        help="relative path to parameter file to use for this run,"
+        " saved in json format.",
+    )
+
+    parser.add_argument(
+        "output_dir", type=str, default=None, help="Path to output directory."
+    )
+
+    parser.add_argument(
+        "--fig_dir",
+        type=str,
+        default="outputs",
+        help="The directory in which to save figures.",
+    )
+
+    parser.add_argument(
+        "--frame_dir",
+        type=str,
+        default="frames",
+        help="The directory in which to save frames.",
+    )
+
+    return parser
 
 
 class LabeledCoordinate:
@@ -190,7 +221,12 @@ def calculate_angular_speed_single(
 
 
 def plot_angular_velocity(
-    path: str | Path, t: int, ax: mpl.projections.polar.PolarAxes, *, rotating: bool
+    path: str | Path,
+    t: int,
+    ax: mpl.projections.polar.PolarAxes,
+    *,
+    rotating: bool,
+    delta_omega: float,
 ) -> None:
     """
     Take an output of single_spin_up_rotating_frame.py and plots the angular velocity.
@@ -219,7 +255,7 @@ def plot_angular_velocity(
         theta_m,
         r_m,
         omega,
-        clim=(0, PARAMS["Delta_Omega"]),
+        clim=(0, delta_omega),
         cmap="RdBu_r",
         edgecolors="face",
     )
@@ -236,7 +272,7 @@ def plot_angular_velocity(
 
 
 def get_angular_speed_vs_time(
-    coord: str, c_get: int, n_writes: int, path_list: list[Path]
+    coord: str, c_get: int, n_writes: int, path_list: list[Path], ntheta: int
 ) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
@@ -252,7 +288,7 @@ def get_angular_speed_vs_time(
     out_size = len(path_list) * n_writes
     omega_rs = np.zeros((out_size,))
     times = np.zeros(out_size)
-    theta_resolution = PARAMS["Ntheta"]
+    theta_resolution = ntheta
     count = 0
     for path in path_list:
         data = h5py.File(path, mode="r")
@@ -277,9 +313,7 @@ def get_angular_speed_vs_time(
 
 
 def plot_against_time(
-    coord: LabeledCoordinate,
-    label: str,
-    path: Path,
+    coord: LabeledCoordinate, label: str, path: Path, ek: float, ntheta: int
 ) -> tuple[list[Path], mpl.figure]:
     """
     Plot a range of coordinate values against time.
@@ -310,7 +344,9 @@ def plot_against_time(
 
     for i in range(len(coord_tries)):
         val = coord_tries[i]
-        omega_r, times = get_angular_speed_vs_time(coord_name, val, 100, path_list)
+        omega_r, times = get_angular_speed_vs_time(
+            coord_name, val, 100, path_list, ntheta=ntheta
+        )
         ax.plot(
             sorted(times),
             sorted(omega_r),
@@ -319,7 +355,7 @@ def plot_against_time(
             label=str(label + " = " + str(round(coord_checked[i], 2))),
         )
     ax.legend(frameon=False, loc="center left")
-    t_ek = 1 / np.sqrt(PARAMS["Ek"])
+    t_ek = 1 / np.sqrt(ek)
     ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
     ax.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
     ax.set_xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")

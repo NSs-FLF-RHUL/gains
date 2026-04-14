@@ -13,14 +13,7 @@ from mpi4py import MPI
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
-
-
-class MeshError(Exception):
-    """Exception for negative values in instances they should be positive."""
-
-    def __init__(self) -> None:
-        """Error message."""
-        super().__init__("Number of cpus should be a power of 2")
+from gains.exceptions import MeshError
 
 
 logger = logging.getLogger(__name__)

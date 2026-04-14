@@ -2,7 +2,7 @@
 
 
 class MeshError(Exception):
-    """Exception for negative values in instances they should be positive."""
+    """Exception raised if the number of cpus given is not a power of 2"""
 
     def __init__(self) -> None:
         """Error message."""

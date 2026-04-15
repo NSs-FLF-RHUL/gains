@@ -354,7 +354,7 @@ def plot_against_time(
             alpha=alphas[i],
             label=str(label + " = " + str(round(coord_checked[i], 2))),
         )
-    ax.legend(frameon=False, loc="center left")
+    ax.legend(frameon=False, loc="lower right")
     t_ek = 1 / np.sqrt(ek)
     ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
     ax.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")

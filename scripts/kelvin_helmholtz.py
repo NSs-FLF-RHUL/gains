@@ -103,7 +103,7 @@ log2 = np.log2(ncpu)
 if log2 == int(log2):
     mesh = [ncpu]
 else:
-    raise (MeshError)
+    raise MeshError
 
 logger.info(f"running on processor mesh={mesh}")
 

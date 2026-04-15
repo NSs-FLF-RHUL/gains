@@ -76,7 +76,7 @@ log2 = np.log2(ncpu)
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
 else:
-    raise (MeshError)
+    raise MeshError
 
 logger.info(f"running on processor mesh={mesh}")
 

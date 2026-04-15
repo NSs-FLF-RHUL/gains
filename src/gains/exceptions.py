@@ -2,11 +2,11 @@
 
 
 class MeshError(Exception):
-    """Exception raised if the number of cpus given is not a power of 2"""
+    """Exception raised if the number of cpus given is not a power of 2."""
 
     def __init__(self) -> None:
         """Error message."""
-        super().__init__("Number of cpus should be a power of 2")
+        super().__init__("Number of cpus should be a power of 2.")
 
 
 class ExpectPositiveError(Exception):

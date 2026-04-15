@@ -10,6 +10,8 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
+from gains.exceptions import MeshError
+
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
@@ -73,6 +75,9 @@ log2 = np.log2(ncpu)
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
+else:
+    raise MeshError
+
 logger.info(f"running on processor mesh={mesh}")
 
 

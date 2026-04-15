@@ -19,6 +19,7 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
+from gains.exceptions import MeshError
 from gains.initial_conditions.mcnally import density, velocity_x
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,9 @@ log2 = np.log2(ncpu)
 
 if log2 == int(log2):
     mesh = [ncpu]
+else:
+    raise MeshError
+
 logger.info(f"running on processor mesh={mesh}")
 
 rho_m = (PARAMS["rho_1"] - PARAMS["rho_2"]) / 2

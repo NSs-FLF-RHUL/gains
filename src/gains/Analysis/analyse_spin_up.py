@@ -348,8 +348,8 @@ def plot_against_time(
             coord_name, val, 100, path_list, ntheta=ntheta
         )
         ax.plot(
-            sorted(times),
-            sorted(omega_r),
+            times,
+            omega_r,
             color="#024cf7",
             alpha=alphas[i],
             label=str(label + " = " + str(round(coord_checked[i], 2))),

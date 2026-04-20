@@ -127,7 +127,7 @@ sintheta = dist.Field(name="sintheta", bases=ball)
 mask = dist.Field(name="mask", bases=sphere)
 
 sintheta["g"] = np.sin(theta)
-mask["g"] = window_equator(theta, 0.5, np.float64)
+mask["g"] = window_equator(theta, 0.5, np.float64, PARAMS["steepness"])
 
 
 uang_r1 = dist.VectorField(coords, bases=ball)(r=radius).evaluate()

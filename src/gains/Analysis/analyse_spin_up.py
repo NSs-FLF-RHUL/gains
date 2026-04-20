@@ -334,8 +334,8 @@ def plot_against_time(
 
     coord_val = coord.coord
     coord_name = coord.label
-
-    coord_tries = list(range(int(len(coord_val) / 2), len(coord_val), 6))
+    coord_res = len(coord_val)
+    coord_tries = np.arange(int(len(coord_val)/2), len(coord_val), int(0.05*coord_res))
     alphas = np.linspace(0.40, 1.0, len(coord_tries))
     coord_checked = [coord_val[i] for i in coord_tries]
 

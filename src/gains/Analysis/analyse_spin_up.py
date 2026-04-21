@@ -45,7 +45,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--targets",
         type=float,
-        nargs='*',
+        nargs="*",
         default=[0.5, 0.6, 0.7, 0.8, 0.9],
         help="The coordinate values you want to plot against time (The default "
         "assumes you are plotting different radii against time).",
@@ -368,7 +368,8 @@ def plot_against_time(
     :param path: The path to the output directory
     :param ek: The ekman number used in this run
     :param ntheta: The number of theta values.
-    :param targets: The values of the coordinate to measure the angular speed against time.
+    :param targets: The values of the coordinate to measure the angular speed
+    against time.
     :returns path_list: A list of only .h5 files in the specified path.
     """
     path = Path(path)

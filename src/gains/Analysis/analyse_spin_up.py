@@ -44,7 +44,8 @@ def create_parser() -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--targets",
-        type=list,
+        type=float,
+        nargs='*',
         default=[0.5, 0.6, 0.7, 0.8, 0.9],
         help="The coordinate values you want to plot against time (The default "
         "assumes you are plotting different radii against time).",
@@ -314,9 +315,10 @@ def get_angular_speed_vs_time(
     Find the angular speed at the equator at a given radius.
 
     :param coord: The coordinate to be varied - should be r or theta.
-    :param c_get: Index of the coordinate we want.
+    :param target: Value of the coordinate we want.
     :param n_writes: Number of writes per .h5 file.
     :param path_list: List of paths to files to analyse.
+    :param ntheta: The number of theta values.
     :returns omega_rs: List of angular velocities at each time.
     :returns times: List of times data is saved at.
     """
@@ -364,10 +366,9 @@ def plot_against_time(
     :param coord: The coordinate and corrsponding label you want to vary when plotting.
     :param label: The label to appear on the legend.
     :param path: The path to the output directory
-    :param return_paths: Sets whether or not a list of paths to output files is
-    returned.
-    :param name: What to name the png file containing the figure.
-    :param targets: The values
+    :param ek: The ekman number used in this run
+    :param ntheta: The number of theta values.
+    :param targets: The values of the coordinate to measure the angular speed against time.
     :returns path_list: A list of only .h5 files in the specified path.
     """
     path = Path(path)

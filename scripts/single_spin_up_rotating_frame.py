@@ -9,6 +9,7 @@ from pathlib import Path
 import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
+import cProfile
 
 from gains.exceptions import MeshError
 
@@ -80,6 +81,22 @@ else:
 
 logger.info(f"running on processor mesh={mesh}")
 
+def profile(filename = None, comm = MPI.COMM_WORLD):
+    def prof_decorator(f):
+        def wrap_f(*args,**kwargs):
+            pr = cProfile.Profile()
+            pr.enable()
+            result = f(*args,**kwargs)
+            pr.disable()
+
+            if filename is None:
+                pr.print_stats()
+            else:
+                filename_r = filename + ".{}".format(comm.rank)
+                pr.dump_stats(filename_r)
+            return result
+        return wrap_f
+    return prof_decorator
 
 # Bases
 coords = d3.SphericalCoordinates("phi", "theta", "r")
@@ -150,7 +167,7 @@ problem = d3.IVP([p_n, u_n, tau_p_n, tau_u_n], namespace=locals())
 problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation(
     "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
-    "-2*cross(ez,u_n) - cross(curl(u_n),u_n)"
+    "-2*cross(ez,u_n)"
 )
 problem.add_equation(
     "angular(u_n(r=radius)) = mask*angular(uang_r1) + (1-mask)*angular(u_n(r=radius))"
@@ -237,5 +254,13 @@ CFL.add_velocity(u_n)
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
+@profile(filename="profile_test")
+def evolve(solver):
+    return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+
+evolve(solver)
+
+'''
 # Main loop
 solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+'''

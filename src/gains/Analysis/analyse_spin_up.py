@@ -94,6 +94,21 @@ def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarra
     return fnew
 
 
+def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
+    """
+    Return the nearest value to a target in an array, as well as its index.
+
+    :param target: The ideal value to search for in the array.
+    :param arr: The array to be searched for the target value.
+    :returns index: The index of the nearest value to target in the array.
+    :returns nearest: The closest value to the target in the array.
+    """
+    diff = np.abs(arr - target)
+    index = np.argmin(diff)
+    nearest = arr[index]
+    return index, nearest
+
+
 def plot_stream(
     r: np.ndarray,
     theta: np.ndarray,
@@ -272,7 +287,11 @@ def plot_angular_velocity(
 
 
 def get_angular_speed_vs_time(
-    coord: str, c_get: int, n_writes: int, path_list: list[Path], ntheta: int
+    coord: LabeledCoordinate,
+    target: float,
+    n_writes: int,
+    path_list: list[Path],
+    ntheta: int,
 ) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
@@ -285,21 +304,23 @@ def get_angular_speed_vs_time(
     :returns times: List of times data is saved at.
     """
     err_msg = "coordinate must be r or theta."
+
     out_size = len(path_list) * n_writes
     omega_rs = np.zeros((out_size,))
     times = np.zeros(out_size)
     theta_resolution = ntheta
     count = 0
+    c_get = get_arg_of_nearest(target, coord.coord)[0]
     for path in path_list:
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
         for j in range(n_writes):
             u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
-            if coord == "r":
+            if coord.label == "r":
                 omega_r = calculate_angular_speed_single(
                     path, c_get, int(theta_resolution / 2), u_n_phi
                 )  # theta arg esnures the equator is selected.
-            elif coord == "theta":
+            elif coord.label == "theta":
                 omega_r = calculate_angular_speed_single(
                     path, -1, c_get, u_n_phi
                 )  # r arg ensures the surface is selected.
@@ -332,27 +353,23 @@ def plot_against_time(
         (p for p in path.iterdir() if p.suffix == ".h5"), key=extract_numerical_suffix
     )
 
-    coord_val = coord.coord
-    coord_name = coord.label
-    coord_res = len(coord_val)
-    coord_tries = np.arange(int(len(coord_val)/2), len(coord_val), int(0.05*coord_res))
-    alphas = np.linspace(0.40, 1.0, len(coord_tries))
-    coord_checked = [coord_val[i] for i in coord_tries]
+    targets = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    alphas = np.linspace(0.40, 1.0, len(targets))
 
     fig = plt.figure()
     ax = fig.gca()
 
-    for i in range(len(coord_tries)):
-        val = coord_tries[i]
+    for i in range(len(targets)):
+        target = targets[i]
         omega_r, times = get_angular_speed_vs_time(
-            coord_name, val, 100, path_list, ntheta=ntheta
+            coord, target, 100, path_list, ntheta=ntheta
         )
         ax.plot(
             times,
             omega_r,
             color="#024cf7",
             alpha=alphas[i],
-            label=str(label + " = " + str(round(coord_checked[i], 2))),
+            label=str(label + " = " + str(round(target, 2))),
         )
     ax.legend(frameon=False, loc="lower right")
     t_ek = 1 / np.sqrt(ek)

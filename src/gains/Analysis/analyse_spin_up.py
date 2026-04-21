@@ -42,6 +42,14 @@ def create_parser() -> argparse.ArgumentParser:
         help="The directory in which to save frames.",
     )
 
+    parser.add_argument(
+        "--targets",
+        type=list,
+        default=[0.5, 0.6, 0.7, 0.8, 0.9],
+        help="The coordinate values you want to plot against time (The default "
+        "assumes you are plotting different radii against time).",
+    )
+
     return parser
 
 
@@ -339,7 +347,7 @@ def plot_against_time(
     path: Path,
     ek: float,
     ntheta: int,
-    targets: np.array | list,
+    targets: np.ndarray | list,
 ) -> tuple[list[Path], mpl.figure]:
     """
     Plot a range of coordinate values against time.

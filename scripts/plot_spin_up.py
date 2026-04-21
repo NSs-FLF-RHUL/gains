@@ -66,7 +66,7 @@ if __name__ == "__main__":
     r = LabeledCoordinate(r_check, "r")
     theta = LabeledCoordinate(theta_check, "theta")
 
-    path_list, fig = plot_against_time(r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"])
+    path_list, fig = plot_against_time(r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"])
     fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
     if anim_check == "y":

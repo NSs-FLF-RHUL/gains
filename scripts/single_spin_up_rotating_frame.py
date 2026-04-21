@@ -245,7 +245,6 @@ try:
             # Compute memory usage in MB
             mem_gb = process.memory_info().rss / 1024**3
 
-            # Optional: gather max and total memory across ranks
             max_mem = comm.allreduce(mem_mb, op=MPI.MAX)
             total_mem = comm.allreduce(mem_mb, op=MPI.SUM)
 

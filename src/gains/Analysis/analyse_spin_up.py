@@ -334,7 +334,12 @@ def get_angular_speed_vs_time(
 
 
 def plot_against_time(
-    coord: LabeledCoordinate, label: str, path: Path, ek: float, ntheta: int
+    coord: LabeledCoordinate,
+    label: str,
+    path: Path,
+    ek: float,
+    ntheta: int,
+    targets: np.array | list,
 ) -> tuple[list[Path], mpl.figure]:
     """
     Plot a range of coordinate values against time.
@@ -345,6 +350,7 @@ def plot_against_time(
     :param return_paths: Sets whether or not a list of paths to output files is
     returned.
     :param name: What to name the png file containing the figure.
+    :param targets: The values
     :returns path_list: A list of only .h5 files in the specified path.
     """
     path = Path(path)
@@ -353,7 +359,6 @@ def plot_against_time(
         (p for p in path.iterdir() if p.suffix == ".h5"), key=extract_numerical_suffix
     )
 
-    targets = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     alphas = np.linspace(0.40, 1.0, len(targets))
 
     fig = plt.figure()

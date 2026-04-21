@@ -50,6 +50,15 @@ def create_parser() -> argparse.ArgumentParser:
         "assumes you are plotting different radii against time).",
     )
 
+    parser.add_argument(
+        "--coordinate",
+        type=str,
+        default="r",
+        help="The coordinate to compare the spin up with time against "
+        "(ie vary the radial or angular location)."
+        " Takes r by default, pass theta to vary the meridional coordinate instead.",
+    )
+
     return parser
 
 

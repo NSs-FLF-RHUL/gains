@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
     elif args["coordinate"] == "theta":
         path_list, fig = plot_against_time(
-            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"]
+            theta, "theta", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"]
         )
         fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
 

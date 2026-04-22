@@ -1,15 +1,16 @@
 """Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
 
 import argparse
+import cProfile
 import datetime
 import json
 import logging
 from pathlib import Path
 
+import dedalus.core as d3core
 import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
-import cProfile
 
 from gains.exceptions import MeshError
 
@@ -48,6 +49,14 @@ parser.add_argument(
     help="relative path to parameter file to use for this run, saved in json format.",
 )
 
+parser.add_argument(
+    "--profile",
+    type=str,
+    default=None,
+    help="If an arg is provided, will also generate time profiling data, stored in a directory named as the"
+    " argument provided.",
+)
+
 args = vars(parser.parse_args())
 
 if args["parameter_file"] is not None:
@@ -65,13 +74,16 @@ PARAMS["output_dir"] = (
     else "single_spin_up_"
     + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
 )
+PARAMS["profile"] = args["profile"]
 # Additional Parameters - not likely to change between runs
 radius = 1
 timestepper = d3.SBDF2
 cfl_safety = 0.2
 max_timestep = 1e-2
 dtype = np.float64
-ncpu = MPI.COMM_WORLD.size
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+ncpu = comm.size
 log2 = np.log2(ncpu)
 
 if log2 == int(log2):
@@ -81,22 +93,33 @@ else:
 
 logger.info(f"running on processor mesh={mesh}")
 
-def profile(filename = None, comm = MPI.COMM_WORLD):
+
+def profile(dirname=None, comm=MPI.COMM_WORLD):
+    """Time profile the decorated function and save the result alongside with the outputs."""
+
     def prof_decorator(f):
-        def wrap_f(*args,**kwargs):
+        def wrap_f(*args, **kwargs):
             pr = cProfile.Profile()
             pr.enable()
-            result = f(*args,**kwargs)
+            result = f(*args, **kwargs)
             pr.disable()
 
-            if filename is None:
+            if dirname is None:
                 pr.print_stats()
             else:
-                filename_r = filename + ".{}".format(comm.rank)
+                output_dir = Path(f"outputs/{PARAMS['output_dir']}" + "/" + dirname)
+                if rank == 0:
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                comm.Barrier()
+
+                filename_r = output_dir / Path(f"time_profile.{comm.rank}")
                 pr.dump_stats(filename_r)
             return result
+
         return wrap_f
+
     return prof_decorator
+
 
 # Bases
 coords = d3.SphericalCoordinates("phi", "theta", "r")
@@ -254,13 +277,15 @@ CFL.add_velocity(u_n)
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
-@profile(filename="profile_test")
-def evolve(solver):
+
+@profile(dirname=PARAMS["profile"])
+def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
+    """Call solver.evolve, but decorate with the profiling function."""
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
 
-evolve(solver)
 
-'''
-# Main loop
-solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
-'''
+if PARAMS["profile"] is not None:
+    evolve(solver)
+
+else:
+    solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)

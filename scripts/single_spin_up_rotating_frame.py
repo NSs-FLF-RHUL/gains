@@ -5,6 +5,7 @@ import cProfile
 import datetime
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
 
 import dedalus.core as d3core
@@ -53,7 +54,8 @@ parser.add_argument(
     "--profile",
     type=str,
     default=None,
-    help="If an arg is provided, will also generate time profiling data, stored in a directory named as the"
+    help="If an arg is provided, will also generate time profiling data,"
+    " stored in a directory named as the"
     " argument provided.",
 )
 
@@ -82,7 +84,6 @@ cfl_safety = 0.2
 max_timestep = 1e-2
 dtype = np.float64
 comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
 ncpu = comm.size
 log2 = np.log2(ncpu)
 
@@ -94,11 +95,20 @@ else:
 logger.info(f"running on processor mesh={mesh}")
 
 
-def profile(dirname=None, comm=MPI.COMM_WORLD):
-    """Time profile the decorated function and save the result alongside with the outputs."""
+def profile(dirname: str | None) -> Callable:
+    """
+    Provide a decorator to use cProfile to profile an function running in parallel.
 
-    def prof_decorator(f):
-        def wrap_f(*args, **kwargs):
+    The stats are optionally saved in a subdirectory of the overall
+    output directory for the simulation, and saved using the dump_stats
+    method in a format readable by snakeviz.
+
+    :param dirname: The name of the directory to save the profiles to.
+    """
+    comm = MPI.COMM_WORLD
+
+    def prof_decorator(f: Callable) -> Callable:
+        def wrap_f(*args: object, **kwargs: object) -> object:
             pr = cProfile.Profile()
             pr.enable()
             result = f(*args, **kwargs)
@@ -108,12 +118,14 @@ def profile(dirname=None, comm=MPI.COMM_WORLD):
                 pr.print_stats()
             else:
                 output_dir = Path(f"outputs/{PARAMS['output_dir']}" + "/" + dirname)
-                if rank == 0:
+                # Only rank 0 creates directory to avoid race conditions
+                if comm.rank == 0:
                     output_dir.mkdir(parents=True, exist_ok=True)
+                # All ranks wait until directory exists
                 comm.Barrier()
 
-                filename_r = output_dir / Path(f"time_profile.{comm.rank}")
-                pr.dump_stats(filename_r)
+                filename = output_dir / Path(f"time_profile.{comm.rank}")
+                pr.dump_stats(filename)
             return result
 
         return wrap_f

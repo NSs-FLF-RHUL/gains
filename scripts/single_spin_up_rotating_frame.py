@@ -117,7 +117,7 @@ def profile(dirname: str | None) -> Callable:
             if dirname is None:
                 pr.print_stats()
             else:
-                output_dir = Path(f"outputs/{PARAMS['output_dir']}" + "/" + dirname)
+                output_dir = Path("outputs") / PARAMS["output_dir"] / dirname
                 # Only rank 0 creates directory to avoid race conditions
                 if comm.rank == 0:
                     output_dir.mkdir(parents=True, exist_ok=True)

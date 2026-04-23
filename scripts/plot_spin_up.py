@@ -66,8 +66,22 @@ if __name__ == "__main__":
     r = LabeledCoordinate(r_check, "r")
     theta = LabeledCoordinate(theta_check, "theta")
 
-    path_list, fig = plot_against_time(r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"])
-    fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
+    err_msg = "Coordinate varied must be r or theta."
+
+    if args["coordinate"] == "r":
+        path_list, fig = plot_against_time(
+            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"]
+        )
+        fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
+
+    elif args["coordinate"] == "theta":
+        path_list, fig = plot_against_time(
+            theta, "theta", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"]
+        )
+        fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
+
+    else:
+        raise NotImplementedError(err_msg)
 
     if anim_check == "y":
         num_files = len(path_list)

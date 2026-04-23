@@ -62,6 +62,7 @@ lint.ignore = [
   "D417",   # argument description in docstring (unreliable)
   "ISC001", # simplify implicit str concatenation (ruff-format recommended)
   "G004", # Logging statement uses f-string (Conflicts with a fix)
+  'PLR0913' # Does not allow more than 5 arguments
 ]
 lint.per-file-ignores = { "tests*" = [
   "D100",   # Missing docstring in public module

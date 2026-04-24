@@ -49,7 +49,7 @@ log2 = np.log2(ncpu)
 
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
-Bprime = PARAMS["Bprime"]
+Bprime = B**2
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
@@ -73,7 +73,7 @@ sphere = ball.surface
 
 #Fields
 u_n = dist.VectorField(coords, name='u_n', bases=ball)
-u_s = dist.VectorField(coords, name = 'u_s')
+u_s = dist.VectorField(coords, name = 'u_s', bases=ball)
 p_n = dist.Field(name='p_n', bases=ball)
 p_s = dist.Field(name='p_s', bases = ball)
 rho_n = dist.Field(name = 'rho_m', bases = ball)
@@ -81,7 +81,8 @@ rho_s = dist.Field(name = 'rho_s', bases = ball)
 
 tau_p_n = dist.Field(name='tau_p_n')
 tau_p_s = dist.Field(name='tau_p_s')
-tau_u_n = dist.VectorField(name='tau_u_n')
+tau_u_n = dist.VectorField(coords, name='tau_u_n', bases=sphere)
+tau_u_s = dist.VectorField(coords, name='tau_u_s', bases=sphere)
 
 #Substitutions
 cross = d3.CrossProduct
@@ -100,33 +101,30 @@ ephi['g'][0] = 1
 ez = dist.VectorField(coords, bases=ball)
 ez['g'][1] = -np.sin(theta)
 ez['g'][2] = np.cos(theta) # unit vector in z direction
-
-omega_s = curl(u_s)
 u_sn = u_s - u_n
-omega_unit = omega_s/np.sqrt(dot(omega_s,omega_s))
+omega_s = curl(u_s)
+omega_unit = omega_s/(np.sqrt(dot(omega_s,omega_s)) + 1e7)
 F_mf = B*(cross(omega_unit, cross(omega_s,u_sn))) - Bprime*cross(omega_s,u_sn)
 
 sintheta = dist.Field(name='sintheta',bases=ball)
 uang = dist.VectorField(coords, bases = ball)(r=radius).evaluate()
 uang['g'][0,:] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()['g']
 
-#problem
-problem = d3.IVP([u_n,u_s,p_n,p_s,rho_n,rho_s,tau_p_n,tau_p_s, tau_u_n], namespace = locals())
+#problem - HVBK equations spin up in sphere
+problem = d3.IVP([u_n,u_s,p_n,p_s,tau_p_n,tau_p_s, tau_u_n, tau_u_s], namespace = locals())
 
 problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation("div(u_s) + tau_p_s = 0")
 problem.add_equation("integ(p_n) = 0")
 problem.add_equation("integ(p_s) = 0")
 
-problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) = -u_n@grad(u_n) + rho_s/rho_n * F_mf - 2*cross(e_z,u_n)")
-problem.add_equation("dt(u_s) + grad(p_s) = -u_s@grad(u_s) - F_mf - 2*cross(e_z, u_s)")
+problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + 0.9 * F_mf - 2*cross(ez,u_n)")
+problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)")
 
 problem.add_equation("radial(u_n(r=radius)) = 0")
 problem.add_equation("radial(u_s(r=radius)) = 0")
 problem.add_equation("angular(u_n(r=radius)) = angular(uang)")
-
-problem.add_equation("dt(rho_s) = - u_s@grad(rho_s)")
-problem.add_equation("dt(rho_n) = - u_n@grad(rho_n)")
+problem.add_equation("angular(u_s(r=radius)) = angular(uang)")
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
@@ -141,3 +139,72 @@ else:
     timestep = max_timestep
 
 # Analysis
+volume = (4 / 3) * np.pi * radius**3
+
+
+def az_avg(a: d3.Field) -> d3.Field:
+    """Average over the phi coordinate."""
+    return d3.Average(a, coords.coords[0])
+
+
+def s2_avg(a: d3.Field) -> d3.Field:
+    """Average over all angular coordinates."""
+    return d3.Average(a, coords.S2coordsys)
+
+
+def vol_avg(a: d3.Field) -> d3.Field:
+    """Average over whole sphere."""
+    return d3.Integrate(a / volume, coords)
+
+
+# define every component of velocity (for output)
+u_n_r = dot(u_n, er)
+u_n_theta = dot(u_n, etheta)
+u_n_phi = dot(u_n, ephi)
+
+save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path.mkdir(parents=True, exist_ok=True)
+
+AZ_avg = solver.evaluator.add_file_handler(
+    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    sim_dt=0.05,
+    max_writes=100,
+)
+AZ_avg.add_task(dot(er, u_n), name="u_n_r")
+AZ_avg.add_task(dot(etheta, u_n), name="u_n_theta")
+AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
+
+
+slices = solver.evaluator.add_file_handler(
+    "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
+    sim_dt=0.025,
+    max_writes=100,
+)
+
+slices.add_task(
+    u_n_phi(theta=np.pi / 2), scales=PARAMS["dealias"], name="u_n_phi(equator)"
+)
+
+# Checkpoint
+checkpoint = solver.evaluator.add_file_handler(
+    "outputs/su_equator/checkpoint",
+    wall_dt=3600,
+    max_writes=1,
+    parallel="gather",
+)
+checkpoint.add_tasks(solver.state, layout="g")
+
+# CFL
+CFL = d3.CFL(
+    solver, timestep, cadence=1, safety=0.3, threshold=0.1, max_dt=max_timestep
+)
+CFL.add_velocity(u_n)
+CFL.add_velocity(u_s)
+
+
+# Flow properties
+flow = d3.GlobalFlowProperty(solver, cadence=10)
+flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
+
+# Main loop
+solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)

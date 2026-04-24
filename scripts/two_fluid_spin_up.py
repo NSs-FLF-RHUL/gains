@@ -108,6 +108,7 @@ omega_unit = omega_s/(np.sqrt(dot(omega_s,omega_s)) + 1e-7)
 F_mf = B*(cross(omega_unit, cross(omega_s,u_sn))) - Bprime*cross(omega_s,u_sn)
 
 sintheta = dist.Field(name='sintheta',bases=ball)
+sintheta["g"] = np.sin(theta)
 uang = dist.VectorField(coords, bases = ball)(r=radius).evaluate()
 uang['g'][0,:] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()['g']
 strain_rate = d3.grad(u_s) + d3.trans(d3.grad(u_s))

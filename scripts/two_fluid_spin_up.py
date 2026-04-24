@@ -94,6 +94,7 @@ phi, theta, r = dist.local_grids(ball)
 er = dist.VectorField(coords)
 etheta = dist.VectorField(coords)
 ephi = dist.VectorField(coords)
+
 er['g'][2] = 1
 etheta['g'][1] = 1
 ephi['g'][0] = 1
@@ -103,12 +104,14 @@ ez['g'][1] = -np.sin(theta)
 ez['g'][2] = np.cos(theta) # unit vector in z direction
 u_sn = u_s - u_n
 omega_s = curl(u_s)
-omega_unit = omega_s/(np.sqrt(dot(omega_s,omega_s)) + 1e7)
+omega_unit = omega_s/(np.sqrt(dot(omega_s,omega_s)) + 1e-7)
 F_mf = B*(cross(omega_unit, cross(omega_s,u_sn))) - Bprime*cross(omega_s,u_sn)
 
 sintheta = dist.Field(name='sintheta',bases=ball)
 uang = dist.VectorField(coords, bases = ball)(r=radius).evaluate()
 uang['g'][0,:] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()['g']
+strain_rate = d3.grad(u_s) + d3.trans(d3.grad(u_s))
+shear_stress = d3.angular(d3.radial(strain_rate(r=1), index=1))
 
 #problem - HVBK equations spin up in sphere
 problem = d3.IVP([u_n,u_s,p_n,p_s,tau_p_n,tau_p_s, tau_u_n, tau_u_s], namespace = locals())
@@ -124,7 +127,7 @@ problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_m
 problem.add_equation("radial(u_n(r=radius)) = 0")
 problem.add_equation("radial(u_s(r=radius)) = 0")
 problem.add_equation("angular(u_n(r=radius)) = angular(uang)")
-problem.add_equation("angular(u_s(r=radius)) = angular(uang)")
+problem.add_equation("shear_stress = 0")
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]

@@ -296,9 +296,4 @@ def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
     """Call solver.evolve, but decorate with the profiling function."""
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
 
-
-if PARAMS["profile"] is not None:
-    evolve(solver)
-
-else:
-    solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+evolve(solver)

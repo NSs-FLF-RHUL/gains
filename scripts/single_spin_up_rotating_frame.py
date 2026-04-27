@@ -107,6 +107,9 @@ def profile(dirname: str | None) -> Callable:
     """
     comm = MPI.COMM_WORLD
 
+    if dirname is None:
+        return lambda f: f
+
     def prof_decorator(f: Callable) -> Callable:
         def wrap_f(*args: object, **kwargs: object) -> object:
             pr = cProfile.Profile()
@@ -114,18 +117,16 @@ def profile(dirname: str | None) -> Callable:
             result = f(*args, **kwargs)
             pr.disable()
 
-            if dirname is None:
-                pr.print_stats()
-            else:
-                output_dir = Path("outputs") / PARAMS["output_dir"] / dirname
-                # Only rank 0 creates directory to avoid race conditions
-                if comm.rank == 0:
-                    output_dir.mkdir(parents=True, exist_ok=True)
-                # All ranks wait until directory exists
-                comm.Barrier()
+            output_dir = Path("outputs") / PARAMS["output_dir"] / dirname
+            # Only rank 0 creates directory to avoid race conditions
+            if comm.rank == 0:
+                output_dir.mkdir(parents=True, exist_ok=True)
+            # All ranks wait until directory exists
+            comm.Barrier()
 
-                filename = output_dir / Path(f"time_profile.{comm.rank}")
-                pr.dump_stats(filename)
+            filename = output_dir / Path(f"time_profile.{comm.rank}")
+            pr.dump_stats(filename)
+            
             return result
 
         return wrap_f

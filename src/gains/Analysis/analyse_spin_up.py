@@ -46,7 +46,7 @@ def create_parser() -> argparse.ArgumentParser:
         "--targets",
         type=float,
         nargs="*",
-        default=[0.5, 0.6, 0.7, 0.8, 0.9],
+        default=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         help="The coordinate values you want to plot against time (The default "
         "assumes you are plotting different radii against time).",
     )
@@ -334,7 +334,7 @@ def get_angular_speed_vs_time(
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
         for j in range(n_writes):
-            u_n_phi = data["tasks"]["u_n_phi"][j, -1, :, :]
+            u_n_phi = data["tasks"]["u_s_phi"][j, -1, :, :]
             if coord.label == "r":
                 omega_r = calculate_angular_speed_single(
                     path, c_get, int(theta_resolution / 2), u_n_phi

@@ -49,7 +49,7 @@ log2 = np.log2(ncpu)
 
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
-Bprime = B**2
+Bprime = B/2
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
@@ -102,10 +102,10 @@ ephi['g'][0] = 1
 ez = dist.VectorField(coords, bases=ball)
 ez['g'][1] = -np.sin(theta)
 ez['g'][2] = np.cos(theta) # unit vector in z direction
-u_sn = u_s - u_n
-omega_s = curl(u_s)
-omega_unit = omega_s/(np.sqrt(dot(omega_s,omega_s)) + 1e-7)
-F_mf = B*(cross(omega_unit, cross(omega_s,u_sn))) - Bprime*cross(omega_s,u_sn)
+u_ns = u_n - u_s
+omega_s = curl(u_s) +2*ez
+omega_unit = omega_s/(np.sqrt(dot(omega_s,omega_s)) + 1e-14)
+F_mf = B*(cross(omega_unit, cross(omega_s,u_ns))) + Bprime*cross(omega_s,u_ns)
 
 sintheta = dist.Field(name='sintheta',bases=ball)
 sintheta["g"] = np.sin(theta)
@@ -122,8 +122,8 @@ problem.add_equation("div(u_s) + tau_p_s = 0")
 problem.add_equation("integ(p_n) = 0")
 problem.add_equation("integ(p_s) = 0")
 
-problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + 0.9 * F_mf - 2*cross(ez,u_n)")
-problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)")
+problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + 0.1 * F_mf - 2*cross(ez,u_n)")
+problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - 0.9 * F_mf - 2*cross(ez, u_s)")
 
 problem.add_equation("radial(u_n(r=radius)) = 0")
 problem.add_equation("radial(u_s(r=radius)) = 0")
@@ -140,6 +140,8 @@ else:
     # Initial condition
     u_n.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
     u_n.low_pass_filter(scales=0.5)
+    u_s.fill_random("g", seed=42,distribution="normal", scale=1e-10)
+    u_s.low_pass_filter(scales=0.5)
     timestep = max_timestep
 
 # Analysis
@@ -177,7 +179,7 @@ AZ_avg = solver.evaluator.add_file_handler(
 AZ_avg.add_task(dot(er, u_n), name="u_n_r")
 AZ_avg.add_task(dot(etheta, u_n), name="u_n_theta")
 AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
-
+AZ_avg.add_task(az_avg(dot(ephi, u_s)), name = "u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),

@@ -126,7 +126,7 @@ def profile(dirname: str | None) -> Callable:
 
             filename = output_dir / Path(f"time_profile.{comm.rank}")
             pr.dump_stats(filename)
-            
+
             return result
 
         return wrap_f
@@ -295,5 +295,6 @@ flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
     """Call solver.evolve, but decorate with the profiling function."""
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+
 
 evolve(solver)

@@ -5,13 +5,14 @@ import logging
 from pathlib import Path
 
 import dedalus.public as d3
+import dedalus.core as d3core
 import numpy as np
 from mpi4py import MPI
 
 from gains.exceptions import MeshError
 
 # Parameters - load in from parameter file
-from gains.utils import create_parser_simulation
+from gains.utils import create_parser_simulation, profile
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
 
@@ -122,8 +123,8 @@ problem.add_equation("div(u_s) + tau_p_s = 0")
 problem.add_equation("integ(p_n) = 0")
 problem.add_equation("integ(p_s) = 0")
 
-problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + 0.1 * F_mf - 2*cross(ez,u_n)")
-problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - 0.9 * F_mf - 2*cross(ez, u_s)")
+problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + 0.95 * F_mf - 2*cross(ez,u_n)")
+problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - 0.05 * F_mf - 2*cross(ez, u_s)")
 
 problem.add_equation("radial(u_n(r=radius)) = 0")
 problem.add_equation("radial(u_s(r=radius)) = 0")
@@ -213,4 +214,9 @@ flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
 # Main loop
-solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+@profile("profiles_4", PARAMS)
+def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
+    return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+
+
+evolve(solver)

@@ -2,6 +2,7 @@
 
 import argparse
 import cProfile
+import re
 from collections.abc import Callable
 from pathlib import Path
 
@@ -151,3 +152,19 @@ def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
     index = np.argmin(diff)
     nearest = arr[index]
     return index, nearest
+
+
+def extract_numerical_suffix(path: Path) -> int | float:
+    """
+    Extract an integer at the end of a filename.
+
+    Takes a path to a file saved in the form /output_dir/file_name[num].extension
+    and return num. Files that don't fit this format will be assigned inf, so
+    placed at the end of a list when sorting.
+
+    :param path: path to the output file, in the form
+    /output_dir/file_name[num].extension.
+    :returns suffix: Integer at the end of the file name.
+    """
+    match = re.search(r"(\d+)$", path.stem)
+    return int(match.group(1)) if match else float("inf")

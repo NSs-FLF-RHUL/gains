@@ -36,7 +36,7 @@ PARAMS["checkpoint_path"] = args["checkpoint_path"]
 PARAMS["output_dir"] = (
     args["output_dir"]
     if args["output_dir"] is not None
-    else "single_spin_up_"
+    else "two_fluid_spin_up_"
     + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
 )
 
@@ -77,8 +77,8 @@ u_n = dist.VectorField(coords, name='u_n', bases=ball)
 u_s = dist.VectorField(coords, name = 'u_s', bases=ball)
 p_n = dist.Field(name='p_n', bases=ball)
 p_s = dist.Field(name='p_s', bases = ball)
-rho_n = dist.Field(name = 'rho_m', bases = ball)
-rho_s = dist.Field(name = 'rho_s', bases = ball)
+rho_n = 0.95
+rho_s = 0.05
 
 tau_p_n = dist.Field(name='tau_p_n')
 tau_p_s = dist.Field(name='tau_p_s')
@@ -123,8 +123,8 @@ problem.add_equation("div(u_s) + tau_p_s = 0")
 problem.add_equation("integ(p_n) = 0")
 problem.add_equation("integ(p_s) = 0")
 
-problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + 0.95 * F_mf - 2*cross(ez,u_n)")
-problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - 0.05 * F_mf - 2*cross(ez, u_s)")
+problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + rho_s/rho_n * F_mf - 2*cross(ez,u_n)")
+problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)")
 
 problem.add_equation("radial(u_n(r=radius)) = 0")
 problem.add_equation("radial(u_s(r=radius)) = 0")

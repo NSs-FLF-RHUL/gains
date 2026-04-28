@@ -1,6 +1,5 @@
 """Contains functions to produce plots in scripts/plot_spin_up.py."""
 
-import argparse
 import re
 from pathlib import Path
 
@@ -9,6 +8,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
+
 from gains.utils import get_arg_of_nearest
 
 

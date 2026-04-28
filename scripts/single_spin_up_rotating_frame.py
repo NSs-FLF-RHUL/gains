@@ -1,6 +1,5 @@
 """Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
 
-import argparse
 import cProfile
 import datetime
 import json
@@ -14,11 +13,11 @@ import numpy as np
 from mpi4py import MPI
 
 from gains.exceptions import MeshError
-from gains.utils import create_parser_simulation
 
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.utils import create_parser_simulation
 
 logger = logging.getLogger(__name__)
 

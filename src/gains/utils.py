@@ -1,13 +1,18 @@
+"""Stores useful functions, applicable throughout the package."""
+
 import argparse
-from pathlib import Path
-from collections.abc import Callable
 import cProfile
-from mpi4py import MPI
+from collections.abc import Callable
+from pathlib import Path
+
 import numpy as np
+from mpi4py import MPI
+
 
 def create_parser_simulation() -> argparse.ArgumentParser:
+    """Create argument parser for simulations in a rotating spherical star."""
     parser = argparse.ArgumentParser(
-        description='simulate glitch on the boundary of a spherical star'
+        description="simulate glitch on the boundary of a spherical star"
     )
 
     parser.add_argument(
@@ -25,21 +30,25 @@ def create_parser_simulation() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--output_dir", type=str, default=None, help="Directory to store simulation outputs"
+        "--output_dir",
+        type=str,
+        default=None,
+        help="Directory to store simulation outputs",
     )
 
     parser.add_argument(
         "--parameter_file",
         type=Path,
         default=None,
-        help="relative path to parameter file to use for this run, saved in json format.",
+        help="relative path to parameter file to use for this run, saved in"
+        " json format.",
     )
 
     return parser
 
+
 def create_parser_analysis() -> argparse.ArgumentParser:
     """Create parser for command line arguments in plotting code."""
-    
     parser = argparse.ArgumentParser(
         description="Full analysis of a single component spin up simulation"
     )
@@ -89,7 +98,8 @@ def create_parser_analysis() -> argparse.ArgumentParser:
 
     return parser
 
-def profile(dirname: str | None, PARAMS: dict) -> Callable:
+
+def profile(dirname: str | None, params: dict) -> Callable:
     """
     Provide a decorator to use cProfile to profile an function running in parallel.
 
@@ -111,7 +121,7 @@ def profile(dirname: str | None, PARAMS: dict) -> Callable:
             result = f(*args, **kwargs)
             pr.disable()
 
-            output_dir = Path("outputs") / PARAMS["output_dir"] / dirname
+            output_dir = Path("outputs") / params["output_dir"] / dirname
             # Only rank 0 creates directory to avoid race conditions
             if comm.rank == 0:
                 output_dir.mkdir(parents=True, exist_ok=True)
@@ -126,6 +136,7 @@ def profile(dirname: str | None, PARAMS: dict) -> Callable:
         return wrap_f
 
     return prof_decorator
+
 
 def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
     """

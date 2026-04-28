@@ -9,6 +9,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
+from gains.utils import get_arg_of_nearest
 
 
 class LabeledCoordinate:
@@ -58,21 +59,6 @@ def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarra
         fnew[i, :] = spl_rep(radnew)
 
     return fnew
-
-
-def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
-    """
-    Return the nearest value to a target in an array, as well as its index.
-
-    :param target: The ideal value to search for in the array.
-    :param arr: The array to be searched for the target value.
-    :returns index: The index of the nearest value to target in the array.
-    :returns nearest: The closest value to the target in the array.
-    """
-    diff = np.abs(arr - target)
-    index = np.argmin(diff)
-    nearest = arr[index]
-    return index, nearest
 
 
 def plot_stream(

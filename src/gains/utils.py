@@ -3,6 +3,7 @@ from pathlib import Path
 from collections.abc import Callable
 import cProfile
 from mpi4py import MPI
+import numpy as np
 
 def create_parser_simulation() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -125,3 +126,17 @@ def profile(dirname: str | None, PARAMS: dict) -> Callable:
         return wrap_f
 
     return prof_decorator
+
+def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
+    """
+    Return the nearest value to a target in an array, as well as its index.
+
+    :param target: The ideal value to search for in the array.
+    :param arr: The array to be searched for the target value.
+    :returns index: The index of the nearest value to target in the array.
+    :returns nearest: The closest value to the target in the array.
+    """
+    diff = np.abs(arr - target)
+    index = np.argmin(diff)
+    nearest = arr[index]
+    return index, nearest

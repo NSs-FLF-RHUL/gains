@@ -11,58 +11,6 @@ import numpy as np
 import scipy.interpolate as inp
 
 
-def create_parser() -> argparse.ArgumentParser:
-    """Create parser for command line arguments in plotting code."""
-    parser = argparse.ArgumentParser(
-        description="Full analysis of a single component spin up simulation"
-    )
-    parser.add_argument(
-        "--parameter_file",
-        type=str,
-        default=None,
-        help="relative path to parameter file to use for this run,"
-        " saved in json format.",
-    )
-
-    parser.add_argument(
-        "output_dir", type=str, default=None, help="Path to output directory."
-    )
-
-    parser.add_argument(
-        "--fig_dir",
-        type=str,
-        default="outputs",
-        help="The directory in which to save figures.",
-    )
-
-    parser.add_argument(
-        "--frame_dir",
-        type=str,
-        default="frames",
-        help="The directory in which to save frames.",
-    )
-
-    parser.add_argument(
-        "--targets",
-        type=float,
-        nargs="*",
-        default=[0.5, 0.6, 0.7, 0.8, 0.9],
-        help="The coordinate values you want to plot against time (The default "
-        "assumes you are plotting different radii against time).",
-    )
-
-    parser.add_argument(
-        "--coordinate",
-        type=str,
-        default="r",
-        help="The coordinate to compare the spin up with time against "
-        "(ie vary the radial or angular location)."
-        " Takes r by default, pass theta to vary the meridional coordinate instead.",
-    )
-
-    return parser
-
-
 class LabeledCoordinate:
     """Holds a coordinate (for example r or theta) and its name for use in plotting."""
 

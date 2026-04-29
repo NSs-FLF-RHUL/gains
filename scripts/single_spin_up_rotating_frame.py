@@ -237,8 +237,8 @@ slices.add_task(
 
 # Checkpoint
 checkpoint = solver.evaluator.add_file_handler(
-    "outputs/su_equator/checkpoint",
-    wall_dt=3600,
+    "outputs/{}/su_equator/checkpoint".format(PARAMS["output_dir"]),
+    sim_dt=50,
     max_writes=1,
     parallel="gather",
 )

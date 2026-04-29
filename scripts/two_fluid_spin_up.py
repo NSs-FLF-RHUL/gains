@@ -1,23 +1,20 @@
-import argparse
 import datetime
 import json
 import logging
 from pathlib import Path
 
-import dedalus.public as d3
 import dedalus.core as d3core
+import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
 from gains.exceptions import MeshError
+from gains.params.single_spin_up_rotating import parameters as default_params
 
 # Parameters - load in from parameter file
 from gains.utils import create_parser_simulation, profile
-from gains.initial_conditions.single_component_spin_up import window_equator
-from gains.params.single_spin_up_rotating import parameters as default_params
 
-
-#Setup
+# Setup
 logger = logging.getLogger(__name__)
 
 parser = create_parser_simulation()
@@ -50,7 +47,7 @@ log2 = np.log2(ncpu)
 
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
-Bprime = B/2
+Bprime = B / 2
 
 if log2 == int(log2):
     mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
@@ -59,7 +56,7 @@ else:
 
 logger.info(f"running on processor mesh={mesh}")
 
-#Basis
+# Basis
 
 coords = d3.SphericalCoordinates("phi", "theta", "r")
 dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
@@ -72,20 +69,20 @@ ball = d3.BallBasis(
 )
 sphere = ball.surface
 
-#Fields
-u_n = dist.VectorField(coords, name='u_n', bases=ball)
-u_s = dist.VectorField(coords, name = 'u_s', bases=ball)
-p_n = dist.Field(name='p_n', bases=ball)
-p_s = dist.Field(name='p_s', bases = ball)
+# Fields
+u_n = dist.VectorField(coords, name="u_n", bases=ball)
+u_s = dist.VectorField(coords, name="u_s", bases=ball)
+p_n = dist.Field(name="p_n", bases=ball)
+p_s = dist.Field(name="p_s", bases=ball)
 rho_n = 0.95
 rho_s = 0.05
 
-tau_p_n = dist.Field(name='tau_p_n')
-tau_p_s = dist.Field(name='tau_p_s')
-tau_u_n = dist.VectorField(coords, name='tau_u_n', bases=sphere)
-tau_u_s = dist.VectorField(coords, name='tau_u_s', bases=sphere)
+tau_p_n = dist.Field(name="tau_p_n")
+tau_p_s = dist.Field(name="tau_p_s")
+tau_u_n = dist.VectorField(coords, name="tau_u_n", bases=sphere)
+tau_u_s = dist.VectorField(coords, name="tau_u_s", bases=sphere)
 
-#Substitutions
+# Substitutions
 cross = d3.CrossProduct
 dot = d3.DotProduct
 curl = d3.Curl
@@ -96,35 +93,40 @@ er = dist.VectorField(coords)
 etheta = dist.VectorField(coords)
 ephi = dist.VectorField(coords)
 
-er['g'][2] = 1
-etheta['g'][1] = 1
-ephi['g'][0] = 1
+er["g"][2] = 1
+etheta["g"][1] = 1
+ephi["g"][0] = 1
 
 ez = dist.VectorField(coords, bases=ball)
-ez['g'][1] = -np.sin(theta)
-ez['g'][2] = np.cos(theta) # unit vector in z direction
+ez["g"][1] = -np.sin(theta)
+ez["g"][2] = np.cos(theta)  # unit vector in z direction
 u_ns = u_n - u_s
-omega_s = curl(u_s) +2*ez
-omega_unit = omega_s/(np.sqrt(dot(omega_s,omega_s)) + 1e-14)
-F_mf = B*(cross(omega_unit, cross(omega_s,u_ns))) + Bprime*cross(omega_s,u_ns)
+omega_s = curl(u_s) + 2 * ez
+omega_unit = omega_s / (np.sqrt(dot(omega_s, omega_s)) + 1e-14)
+F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
 
-sintheta = dist.Field(name='sintheta',bases=ball)
+sintheta = dist.Field(name="sintheta", bases=ball)
 sintheta["g"] = np.sin(theta)
-uang = dist.VectorField(coords, bases = ball)(r=radius).evaluate()
-uang['g'][0,:] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()['g']
+uang = dist.VectorField(coords, bases=ball)(r=radius).evaluate()
+uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 strain_rate = d3.grad(u_s) + d3.trans(d3.grad(u_s))
 shear_stress = d3.angular(d3.radial(strain_rate(r=1), index=1))
-
-#problem - HVBK equations spin up in sphere
-problem = d3.IVP([u_n,u_s,p_n,p_s,tau_p_n,tau_p_s, tau_u_n, tau_u_s], namespace = locals())
+# problem - HVBK equations spin up in sphere
+problem = d3.IVP(
+    [u_n, u_s, p_n, p_s, tau_p_n, tau_p_s, tau_u_n, tau_u_s], namespace=locals()
+)
 
 problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation("div(u_s) + tau_p_s = 0")
 problem.add_equation("integ(p_n) = 0")
 problem.add_equation("integ(p_s) = 0")
 
-problem.add_equation("dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + rho_s/rho_n * F_mf - 2*cross(ez,u_n)")
-problem.add_equation("dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)")
+problem.add_equation(
+    "dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + rho_s/rho_n * F_mf - 2*cross(ez,u_n)"
+)
+problem.add_equation(
+    "dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)"
+)
 
 problem.add_equation("radial(u_n(r=radius)) = 0")
 problem.add_equation("radial(u_s(r=radius)) = 0")
@@ -141,7 +143,7 @@ else:
     # Initial condition
     u_n.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
     u_n.low_pass_filter(scales=0.5)
-    u_s.fill_random("g", seed=42,distribution="normal", scale=1e-10)
+    u_s.fill_random("g", seed=42, distribution="normal", scale=1e-10)
     u_s.low_pass_filter(scales=0.5)
     timestep = max_timestep
 
@@ -180,7 +182,7 @@ AZ_avg = solver.evaluator.add_file_handler(
 AZ_avg.add_task(dot(er, u_n), name="u_n_r")
 AZ_avg.add_task(dot(etheta, u_n), name="u_n_theta")
 AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
-AZ_avg.add_task(az_avg(dot(ephi, u_s)), name = "u_s_phi")
+AZ_avg.add_task(az_avg(dot(ephi, u_s)), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
@@ -212,6 +214,7 @@ CFL.add_velocity(u_s)
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
+
 
 # Main loop
 @profile("profiles_4", PARAMS)

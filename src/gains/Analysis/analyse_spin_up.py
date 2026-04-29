@@ -322,6 +322,7 @@ def plot_against_time(
         omega_r, times = get_angular_speed_vs_time(
             coord, target, 100, path_list, ntheta=ntheta
         )
+        print(i)
         ax.plot(
             times,
             omega_r,

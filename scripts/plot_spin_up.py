@@ -11,18 +11,18 @@ import numpy as np
 
 from gains.analysis.analyse_spin_up import (
     LabeledCoordinate,
-    create_parser,
     get_angular_coords,
     plot_against_time,
     plot_angular_velocity,
 )
 from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.utils import create_parser_analysis
 
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
-    parser = create_parser()
+    parser = create_parser_analysis()
     args = vars(parser.parse_args())
 
     if args["parameter_file"] is not None:

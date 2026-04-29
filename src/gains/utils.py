@@ -1,12 +1,19 @@
+"""Stores useful functions, applicable throughout the package."""
+
 import argparse
-from pathlib import Path
-from collections.abc import Callable
 import cProfile
+import re
+from collections.abc import Callable
+from pathlib import Path
+
+import numpy as np
 from mpi4py import MPI
 
+
 def create_parser_simulation() -> argparse.ArgumentParser:
+    """Create argument parser for simulations in a rotating spherical star."""
     parser = argparse.ArgumentParser(
-        description='simulate glitch on the boundary of a spherical star'
+        description="simulate glitch on the boundary of a spherical star"
     )
 
     parser.add_argument(
@@ -24,19 +31,76 @@ def create_parser_simulation() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--output_dir", type=str, default=None, help="Directory to store simulation outputs"
+        "--output_dir",
+        type=str,
+        default=None,
+        help="Directory to store simulation outputs",
     )
 
     parser.add_argument(
         "--parameter_file",
         type=Path,
         default=None,
-        help="relative path to parameter file to use for this run, saved in json format.",
+        help="relative path to parameter file to use for this run, saved in"
+        " json format.",
     )
 
     return parser
 
-def profile(dirname: str | None, PARAMS: dict) -> Callable:
+
+def create_parser_analysis() -> argparse.ArgumentParser:
+    """Create parser for command line arguments in plotting code."""
+    parser = argparse.ArgumentParser(
+        description="Full analysis of a single component spin up simulation"
+    )
+    parser.add_argument(
+        "--parameter_file",
+        type=str,
+        default=None,
+        help="relative path to parameter file to use for this run,"
+        " saved in json format.",
+    )
+
+    parser.add_argument(
+        "output_dir", type=str, default=None, help="Path to output directory."
+    )
+
+    parser.add_argument(
+        "--fig_dir",
+        type=str,
+        default="outputs",
+        help="The directory in which to save figures.",
+    )
+
+    parser.add_argument(
+        "--frame_dir",
+        type=str,
+        default="frames",
+        help="The directory in which to save frames.",
+    )
+
+    parser.add_argument(
+        "--targets",
+        type=float,
+        nargs="*",
+        default=[0.5, 0.6, 0.7, 0.8, 0.9],
+        help="The coordinate values you want to plot against time (The default "
+        "assumes you are plotting different radii against time).",
+    )
+
+    parser.add_argument(
+        "--coordinate",
+        type=str,
+        default="r",
+        help="The coordinate to compare the spin up with time against "
+        "(ie vary the radial or angular location)."
+        " Takes r by default, pass theta to vary the meridional coordinate instead.",
+    )
+
+    return parser
+
+
+def profile(dirname: str | None, params: dict) -> Callable:
     """
     Provide a decorator to use cProfile to profile an function running in parallel.
 
@@ -58,7 +122,7 @@ def profile(dirname: str | None, PARAMS: dict) -> Callable:
             result = f(*args, **kwargs)
             pr.disable()
 
-            output_dir = Path("outputs") / PARAMS["output_dir"] / dirname
+            output_dir = Path("outputs") / params["output_dir"] / dirname
             # Only rank 0 creates directory to avoid race conditions
             if comm.rank == 0:
                 output_dir.mkdir(parents=True, exist_ok=True)
@@ -74,3 +138,33 @@ def profile(dirname: str | None, PARAMS: dict) -> Callable:
 
     return prof_decorator
 
+
+def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
+    """
+    Return the nearest value to a target in an array, as well as its index.
+
+    :param target: The ideal value to search for in the array.
+    :param arr: The array to be searched for the target value.
+    :returns index: The index of the nearest value to target in the array.
+    :returns nearest: The closest value to the target in the array.
+    """
+    diff = np.abs(arr - target)
+    index = np.argmin(diff)
+    nearest = arr[index]
+    return index, nearest
+
+
+def extract_numerical_suffix(path: Path) -> int | float:
+    """
+    Extract an integer at the end of a filename.
+
+    Takes a path to a file saved in the form /output_dir/file_name[num].extension
+    and return num. Files that don't fit this format will be assigned inf, so
+    placed at the end of a list when sorting.
+
+    :param path: path to the output file, in the form
+    /output_dir/file_name[num].extension.
+    :returns suffix: Integer at the end of the file name.
+    """
+    match = re.search(r"(\d+)$", path.stem)
+    return int(match.group(1)) if match else float("inf")

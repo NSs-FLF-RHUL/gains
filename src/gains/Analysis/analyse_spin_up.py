@@ -1,6 +1,5 @@
 """Contains functions to produce plots in scripts/plot_spin_up.py."""
 
-import argparse
 import re
 from pathlib import Path
 
@@ -10,57 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
 
-
-def create_parser() -> argparse.ArgumentParser:
-    """Create parser for command line arguments in plotting code."""
-    parser = argparse.ArgumentParser(
-        description="Full analysis of a single component spin up simulation"
-    )
-    parser.add_argument(
-        "--parameter_file",
-        type=str,
-        default=None,
-        help="relative path to parameter file to use for this run,"
-        " saved in json format.",
-    )
-
-    parser.add_argument(
-        "output_dir", type=str, default=None, help="Path to output directory."
-    )
-
-    parser.add_argument(
-        "--fig_dir",
-        type=str,
-        default="outputs",
-        help="The directory in which to save figures.",
-    )
-
-    parser.add_argument(
-        "--frame_dir",
-        type=str,
-        default="frames",
-        help="The directory in which to save frames.",
-    )
-
-    parser.add_argument(
-        "--targets",
-        type=float,
-        nargs="*",
-        default=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        help="The coordinate values you want to plot against time (The default "
-        "assumes you are plotting different radii against time).",
-    )
-
-    parser.add_argument(
-        "--coordinate",
-        type=str,
-        default="r",
-        help="The coordinate to compare the spin up with time against "
-        "(ie vary the radial or angular location)."
-        " Takes r by default, pass theta to vary the meridional coordinate instead.",
-    )
-
-    return parser
+from gains.utils import get_arg_of_nearest
 
 
 class LabeledCoordinate:
@@ -110,21 +59,6 @@ def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarra
         fnew[i, :] = spl_rep(radnew)
 
     return fnew
-
-
-def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
-    """
-    Return the nearest value to a target in an array, as well as its index.
-
-    :param target: The ideal value to search for in the array.
-    :param arr: The array to be searched for the target value.
-    :returns index: The index of the nearest value to target in the array.
-    :returns nearest: The closest value to the target in the array.
-    """
-    diff = np.abs(arr - target)
-    index = np.argmin(diff)
-    nearest = arr[index]
-    return index, nearest
 
 
 def plot_stream(

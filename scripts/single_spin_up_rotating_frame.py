@@ -1,6 +1,5 @@
 """Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
 
-import argparse
 import cProfile
 import datetime
 import json
@@ -18,46 +17,11 @@ from gains.exceptions import MeshError
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.utils import create_parser_simulation
 
 logger = logging.getLogger(__name__)
 
-parser = argparse.ArgumentParser(
-    description="Simulate a localised spin up on the surface of a sphere of fluid."
-)
-
-parser.add_argument(
-    "--use_checkpoint",
-    type=bool,
-    default=False,
-    help="Boolean argument to determine if to use a checkpoint file.",
-)
-
-parser.add_argument(
-    "--checkpoint_path",
-    type=str,
-    default="outputs/checkpoints/checkpoints_sNumber.h5",
-    help="Path to the checkpoint file you want to use.",
-)
-
-parser.add_argument(
-    "--output_dir", type=str, default=None, help="Directory to store simulation outputs"
-)
-
-parser.add_argument(
-    "--parameter_file",
-    type=Path,
-    default=None,
-    help="relative path to parameter file to use for this run, saved in json format.",
-)
-
-parser.add_argument(
-    "--profile",
-    type=str,
-    default=None,
-    help="If an arg is provided, will also generate time profiling data,"
-    " stored in a directory named as the"
-    " argument provided.",
-)
+parser = create_parser_simulation()
 
 args = vars(parser.parse_args())
 

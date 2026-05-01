@@ -17,7 +17,7 @@ from gains.exceptions import MeshError
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
-from gains.utils import create_parser_simulation
+from gains.utils.parsers import create_parser_simulation
 
 logger = logging.getLogger(__name__)
 

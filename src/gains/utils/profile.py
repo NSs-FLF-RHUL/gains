@@ -8,7 +8,7 @@ from pathlib import Path
 from mpi4py import MPI
 
 
-def profile(dirname: str | None, params: dict) -> Callable:
+def profile(dirname: str | None, run_output_dir: str) -> Callable:
     """
     Provide a decorator to use cProfile to profile an function running in parallel.
 
@@ -17,6 +17,8 @@ def profile(dirname: str | None, params: dict) -> Callable:
     method in a format readable by snakeviz.
 
     :param dirname: The name of the directory to save the profiles to.
+    :param run_output_dir: The super-directory to which all outputs from the currently
+        running script should be saved.
     """
     comm = MPI.COMM_WORLD
 
@@ -30,7 +32,7 @@ def profile(dirname: str | None, params: dict) -> Callable:
             result = f(*args, **kwargs)
             pr.disable()
 
-            output_dir = Path("outputs") / params["output_dir"] / dirname
+            output_dir = Path("outputs") / run_output_dir / dirname
             # Only rank 0 creates directory to avoid race conditions
             if comm.rank == 0:
                 output_dir.mkdir(parents=True, exist_ok=True)

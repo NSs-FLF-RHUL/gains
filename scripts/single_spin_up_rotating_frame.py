@@ -41,6 +41,7 @@ PARAMS["output_dir"] = (
     + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
 )
 PARAMS["profile"] = args["profile"]
+
 # Additional Parameters - not likely to change between runs
 radius = 1
 timestepper = d3.SBDF2
@@ -215,7 +216,7 @@ flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
 
-@profile(dirname=PARAMS["profile"])
+@profile(dirname=PARAMS["profile"], run_output_dir=PARAMS["output_dir"])
 def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
     """Call solver.evolve, but decorate with the profiling function."""
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)

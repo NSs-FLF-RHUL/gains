@@ -1,10 +1,8 @@
 """Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
 
-import cProfile
 import datetime
 import json
 import logging
-from collections.abc import Callable
 from pathlib import Path
 
 import dedalus.core as d3core
@@ -17,11 +15,13 @@ from gains.exceptions import MeshError
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import mask_theta, mask_r
 from gains.params.single_spin_up_rotating import parameters as default_params
-from gains.utils import create_parser_simulation
+from gains.utils.parsers import create_parser_simulation
+from gains.utils.profile import add_profiling_options, profile
 
 logger = logging.getLogger(__name__)
 
 parser = create_parser_simulation()
+add_profiling_options(parser)
 
 args = vars(parser.parse_args())
 
@@ -41,6 +41,7 @@ PARAMS["output_dir"] = (
     + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
 )
 PARAMS["profile"] = args["profile"]
+
 # Additional Parameters - not likely to change between runs
 radius = 1
 timestepper = d3.SBDF2
@@ -57,46 +58,6 @@ else:
     raise MeshError
 
 logger.info(f"running on processor mesh={mesh}")
-
-
-def profile(dirname: str | None) -> Callable:
-    """
-    Provide a decorator to use cProfile to profile an function running in parallel.
-
-    The stats are optionally saved in a subdirectory of the overall
-    output directory for the simulation, and saved using the dump_stats
-    method in a format readable by snakeviz.
-
-    :param dirname: The name of the directory to save the profiles to.
-    """
-    comm = MPI.COMM_WORLD
-
-    if dirname is None:
-        return lambda f: f
-
-    def prof_decorator(f: Callable) -> Callable:
-        def wrap_f(*args: object, **kwargs: object) -> object:
-            pr = cProfile.Profile()
-            pr.enable()
-            result = f(*args, **kwargs)
-            pr.disable()
-
-            output_dir = Path("outputs") / PARAMS["output_dir"] / dirname
-            # Only rank 0 creates directory to avoid race conditions
-            if comm.rank == 0:
-                output_dir.mkdir(parents=True, exist_ok=True)
-            # All ranks wait until directory exists
-            comm.Barrier()
-
-            filename = output_dir / Path(f"time_profile.{comm.rank}")
-            pr.dump_stats(filename)
-
-            return result
-
-        return wrap_f
-
-    return prof_decorator
-
 
 # Bases
 coords = d3.SphericalCoordinates("phi", "theta", "r")
@@ -257,7 +218,7 @@ flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
 
-@profile(dirname=PARAMS["profile"])
+@profile(dirname=PARAMS["profile"], run_output_dir=PARAMS["output_dir"])
 def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
     """Call solver.evolve, but decorate with the profiling function."""
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)

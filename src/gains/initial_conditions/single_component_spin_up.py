@@ -11,7 +11,7 @@ import numpy as np
 from gains.exceptions import ExpectPositiveError
 
 
-def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
+def mask_theta(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
     """
     Create window function to enforce boundary conditions on only parts of the sphere.
 
@@ -32,8 +32,9 @@ def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
     shift = np.pi / 2 * np.ones_like(theta)
     theta = theta - shift
     mask = np.tanh((theta + a) / 0.1) - np.tanh((theta - a) / 0.1)
-    precision = np.finfo(dtype).eps
-    mask[mask < 1e3 * precision] = (
-        0  # about 3 orders of magnitude above dtype precision limit
-    )
     return 0.5 * mask
+
+def mask_r(rs, Nr):
+    delta_r = 1.0/Nr
+    mask = np.exp(-((rs-1.0)/delta_r)**2)
+    return mask

@@ -16,7 +16,7 @@ from gains.analysis.analyse_spin_up import (
     plot_angular_velocity,
 )
 from gains.params.single_spin_up_rotating import parameters as default_params
-from gains.utils import create_parser_analysis
+from gains.utils.parsers import create_parser_analysis
 
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)

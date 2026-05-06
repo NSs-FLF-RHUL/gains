@@ -35,6 +35,6 @@ def mask_theta(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
     return 0.5 * mask
 
 def mask_r(rs, Nr):
-    delta_r = 1.0/Nr
+    delta_r = 1.0/(Nr*2.0)
     mask = np.exp(-((rs-1.0)/delta_r)**2)
     return mask

@@ -106,7 +106,7 @@ mask_equator = dist.Field(name="mask_equator", bases=ball)
 mask_radial = dist.Field(name="mask_radial", bases=ball)
 
 sintheta["g"] = np.sin(theta)
-mask_equator["g"] = mask_theta(theta, 1.0, np.float64)
+mask_equator["g"] = mask_theta(theta, 10.0, np.float64)
 mask_radial["g"] = mask_r(r, PARAMS["Nr"])
 u_n_target = dist.VectorField(coords, name = "u_n_target", bases=ball)
 u_n_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)
@@ -131,7 +131,7 @@ problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation(
     "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
     "-2*cross(ez,u_n) "
-    "+10*(mask_equator*mask_radial*(u_n_target - u_n))" #Boundary forcing to enforce glitch
+    "+100*(mask_equator*mask_radial*(u_n_target - u_n))" #Boundary forcing to enforce glitch
 )
 
 problem.add_equation("radial(u_n(r=radius)) = 0")  # impenetrable bc

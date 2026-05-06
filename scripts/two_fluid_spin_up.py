@@ -74,8 +74,6 @@ u_n = dist.VectorField(coords, name="u_n", bases=ball)
 u_s = dist.VectorField(coords, name="u_s", bases=ball)
 p_n = dist.Field(name="p_n", bases=ball)
 p_s = dist.Field(name="p_s", bases=ball)
-rho_n = 0.95
-rho_s = 0.05
 
 tau_p_n = dist.Field(name="tau_p_n")
 tau_p_s = dist.Field(name="tau_p_s")
@@ -87,6 +85,9 @@ cross = d3.CrossProduct
 dot = d3.DotProduct
 curl = d3.Curl
 lift = lambda a: d3.Lift(a, ball, -1)
+
+x_s = 0.95 #Neutron fraction
+x_n = 0.05 #Proton/electron fraction
 
 phi, theta, r = dist.local_grids(ball)
 er = dist.VectorField(coords)
@@ -122,7 +123,7 @@ problem.add_equation("integ(p_n) = 0")
 problem.add_equation("integ(p_s) = 0")
 
 problem.add_equation(
-    "dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + rho_s/rho_n * F_mf - 2*cross(ez,u_n)"
+    "dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + x_s/x_n * F_mf - 2*cross(ez,u_n)"
 )
 problem.add_equation(
     "dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)"
@@ -217,7 +218,7 @@ flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
 
 # Main loop
-@profile("profiles_4", PARAMS)
+@profile("profiles", PARAMS)
 def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
 

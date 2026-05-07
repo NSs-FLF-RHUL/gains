@@ -106,7 +106,7 @@ mask_equator = dist.Field(name="mask_equator", bases=ball)
 mask_radial = dist.Field(name="mask_radial", bases=ball)
 
 sintheta["g"] = np.sin(theta)
-mask_equator["g"] = mask_theta(theta, 10.0, np.float64)
+mask_equator["g"] = mask_theta(theta, 0.3, 3.0)
 mask_radial["g"] = mask_r(r, PARAMS["Nr"])
 u_n_target = dist.VectorField(coords, name = "u_n_target", bases=ball)
 u_n_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)

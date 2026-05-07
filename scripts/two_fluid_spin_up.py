@@ -12,7 +12,8 @@ from gains.exceptions import MeshError
 from gains.params.single_spin_up_rotating import parameters as default_params
 
 # Parameters - load in from parameter file
-from gains.utils import create_parser_simulation, profile
+from gains.utils.parsers import create_parser_simulation
+from gains.utils.profile import profile
 
 # Setup
 logger = logging.getLogger(__name__)

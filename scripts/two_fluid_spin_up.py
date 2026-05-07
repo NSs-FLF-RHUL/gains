@@ -86,8 +86,8 @@ dot = d3.DotProduct
 curl = d3.Curl
 lift = lambda a: d3.Lift(a, ball, -1)
 
-x_s = 0.95 #Neutron fraction
-x_n = 0.05 #Proton/electron fraction
+x_s = 0.95  # Neutron fraction
+x_n = 0.05  # Proton/electron fraction
 
 phi, theta, r = dist.local_grids(ball)
 er = dist.VectorField(coords)

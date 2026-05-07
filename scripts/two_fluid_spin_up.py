@@ -1,3 +1,10 @@
+"""
+Solve the HVBK equations for a spherical star subject to a boundary spin up.
+
+Equations and mutual friction are in the same form as
+J. R. Fuentes and Vanessa Graber 2024 ApJ 974 300.
+"""
+
 import datetime
 import json
 import logging
@@ -124,7 +131,8 @@ problem.add_equation("integ(p_n) = 0")
 problem.add_equation("integ(p_s) = 0")
 
 problem.add_equation(
-    "dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + x_s/x_n * F_mf - 2*cross(ez,u_n)"
+    "dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + x_s/x_n * F_mf"
+    "- 2*cross(ez,u_n)"
 )
 problem.add_equation(
     "dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)"
@@ -221,6 +229,7 @@ flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 # Main loop
 @profile("profiles", PARAMS)
 def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
+    """Define a function to call the dedalus evolve method with profiling."""
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
 
 

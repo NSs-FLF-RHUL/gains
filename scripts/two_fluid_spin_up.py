@@ -20,12 +20,13 @@ from gains.params.single_spin_up_rotating import parameters as default_params
 
 # Parameters - load in from parameter file
 from gains.utils.parsers import create_parser_simulation
-from gains.utils.profile import profile
+from gains.utils.profile import add_profiling_options, profile
 
 # Setup
 logger = logging.getLogger(__name__)
 
 parser = create_parser_simulation()
+add_profiling_options(parser)
 args = vars(parser.parse_args())
 
 
@@ -227,7 +228,7 @@ flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
 
 # Main loop
-@profile("profiles", PARAMS)
+@profile(args["profile"], PARAMS)
 def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
     """Define a function to call the dedalus evolve method with profiling."""
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)

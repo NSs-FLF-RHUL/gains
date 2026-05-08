@@ -15,7 +15,7 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
-from gains.exceptions import MeshError
+from gains.utils.misc import mesh_cpus
 from gains.params.single_spin_up_rotating import parameters as default_params
 
 # Parameters - load in from parameter file
@@ -52,16 +52,12 @@ cfl_safety = 0.2
 max_timestep = 1e-2
 dtype = np.float64
 ncpu = MPI.COMM_WORLD.size
-log2 = np.log2(ncpu)
 
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
 Bprime = B / 2
 
-if log2 == int(log2):
-    mesh = [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
-else:
-    raise MeshError
+mesh = mesh_cpus(ncpu)
 
 logger.info(f"running on processor mesh={mesh}")
 

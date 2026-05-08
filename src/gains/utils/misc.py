@@ -2,9 +2,10 @@
 
 import re
 from pathlib import Path
-from gains.exceptions import MeshError
 
 import numpy as np
+
+from gains.exceptions import MeshError
 
 
 def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
@@ -37,9 +38,19 @@ def extract_numerical_suffix(path: Path) -> int | float:
     match = re.search(r"(\d+)$", path.stem)
     return int(match.group(1)) if match else float("inf")
 
-def mesh_cpus(ncpu):
+
+def mesh_cpus(ncpu: int) -> list[int] | None:
+    """
+    Distribute the number of cores in a 2D mesh.
+
+    Takes the number of cpus and distributes them in a 2D mesh to allow for
+    an efficient discretisation by dedalus. Raises an error if the number
+    of available cpus is not a power of 2.
+
+    :param ncpu: The number of available cpus.
+    :returns mesh: The 2D mesh to be passed to a dedalus distributor object.
+    """
     log2 = np.log2(ncpu)
     if log2 == int(log2):
         return [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
-    else:
-        raise MeshError
+    raise MeshError

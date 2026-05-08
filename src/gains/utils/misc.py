@@ -2,6 +2,7 @@
 
 import re
 from pathlib import Path
+from gains.exceptions import MeshError
 
 import numpy as np
 
@@ -35,3 +36,10 @@ def extract_numerical_suffix(path: Path) -> int | float:
     """
     match = re.search(r"(\d+)$", path.stem)
     return int(match.group(1)) if match else float("inf")
+
+def mesh_cpus(ncpu):
+    log2 = np.log2(ncpu)
+    if log2 == int(log2):
+        return [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
+    else:
+        raise MeshError

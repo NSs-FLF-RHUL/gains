@@ -1,4 +1,4 @@
-"""Simulates the spin up of a full sphere containing a viscous newtonian fluid."""
+"""Simulates the spin up of a full basis.sphere containing a viscous newtonian fluid."""
 
 import datetime
 import json
@@ -13,6 +13,7 @@ from mpi4py import MPI
 # Parameters - load in from parameter file
 from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
@@ -51,66 +52,57 @@ comm = MPI.COMM_WORLD
 ncpu = comm.size
 
 mesh = mesh_cpus(ncpu)
+basis = SphericalBasis(mesh, dtype)
 
 logger.info(f"running on processor mesh={mesh}")
 
-# Bases
-coords = d3.SphericalCoordinates("phi", "theta", "r")
-dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
-ball = d3.BallBasis(
-    coords,
-    shape=(PARAMS["Nphi"], PARAMS["Ntheta"], PARAMS["Nr"]),
-    radius=1,
-    dealias=PARAMS["dealias"],
-    dtype=dtype,
-)
-sphere = ball.surface
-
 # Fields
-u_n = dist.VectorField(coords, name="u_n", bases=ball)
-p_n = dist.Field(name="p_n", bases=ball)
-omega_n = dist.VectorField(coords, name="omega_n", bases=ball)
+u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)
+p_n = basis.basis.dist.Field(name="p_n", bases=basis.ball)
+omega_n = basis.dist.VectorField(basis.coords, name="omega_n", bases=basis.ball)
 
-tau_p_n = dist.Field(name="tau_p_n")
-tau_u_n = dist.VectorField(coords, name="tau_u_n", bases=sphere)
-tau_omega_n = dist.VectorField(coords, name="tau_omega_n", bases=sphere)
-u_n_boundary = dist.VectorField(coords, name="u_n_boundary", bases=sphere)
+tau_p_n = basis.dist.Field(name="tau_p_n")
+tau_u_n = basis.dist.VectorField(basis.coords, name="tau_u_n", bases=basis.sphere)
+tau_omega_n = basis.dist.VectorField(
+    basis.coords, name="tau_omega_n", bases=basis.sphere
+)
+
 # Substitutions
-phi, theta, r = dist.local_grids(ball)
+phi, theta, r = basis.dist.local_grids(basis.ball)
 
-r_vec = dist.VectorField(coords, bases=ball)
+r_vec = basis.dist.VectorField(basis.coords, bases=basis.ball)
 r_vec["g"][2] = r
 r_vec["g"][1] = theta
 r_vec["g"][0] = phi
-er = dist.VectorField(coords)
-etheta = dist.VectorField(coords)
-ephi = dist.VectorField(coords)
+er = basis.dist.VectorField(basis.coords)
+etheta = basis.dist.VectorField(basis.coords)
+ephi = basis.dist.VectorField(basis.coords)
 er["g"][2] = 1
 etheta["g"][1] = 1
 ephi["g"][0] = 1
 
 
-ez = dist.VectorField(coords, bases=ball)
+ez = basis.dist.VectorField(basis.coords, bases=basis.ball)
 ez["g"][1] = -np.sin(theta)
 ez["g"][2] = np.cos(theta)  # unit vector in z direction
 
 
 # This field is for the Boundary Conditions
-sintheta = dist.Field(name="sintheta", bases=ball)
-mask = dist.Field(name="mask", bases=sphere)
+sintheta = basis.dist.Field(name="sintheta", bases=basis.ball)
+mask = basis.dist.Field(name="mask", bases=basis.sphere)
 
 sintheta["g"] = np.sin(theta)
 mask["g"] = window_equator(theta, 0.5, np.float64)
 
 
-uang_r1 = dist.VectorField(coords, bases=ball)(r=radius).evaluate()
+uang_r1 = basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
 
 uang_r1["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 
 
 def lift(a: d3.Field) -> d3.Field:
     """Lift operand to derivative basis."""
-    return d3.Lift(a, ball, -1)
+    return d3.Lift(a, basis.ball, -1)
 
 
 dot = d3.DotProduct
@@ -150,17 +142,17 @@ volume = (4 / 3) * np.pi * radius**3
 
 def az_avg(a: d3.Field) -> d3.Field:
     """Average over the phi coordinate."""
-    return d3.Average(a, coords.coords[0])
+    return d3.Average(a, basis.coords.basis.coords[0])
 
 
 def s2_avg(a: d3.Field) -> d3.Field:
     """Average over all angular coordinates."""
-    return d3.Average(a, coords.S2coordsys)
+    return d3.Average(a, basis.coords.S2basis.coordsys)
 
 
 def vol_avg(a: d3.Field) -> d3.Field:
-    """Average over whole sphere."""
-    return d3.Integrate(a / volume, coords)
+    """Average over whole basis.sphere."""
+    return d3.Integrate(a / volume, basis.coords)
 
 
 # define every component of velocity (for output)

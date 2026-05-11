@@ -21,7 +21,7 @@ from gains.utils.misc import mesh_cpus
 # Parameters - load in from parameter file
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
-
+from gains.problems.bases import SphericalBasis
 # Setup
 logger = logging.getLogger(__name__)
 
@@ -63,47 +63,38 @@ logger.info(f"running on processor mesh={mesh}")
 
 # Basis
 
-coords = d3.SphericalCoordinates("phi", "theta", "r")
-dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
-ball = d3.BallBasis(
-    coords,
-    shape=(PARAMS["Nphi"], PARAMS["Ntheta"], PARAMS["Nr"]),
-    radius=1,
-    dealias=PARAMS["dealias"],
-    dtype=dtype,
-)
-sphere = ball.surface
+basis = SphericalBasis(mesh, dtype)
 
 # Fields
-u_n = dist.VectorField(coords, name="u_n", bases=ball)
-u_s = dist.VectorField(coords, name="u_s", bases=ball)
-p_n = dist.Field(name="p_n", bases=ball)
-p_s = dist.Field(name="p_s", bases=ball)
+u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)
+u_s = basis.dist.VectorField(basis.coords, name="u_s", bases=basis.ball)
+p_n = basis.dist.Field(name="p_n", bases=basis.ball)
+p_s = basis.dist.Field(name="p_s", bases=basis.ball)
 
-tau_p_n = dist.Field(name="tau_p_n")
-tau_p_s = dist.Field(name="tau_p_s")
-tau_u_n = dist.VectorField(coords, name="tau_u_n", bases=sphere)
-tau_u_s = dist.VectorField(coords, name="tau_u_s", bases=sphere)
+tau_p_n = basis.dist.Field(name="tau_p_n")
+tau_p_s = basis.dist.Field(name="tau_p_s")
+tau_u_n = basis.dist.VectorField(basis.coords, name="tau_u_n", bases=basis.sphere)
+tau_u_s = basis.dist.VectorField(basis.coords, name="tau_u_s", bases=basis.sphere)
 
 # Substitutions
 cross = d3.CrossProduct
 dot = d3.DotProduct
 curl = d3.Curl
-lift = lambda a: d3.Lift(a, ball, -1)
+lift = lambda a: d3.Lift(a, basis.ball, -1)
 
 x_s = 0.95  # Neutron fraction
 x_n = 0.05  # Proton/electron fraction
 
-phi, theta, r = dist.local_grids(ball)
-er = dist.VectorField(coords)
-etheta = dist.VectorField(coords)
-ephi = dist.VectorField(coords)
+phi, theta, r = basis.dist.local_grids(basis.ball)
+er = basis.basis.dist.VectorField(basis.coords)
+etheta = basis.basis.dist.VectorField(basis.coords)
+ephi = basis.basis.dist.VectorField(basis.coords)
 
 er["g"][2] = 1
 etheta["g"][1] = 1
 ephi["g"][0] = 1
 
-ez = dist.VectorField(coords, bases=ball)
+ez = basis.basis.dist.VectorField(basis.coords, bases=basis.ball)
 ez["g"][1] = -np.sin(theta)
 ez["g"][2] = np.cos(theta)  # unit vector in z direction
 u_ns = u_n - u_s
@@ -111,13 +102,13 @@ omega_s = curl(u_s) + 2 * ez
 omega_unit = omega_s / (np.sqrt(dot(omega_s, omega_s)) + 1e-14)
 F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
 
-sintheta = dist.Field(name="sintheta", bases=ball)
+sintheta = basis.basis.dist.Field(name="sintheta", bases=basis.ball)
 sintheta["g"] = np.sin(theta)
-uang = dist.VectorField(coords, bases=ball)(r=radius).evaluate()
+uang = basis.basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
 uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 strain_rate = d3.grad(u_s) + d3.trans(d3.grad(u_s))
 shear_stress = d3.angular(d3.radial(strain_rate(r=1), index=1))
-# problem - HVBK equations spin up in sphere
+# problem - HVBK equations spin up in basis.sphere
 problem = d3.IVP(
     [u_n, u_s, p_n, p_s, tau_p_n, tau_p_s, tau_u_n, tau_u_s], namespace=locals()
 )
@@ -160,17 +151,17 @@ volume = (4 / 3) * np.pi * radius**3
 
 def az_avg(a: d3.Field) -> d3.Field:
     """Average over the phi coordinate."""
-    return d3.Average(a, coords.coords[0])
+    return d3.Average(a, basis.coords.basis.coords[0])
 
 
 def s2_avg(a: d3.Field) -> d3.Field:
     """Average over all angular coordinates."""
-    return d3.Average(a, coords.S2coordsys)
+    return d3.Average(a, basis.coords.S2basis.coordsys)
 
 
 def vol_avg(a: d3.Field) -> d3.Field:
-    """Average over whole sphere."""
-    return d3.Integrate(a / volume, coords)
+    """Average over whole basis.sphere."""
+    return d3.Integrate(a / volume, basis.coords)
 
 
 # define every component of velocity (for output)

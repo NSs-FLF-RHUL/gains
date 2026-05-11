@@ -16,12 +16,13 @@ import numpy as np
 from mpi4py import MPI
 
 from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
 
 # Parameters - load in from parameter file
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
-from gains.problems.bases import SphericalBasis
+
 # Setup
 logger = logging.getLogger(__name__)
 

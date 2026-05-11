@@ -52,7 +52,7 @@ comm = MPI.COMM_WORLD
 ncpu = comm.size
 
 mesh = mesh_cpus(ncpu)
-basis = SphericalBasis(mesh, dtype)
+basis = SphericalBasis(mesh, dtype, **PARAMS)
 
 logger.info(f"running on processor mesh={mesh}")
 

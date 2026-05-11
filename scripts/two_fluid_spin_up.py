@@ -64,7 +64,7 @@ logger.info(f"running on processor mesh={mesh}")
 
 # Basis
 
-basis = SphericalBasis(mesh, dtype)
+basis = SphericalBasis(mesh, dtype, **PARAMS)
 
 # Fields
 u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)

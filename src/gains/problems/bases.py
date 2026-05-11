@@ -1,18 +1,25 @@
-"""Creation of bases for use in problems"""
+"""Creation of bases for use in problems."""
 
 import dedalus.public as d3
-import dedalus.core as d3core
 
-class spherical_basis:
-    
-    def __init__(self, mesh, dtype, **PARAMS):
+
+class SphericalBasis:
+    """Initialise bases and distributor to solve spherical problems in dedalus."""
+
+    def __init__(self, mesh: list[int], dtype: type, **params: float) -> None:
+        """
+        Initialise spherical basis, including the surface.
+
+        :param mesh: cpu mesh for dedalus distributor.
+        :param dtype: data type for dedalus distributor.
+        """
         self.coords = d3.SphericalCoordinates("phi", "theta", "r")
         self.dist = d3.Distributor(self.coords, dtype=dtype, mesh=mesh)
         self.ball = d3.BallBasis(
-        self.coords,
-        shape=(PARAMS["Nphi"], PARAMS["Ntheta"], PARAMS["Nr"]),
-        radius=1,
-        dealias=PARAMS["dealias"],
-        dtype=dtype,
-    )
+            self.coords,
+            shape=(params["Nphi"], params["Ntheta"], params["Nr"]),
+            radius=1,
+            dealias=params["dealias"],
+            dtype=dtype,
+        )
         self.sphere = self.ball.surface

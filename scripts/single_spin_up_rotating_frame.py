@@ -142,7 +142,7 @@ volume = (4 / 3) * np.pi * radius**3
 
 def az_avg(a: d3.Field) -> d3.Field:
     """Average over the phi coordinate."""
-    return d3.Average(a, basis.coords.basis.coords[0])
+    return d3.Average(a, basis.coords.coords[0])
 
 
 def s2_avg(a: d3.Field) -> d3.Field:

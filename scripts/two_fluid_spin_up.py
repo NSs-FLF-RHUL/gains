@@ -87,15 +87,15 @@ x_s = 0.95  # Neutron fraction
 x_n = 0.05  # Proton/electron fraction
 
 phi, theta, r = basis.dist.local_grids(basis.ball)
-er = basis.basis.dist.VectorField(basis.coords)
-etheta = basis.basis.dist.VectorField(basis.coords)
-ephi = basis.basis.dist.VectorField(basis.coords)
+er = basis.dist.VectorField(basis.coords)
+etheta = basis.dist.VectorField(basis.coords)
+ephi = basis.dist.VectorField(basis.coords)
 
 er["g"][2] = 1
 etheta["g"][1] = 1
 ephi["g"][0] = 1
 
-ez = basis.basis.dist.VectorField(basis.coords, bases=basis.ball)
+ez = basis.dist.VectorField(basis.coords, bases=basis.ball)
 ez["g"][1] = -np.sin(theta)
 ez["g"][2] = np.cos(theta)  # unit vector in z direction
 u_ns = u_n - u_s
@@ -103,9 +103,9 @@ omega_s = curl(u_s) + 2 * ez
 omega_unit = omega_s / (np.sqrt(dot(omega_s, omega_s)) + 1e-14)
 F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
 
-sintheta = basis.basis.dist.Field(name="sintheta", bases=basis.ball)
+sintheta = basis.dist.Field(name="sintheta", bases=basis.ball)
 sintheta["g"] = np.sin(theta)
-uang = basis.basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
+uang = basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
 uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 strain_rate = d3.grad(u_s) + d3.trans(d3.grad(u_s))
 shear_stress = d3.angular(d3.radial(strain_rate(r=1), index=1))

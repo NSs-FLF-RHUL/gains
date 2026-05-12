@@ -58,7 +58,7 @@ logger.info(f"running on processor mesh={mesh}")
 
 # Fields
 u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)
-p_n = basis.basis.dist.Field(name="p_n", bases=basis.ball)
+p_n = basis.dist.Field(name="p_n", bases=basis.ball)
 omega_n = basis.dist.VectorField(basis.coords, name="omega_n", bases=basis.ball)
 
 tau_p_n = basis.dist.Field(name="tau_p_n")

@@ -61,96 +61,73 @@ logger.info(f"running on processor mesh={mesh}")
 coords = d3.SphericalCoordinates("phi", "theta", "r")
 dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
 
-basis_full = SphericalBasis(coords, dist, Ro, dtype, **PARAMS)
 basis_core = SphericalBasis(coords, dist, Ri, dtype, **PARAMS)
-basis_crust = d3.ShellBasis(basis_full.coords,
-                            shape=(PARAMS["Nphi"], PARAMS["Ntheta"], PARAMS["Nr"]),
-                            radii = (Ri, Ro),
+basis_shell = d3.ShellBasis(coords, 
+                            (PARAMS['Nphi'], PARAMS['Ntheta'], PARAMS['Nr']),
+                            radii=(Ri, Ro),
                             dealias=PARAMS["dealias"],
                             dtype=dtype
                             )
-sphere = basis_crust.outer_surface
+surface = basis_shell.outer_surface
 
-#Fields
-u_crust = dist.VectorField(basis_full.coords, name="u_crust", bases=basis_crust)
-p_crust = dist.Field(name = "p_crust", bases=basis_crust)
-tau_ucr_1 = dist.VectorField(basis_full.coords, name = "tau_ucr_1", bases = sphere)
-tau_ucr_2 = dist.VectorField(basis_full.coords,name = "tau_ucr_2", bases = sphere)
-tau_pcr = dist.Field(name="tau_pcr")
+#Crust fields
 
-u_core = dist.VectorField(basis_full.coords, name="u_core", bases=basis_core.ball)
-p_core = dist.Field(name = "p_core", bases=basis_core.ball)
-tau_uco_1 = dist.VectorField(basis_full.coords, name = "tau_uco_1", bases = basis_core.sphere)
-tau_uco_2 = dist.VectorField(basis_full.coords, name = "tau_uco_2", bases = basis_core.sphere)
-tau_pco = dist.Field(name="tau_pco")
+u_cr = dist.VectorField(coords, name = 'u_cr', bases=basis_shell)
+p_cr = dist.Field(name='p_cr', bases=basis_shell)
+tau_pcr = dist.Field(name='tau_pcr')
+tau_ucr_1 = dist.VectorField(coords, name='tau_ucr_1', bases = surface)
+tau_ucr_2 = dist.VectorField(coords, name='tau_ucr_2', bases=surface)
 
-phi, theta, r = dist.local_grids(basis_full.ball)
-er = dist.VectorField(basis_full.coords)
-etheta = dist.VectorField(basis_full.coords)
-ephi = dist.VectorField(basis_full.coords)
-
-er["g"][2] = 1
-etheta["g"][1] = 1
-ephi["g"][0] = 1
-
-ez_core = dist.VectorField(basis_full.coords, bases=basis_core.ball)
-ez_core["g"][1] = -np.sin(theta)
-ez_core["g"][2] = np.cos(theta)  # unit vector in z direction
-
-ez_crust = dist.VectorField(basis_full.coords, bases=basis_crust)
-ez_crust["g"][1] = -np.sin(theta)
-ez_crust["g"][2] = np.cos(theta)
-
-sintheta = dist.Field(name="sintheta", bases=basis_full.ball)
-sintheta["g"] = np.sin(theta)
-uang = dist.VectorField(basis_full.coords, bases=basis_crust)(r=Ro).evaluate()
-uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=Ro).evaluate()["g"]
-
-strain_rate_crust = d3.grad(u_crust) + d3.trans(d3.grad(u_crust))
-shear_stress_crust = d3.angular(d3.radial(strain_rate_crust(r=Ro), index=1))
-r_vec_crust = dist.VectorField(basis_full.coords, bases=basis_crust.radial_basis)
-r_vec_core = dist.VectorField(basis_full.coords, bases = basis_core.ball.radial_basis)
-r_vec_core['g'][2] = r
-r_vec_crust['g'][2] = r
-lift_basis_crust = basis_crust.derivative_basis(1)
-lift_basis_core = basis_core.ball.derivative_basis(1)
-
-lift_core = lambda a: d3.Lift(a, lift_basis_core, -1)
-lift_crust = lambda a: d3.Lift(a, lift_basis_crust, -1)
-
-
-grad_u_crust = d3.grad(u_crust) + r_vec_crust * lift_crust(tau_ucr_1)
-
-
+#Crust substitutions
+cross = d3.CrossProduct
 dot = d3.DotProduct
 curl = d3.Curl
-cross = d3.CrossProduct
-Ek = PARAMS["Ek"]  # Seperately defined for use in equations
 
-#Problem
+lift_basis_crust = basis_shell.derivative_basis(1)
+lift_crust = lambda a: d3.Lift(a, lift_basis_crust, -1)
 
-problem = d3.IVP(
-    [u_crust, p_crust, tau_pcr, tau_ucr_2, u_core, p_core, tau_pco, tau_uco_1, tau_uco_2],
-    namespace=locals()
-)
+er_crust = dist.VectorField(coords)
+etheta_crust = dist.VectorField(coords)
+ephi_crust = dist.VectorField(coords)
 
-problem.add_equation("div(u_crust) + tau_pcr = 0")
-problem.add_equation("div(u_core) + tau_pco = 0")
-problem.add_equation("integ(p_crust) = 0")
-problem.add_equation("integ(p_core) = 0")
+phi_crust, theta_crust, r_crust = dist.local_grids(basis_shell)
 
-problem.add_equation(
-    "dt(u_core) + grad(p_core) - Ek*lap(u_core) +lift_core(tau_uco_2) = -u_core@grad(u_core) - 2*cross(ez_core,u_core)"
-)
-problem.add_equation(
-    "dt(u_crust) + grad(p_crust) - Ek*lap(u_crust) +lift_crust(tau_ucr_2) = -u_crust@grad_u_crust "
-    "- 2*cross(ez_crust,u_crust)"
-)
+er_crust["g"][2] = 1
+etheta_crust["g"][1] = 1
+ephi_crust["g"][0] = 1
+ez_crust = dist.VectorField(coords, bases=basis_shell)
+ez_crust["g"][1] = -np.sin(theta_crust)
+ez_crust["g"][2] = np.cos(theta_crust)
 
-problem.add_equation("radial(u_crust(r=Ro)) = 0")
-problem.add_equation("shear_stress_crust = 0")
-problem.add_equation("u_crust(r=Ri) = u_core(r=Ri)")
+
+rvec = dist.VectorField(coords, bases=basis_shell.radial_basis)
+rvec['g'][2] = r_crust
+grad_ucr = d3.grad(u_cr) + rvec*lift_crust(tau_ucr_1)
+
+sintheta = dist.Field(name="sintheta", bases=basis_shell)
+sintheta["g"] = np.sin(theta_crust)
+uang = dist.VectorField(coords, bases=basis_shell)(r=radius).evaluate()
+uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
+
+strain_rate_cr = d3.grad(u_cr) + d3.trans(d3.grad(u_cr))
+shear_stress_cr = d3.angular(d3.radial(strain_rate_cr(r=Ri), index=1))
+
+#Problem for crust (testing)
+
+
+
+problem = d3.IVP([u_cr, p_cr, tau_pcr, tau_ucr_1, tau_ucr_2], namespace=locals())
+problem.add_equation("div(u_cr) + tau_pcr = 0")
+problem.add_equation("integ(p_cr) = 0")
+
+problem.add_equation("dt(u_cr) - Ek*div(grad_ucr) = - u_cr@grad_ucr - 2*cross(ez_crust,u_cr)")
+
+problem.add_equation("radial(u_cr(r=Ro)) = 0")
+problem.add_equation("angular(u_cr(r=Ro)) = angular(uang)")
+
+problem.add_equation("radial(u_cr(r=Ri)) = 0")
+problem.add_equation("shear_stress_cr = 0")
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
-breakpoint()
+

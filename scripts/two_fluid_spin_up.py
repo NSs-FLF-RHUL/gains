@@ -137,7 +137,6 @@ solver.stop_sim_time = PARAMS["stop_sim_time"]
 
 if PARAMS["use_checkpoint"]:
     write, timestep = solver.load_state(PARAMS["checkpoint_path"])
-    # Shouldn't the initial condition be solid body rotation?
 else:
     # Initial condition
     u_n.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise

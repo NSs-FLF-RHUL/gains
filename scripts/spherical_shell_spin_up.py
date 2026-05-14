@@ -50,7 +50,7 @@ ncpu = MPI.COMM_WORLD.size
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
 Bprime = B / 2
-Ri = 0.9
+Ri = 0.5 #Add to parameter file
 Ro = 1.0
 mesh = mesh_cpus(ncpu)
 
@@ -109,7 +109,7 @@ sintheta["g"] = np.sin(theta_crust)
 uang = dist.VectorField(coords, bases=basis_shell)(r=radius).evaluate()
 uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 
-strain_rate_cr = d3.grad(u_cr) + d3.trans(d3.grad(u_cr))
+strain_rate_cr = grad_ucr + d3.trans(grad_ucr)
 shear_stress_cr = d3.angular(d3.radial(strain_rate_cr(r=Ri), index=1))
 
 #Problem for crust (testing)
@@ -117,10 +117,10 @@ shear_stress_cr = d3.angular(d3.radial(strain_rate_cr(r=Ri), index=1))
 
 
 problem = d3.IVP([u_cr, p_cr, tau_pcr, tau_ucr_1, tau_ucr_2], namespace=locals())
-problem.add_equation("div(u_cr) + tau_pcr = 0")
+problem.add_equation("trace(grad_ucr) + tau_pcr = 0")
 problem.add_equation("integ(p_cr) = 0")
 
-problem.add_equation("dt(u_cr) - Ek*div(grad_ucr) = - u_cr@grad_ucr - 2*cross(ez_crust,u_cr)")
+problem.add_equation("dt(u_cr) - Ek*div(grad_ucr) + grad(p_cr) + lift_crust(tau_ucr_2) = - u_cr@grad(u_cr) - 2*cross(ez_crust,u_cr)")
 
 problem.add_equation("radial(u_cr(r=Ro)) = 0")
 problem.add_equation("angular(u_cr(r=Ro)) = angular(uang)")
@@ -131,3 +131,87 @@ problem.add_equation("shear_stress_cr = 0")
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
 
+if PARAMS["use_checkpoint"]:
+    write, timestep = solver.load_state(PARAMS["checkpoint_path"])
+else:
+    # Initial condition
+    u_cr.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
+    u_cr.low_pass_filter(scales=0.5)
+    timestep = max_timestep
+
+# Analysis
+volume = (4 / 3) * np.pi * radius**3
+
+
+def az_avg(a: d3.Field) -> d3.Field:
+    """Average over the phi coordinate."""
+    return d3.Average(a, coords.coords[0])
+
+
+def s2_avg(a: d3.Field) -> d3.Field:
+    """Average over all angular coordinates."""
+    return d3.Average(a, coords.S2basis.coordsys)
+
+
+def vol_avg(a: d3.Field) -> d3.Field:
+    """Average over whole basis.sphere."""
+    return d3.Integrate(a / volume, coords)
+
+
+# define every component of velocity (for output)
+u_n_r = dot(u_cr, er_crust)
+u_n_theta = dot(u_cr, etheta_crust)
+u_n_phi = dot(u_cr, ephi_crust)
+
+save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path.mkdir(parents=True, exist_ok=True)
+
+AZ_avg = solver.evaluator.add_file_handler(
+    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    sim_dt=0.05,
+    max_writes=100,
+)
+AZ_avg.add_task(dot(er_crust, u_cr), name="u_n_r")
+AZ_avg.add_task(dot(etheta_crust, u_cr), name="u_n_theta")
+AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
+AZ_avg.add_task(az_avg(dot(ephi_crust, u_cr)), name="u_s_phi")
+
+slices = solver.evaluator.add_file_handler(
+    "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
+    sim_dt=0.025,
+    max_writes=100,
+)
+
+slices.add_task(
+    u_n_phi(theta=np.pi / 2), scales=PARAMS["dealias"], name="u_n_phi(equator)"
+)
+
+# Checkpoint
+checkpoint = solver.evaluator.add_file_handler(
+    "outputs/su_equator/checkpoint",
+    wall_dt=3600,
+    max_writes=1,
+    parallel="gather",
+)
+checkpoint.add_tasks(solver.state, layout="g")
+
+# CFL
+CFL = d3.CFL(
+    solver, timestep, cadence=1, safety=0.3, threshold=0.1, max_dt=max_timestep
+)
+CFL.add_velocity(u_cr)
+
+
+# Flow properties
+flow = d3.GlobalFlowProperty(solver, cadence=10)
+flow.add_property(np.sqrt(u_cr @ u_cr) * PARAMS["Ek"], name="Re_n")
+
+
+# Main loop
+@profile(args["profile"], PARAMS)
+def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
+    """Define a function to call the dedalus evolve method with profiling."""
+    return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+
+
+evolve(solver)

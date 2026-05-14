@@ -54,6 +54,9 @@ Ri = 0.5 #Add to parameter file
 Ro = 1.0
 mesh = mesh_cpus(ncpu)
 
+x_s = 0.95  # Neutron fraction
+x_n = 0.05  # Proton/electron fraction
+
 logger.info(f"running on processor mesh={mesh}")
 
 # Basis
@@ -77,6 +80,12 @@ p_n_cr = dist.Field(name='p_n_cr', bases=basis_shell)
 tau_n_pcr = dist.Field(name='tau_n_pcr')
 tau_uncr_1 = dist.VectorField(coords, name='tau_nucr_1', bases = surface)
 tau_uncr_2 = dist.VectorField(coords, name='tau_nucr_2', bases=surface)
+
+u_s_cr = dist.VectorField(coords, name = 'u_s_cr', bases=basis_shell)
+p_s_cr = dist.Field(name='p_s_cr', bases=basis_shell)
+tau_s_pcr = dist.Field(name='tau_s_pcr')
+tau_uscr_1 = dist.VectorField(coords, name='tau_sucr_1', bases = surface)
+tau_uscr_2 = dist.VectorField(coords, name='tau_sucr_2', bases=surface)
 
 #Crust substitutions
 cross = d3.CrossProduct
@@ -102,31 +111,54 @@ ez_crust["g"][2] = np.cos(theta_crust)
 
 rvec = dist.VectorField(coords, bases=basis_shell.radial_basis)
 rvec['g'][2] = r_crust
+
 grad_uncr = d3.grad(u_n_cr) + rvec*lift_crust(tau_uncr_1)
+grad_uscr = d3.grad(u_s_cr) + rvec*lift_crust(tau_uscr_1)
 
 sintheta = dist.Field(name="sintheta", bases=basis_shell)
 sintheta["g"] = np.sin(theta_crust)
 uang = dist.VectorField(coords, bases=basis_shell)(r=radius).evaluate()
 uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 
-strain_rate_cr = grad_uncr + d3.trans(grad_uncr)
-shear_stress_cr = d3.angular(d3.radial(strain_rate_cr(r=Ri), index=1))
+u_ns = u_n_cr - u_s_cr
+omega_s = curl(u_s_cr) + 2 * ez_crust
+omega_unit = omega_s / (np.sqrt(dot(omega_s, omega_s)) + 1e-14)
+F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
+
+strain_rate_n_cr = grad_uncr + d3.trans(grad_uncr)
+shear_stress_n_cr = d3.angular(d3.radial(strain_rate_n_cr(r=Ri), index=1))
+
+strain_rate_s_cr = grad_uscr + d3.trans(grad_uscr)
+shear_stress_s_cr_i = d3.angular(d3.radial(strain_rate_s_cr(r=Ri), index=1))
+shear_stress_s_cr_o = d3.angular(d3.radial(strain_rate_s_cr(r=Ro), index=1))
 
 #Problem for crust (testing)
 
-
-
-problem = d3.IVP([u_n_cr, p_n_cr, tau_n_pcr, tau_uncr_1, tau_uncr_2], namespace=locals())
+problem = d3.IVP([u_n_cr, p_n_cr, tau_n_pcr, tau_uncr_1, tau_uncr_2
+                  , u_s_cr, p_s_cr, tau_s_pcr, tau_uscr_1, tau_uscr_2], namespace=locals())
 problem.add_equation("trace(grad_uncr) + tau_n_pcr = 0")
+problem.add_equation("trace(grad_uscr) + tau_s_pcr = 0")
 problem.add_equation("integ(p_n_cr) = 0")
+problem.add_equation("integ(p_s_cr) = 0")
 
-problem.add_equation("dt(u_n_cr) - Ek*div(grad_uncr) + grad(p_n_cr) + lift_crust(tau_uncr_2) = - u_n_cr@grad(u_n_cr) - 2*cross(ez_crust,u_n_cr)")
+problem.add_equation("dt(u_n_cr) - Ek*div(grad_uncr) + grad(p_n_cr) " \
+"+ lift_crust(tau_uncr_2) = - u_n_cr@grad(u_n_cr) -" \
+" 2*cross(ez_crust,u_n_cr) + x_s/x_n * F_mf")
+
+problem.add_equation(
+    "dt(u_s_cr) + grad(p_s_cr) + lift_crust(tau_uscr_2) = "
+    "-u_s_cr@grad(u_s_cr) - F_mf - 2*cross(ez_crust, u_s_cr)"
+)
 
 problem.add_equation("radial(u_n_cr(r=Ro)) = 0")
 problem.add_equation("angular(u_n_cr(r=Ro)) = angular(uang)")
+problem.add_equation("radial(u_s_cr(r=Ro)) = 0")
+problem.add_equation("shear_stress_s_cr_o = 0")
 
 problem.add_equation("radial(u_n_cr(r=Ri)) = 0")
-problem.add_equation("shear_stress_cr = 0")
+problem.add_equation("shear_stress_n_cr = 0")
+problem.add_equation("radial(u_s_cr(r=Ri)) = 0")
+problem.add_equation("shear_stress_s_cr_i = 0")
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]

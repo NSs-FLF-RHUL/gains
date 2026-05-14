@@ -72,11 +72,11 @@ surface = basis_shell.outer_surface
 
 #Crust fields
 
-u_cr = dist.VectorField(coords, name = 'u_cr', bases=basis_shell)
-p_cr = dist.Field(name='p_cr', bases=basis_shell)
-tau_pcr = dist.Field(name='tau_pcr')
-tau_ucr_1 = dist.VectorField(coords, name='tau_ucr_1', bases = surface)
-tau_ucr_2 = dist.VectorField(coords, name='tau_ucr_2', bases=surface)
+u_n_cr = dist.VectorField(coords, name = 'u_n_cr', bases=basis_shell)
+p_n_cr = dist.Field(name='p_n_cr', bases=basis_shell)
+tau_n_pcr = dist.Field(name='tau_n_pcr')
+tau_uncr_1 = dist.VectorField(coords, name='tau_nucr_1', bases = surface)
+tau_uncr_2 = dist.VectorField(coords, name='tau_nucr_2', bases=surface)
 
 #Crust substitutions
 cross = d3.CrossProduct
@@ -102,30 +102,30 @@ ez_crust["g"][2] = np.cos(theta_crust)
 
 rvec = dist.VectorField(coords, bases=basis_shell.radial_basis)
 rvec['g'][2] = r_crust
-grad_ucr = d3.grad(u_cr) + rvec*lift_crust(tau_ucr_1)
+grad_uncr = d3.grad(u_n_cr) + rvec*lift_crust(tau_uncr_1)
 
 sintheta = dist.Field(name="sintheta", bases=basis_shell)
 sintheta["g"] = np.sin(theta_crust)
 uang = dist.VectorField(coords, bases=basis_shell)(r=radius).evaluate()
 uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 
-strain_rate_cr = grad_ucr + d3.trans(grad_ucr)
+strain_rate_cr = grad_uncr + d3.trans(grad_uncr)
 shear_stress_cr = d3.angular(d3.radial(strain_rate_cr(r=Ri), index=1))
 
 #Problem for crust (testing)
 
 
 
-problem = d3.IVP([u_cr, p_cr, tau_pcr, tau_ucr_1, tau_ucr_2], namespace=locals())
-problem.add_equation("trace(grad_ucr) + tau_pcr = 0")
-problem.add_equation("integ(p_cr) = 0")
+problem = d3.IVP([u_n_cr, p_n_cr, tau_n_pcr, tau_uncr_1, tau_uncr_2], namespace=locals())
+problem.add_equation("trace(grad_uncr) + tau_n_pcr = 0")
+problem.add_equation("integ(p_n_cr) = 0")
 
-problem.add_equation("dt(u_cr) - Ek*div(grad_ucr) + grad(p_cr) + lift_crust(tau_ucr_2) = - u_cr@grad(u_cr) - 2*cross(ez_crust,u_cr)")
+problem.add_equation("dt(u_n_cr) - Ek*div(grad_uncr) + grad(p_n_cr) + lift_crust(tau_uncr_2) = - u_n_cr@grad(u_n_cr) - 2*cross(ez_crust,u_n_cr)")
 
-problem.add_equation("radial(u_cr(r=Ro)) = 0")
-problem.add_equation("angular(u_cr(r=Ro)) = angular(uang)")
+problem.add_equation("radial(u_n_cr(r=Ro)) = 0")
+problem.add_equation("angular(u_n_cr(r=Ro)) = angular(uang)")
 
-problem.add_equation("radial(u_cr(r=Ri)) = 0")
+problem.add_equation("radial(u_n_cr(r=Ri)) = 0")
 problem.add_equation("shear_stress_cr = 0")
 
 solver = problem.build_solver(timestepper)
@@ -135,8 +135,8 @@ if PARAMS["use_checkpoint"]:
     write, timestep = solver.load_state(PARAMS["checkpoint_path"])
 else:
     # Initial condition
-    u_cr.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
-    u_cr.low_pass_filter(scales=0.5)
+    u_n_cr.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
+    u_n_cr.low_pass_filter(scales=0.5)
     timestep = max_timestep
 
 # Analysis
@@ -159,9 +159,9 @@ def vol_avg(a: d3.Field) -> d3.Field:
 
 
 # define every component of velocity (for output)
-u_n_r = dot(u_cr, er_crust)
-u_n_theta = dot(u_cr, etheta_crust)
-u_n_phi = dot(u_cr, ephi_crust)
+u_n_r = dot(u_n_cr, er_crust)
+u_n_theta = dot(u_n_cr, etheta_crust)
+u_n_phi = dot(u_n_cr, ephi_crust)
 
 save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
 save_path.mkdir(parents=True, exist_ok=True)
@@ -171,10 +171,10 @@ AZ_avg = solver.evaluator.add_file_handler(
     sim_dt=0.05,
     max_writes=100,
 )
-AZ_avg.add_task(dot(er_crust, u_cr), name="u_n_r")
-AZ_avg.add_task(dot(etheta_crust, u_cr), name="u_n_theta")
+AZ_avg.add_task(dot(er_crust, u_n_cr), name="u_n_r")
+AZ_avg.add_task(dot(etheta_crust, u_n_cr), name="u_n_theta")
 AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
-AZ_avg.add_task(az_avg(dot(ephi_crust, u_cr)), name="u_s_phi")
+AZ_avg.add_task(az_avg(dot(ephi_crust, u_n_cr)), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
@@ -199,12 +199,12 @@ checkpoint.add_tasks(solver.state, layout="g")
 CFL = d3.CFL(
     solver, timestep, cadence=1, safety=0.3, threshold=0.1, max_dt=max_timestep
 )
-CFL.add_velocity(u_cr)
+CFL.add_velocity(u_n_cr)
 
 
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
-flow.add_property(np.sqrt(u_cr @ u_cr) * PARAMS["Ek"], name="Re_n")
+flow.add_property(np.sqrt(u_n_cr @ u_n_cr) * PARAMS["Ek"], name="Re_n")
 
 
 # Main loop

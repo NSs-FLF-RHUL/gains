@@ -122,8 +122,8 @@ uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
 
 u_ns = u_n_cr - u_s_cr
 omega_s = curl(u_s_cr) + 2 * ez_crust
-omega_unit = omega_s / (np.sqrt(dot(omega_s, omega_s)) + 1e-14)
-F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
+omega_unit = omega_s #/ np.sqrt(dot(omega_s, omega_s) + 1e-7)
+F_mf =  B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
 
 strain_rate_n_cr = grad_uncr + d3.trans(grad_uncr)
 shear_stress_n_cr = d3.angular(d3.radial(strain_rate_n_cr(r=Ri), index=1))
@@ -169,6 +169,8 @@ else:
     # Initial condition
     u_n_cr.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
     u_n_cr.low_pass_filter(scales=0.5)
+    u_s_cr.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
+    u_s_cr.low_pass_filter(scales=0.5)
     timestep = max_timestep
 
 # Analysis
@@ -206,7 +208,8 @@ AZ_avg = solver.evaluator.add_file_handler(
 AZ_avg.add_task(dot(er_crust, u_n_cr), name="u_n_r")
 AZ_avg.add_task(dot(etheta_crust, u_n_cr), name="u_n_theta")
 AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
-AZ_avg.add_task(az_avg(dot(ephi_crust, u_n_cr)), name="u_s_phi")
+AZ_avg.add_task(az_avg(dot(ephi_crust, u_s_cr)), name="u_s_phi")
+AZ_avg.add_task(dot(F_mf, F_mf), name = "mag_mf")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
@@ -232,6 +235,7 @@ CFL = d3.CFL(
     solver, timestep, cadence=1, safety=0.3, threshold=0.1, max_dt=max_timestep
 )
 CFL.add_velocity(u_n_cr)
+CFL.add_velocity(u_s_cr)
 
 
 # Flow properties

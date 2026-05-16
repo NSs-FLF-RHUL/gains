@@ -54,6 +54,8 @@ Ri = 0.5 #Add to parameter file
 Ro = 1.0
 mesh = mesh_cpus(ncpu)
 
+nu_hyper = 1e-6
+
 x_s = 0.95  # Neutron fraction
 x_n = 0.05  # Proton/electron fraction
 
@@ -119,11 +121,16 @@ sintheta = dist.Field(name="sintheta", bases=basis_shell)
 sintheta["g"] = np.sin(theta_crust)
 uang = dist.VectorField(coords, bases=basis_shell)(r=radius).evaluate()
 uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
+omega_s = dist.VectorField(coords, name = "omega_s", bases = basis_shell)
+
+omega_s_r = dot(omega_s, er_crust)
+omega_s_theta = dot(omega_s, etheta_crust)
+omega_s_phi = dot(omega_s, ephi_crust)
 
 u_ns = u_n_cr - u_s_cr
-omega_s = curl(u_s_cr) + 2 * ez_crust
-omega_unit = omega_s #/ np.sqrt(dot(omega_s, omega_s) + 1e-7)
-F_mf =  B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
+omega_s = (curl(u_s_cr) + 2 * ez_crust)
+omega_unit = omega_s / 2
+F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
 
 strain_rate_n_cr = grad_uncr + d3.trans(grad_uncr)
 shear_stress_n_cr = d3.angular(d3.radial(strain_rate_n_cr(r=Ri), index=1))
@@ -143,11 +150,12 @@ problem.add_equation("integ(p_s_cr) = 0")
 
 problem.add_equation("dt(u_n_cr) - Ek*div(grad_uncr) + grad(p_n_cr) " \
 "+ lift_crust(tau_uncr_2) = - u_n_cr@grad(u_n_cr) -" \
-" 2*cross(ez_crust,u_n_cr) + x_s/x_n * F_mf")
+" 2*cross(ez_crust,u_n_cr) + x_s/x_n * F_mf" 
+)
 
 problem.add_equation(
     "dt(u_s_cr) + grad(p_s_cr) + lift_crust(tau_uscr_2) = "
-    "-u_s_cr@grad(u_s_cr) - F_mf - 2*cross(ez_crust, u_s_cr)"
+    "-u_s_cr@grad(u_s_cr) - F_mf - 2*cross(ez_crust, u_s_cr)" 
 )
 
 problem.add_equation("radial(u_n_cr(r=Ro)) = 0")
@@ -169,7 +177,7 @@ else:
     # Initial condition
     u_n_cr.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
     u_n_cr.low_pass_filter(scales=0.5)
-    u_s_cr.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
+    u_s_cr.fill_random("g", seed=67, distribution="normal", scale=1e-10)  # Random noise
     u_s_cr.low_pass_filter(scales=0.5)
     timestep = max_timestep
 
@@ -205,9 +213,9 @@ AZ_avg = solver.evaluator.add_file_handler(
     sim_dt=0.05,
     max_writes=100,
 )
-AZ_avg.add_task(dot(er_crust, u_n_cr), name="u_n_r")
-AZ_avg.add_task(dot(etheta_crust, u_n_cr), name="u_n_theta")
-AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
+AZ_avg.add_task(dot(er_crust, u_s_cr), name="u_n_r")
+AZ_avg.add_task(dot(etheta_crust, u_s_cr), name="u_n_theta")
+#AZ_avg.add_task(az_avg(ephi_crust, u_s_cr), name="u_n_phi")
 AZ_avg.add_task(az_avg(dot(ephi_crust, u_s_cr)), name="u_s_phi")
 AZ_avg.add_task(dot(F_mf, F_mf), name = "mag_mf")
 
@@ -232,7 +240,7 @@ checkpoint.add_tasks(solver.state, layout="g")
 
 # CFL
 CFL = d3.CFL(
-    solver, timestep, cadence=1, safety=0.3, threshold=0.1, max_dt=max_timestep
+    solver, timestep, cadence=1, safety=0.5, threshold=0.1, max_dt=max_timestep
 )
 CFL.add_velocity(u_n_cr)
 CFL.add_velocity(u_s_cr)
@@ -241,7 +249,7 @@ CFL.add_velocity(u_s_cr)
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n_cr @ u_n_cr) * PARAMS["Ek"], name="Re_n")
-
+flow.add_property(np.sqrt(omega_s @ omega_s), name = "vorticity_mag")
 
 # Main loop
 @profile(args["profile"], PARAMS)
@@ -250,4 +258,16 @@ def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
 
 
-evolve(solver)
+try:
+    logger.info('Starting main loop')
+    while solver.proceed:
+        timestep = CFL.compute_timestep()
+        solver.step(timestep)
+        if (solver.iteration-1) % 10 == 0:
+            max_omega = flow.max('vorticity_mag')
+            logger.info('Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f' %(solver.iteration, solver.sim_time, timestep, max_omega))
+except:
+    logger.error('Exception raised, triggering end of main loop.')
+    raise
+finally:
+    solver.log_stats()

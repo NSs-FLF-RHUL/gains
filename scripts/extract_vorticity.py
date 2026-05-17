@@ -1,15 +1,16 @@
-import re
 import matplotlib.pyplot as plt
+from pathlib import Path
+from gains.utils.misc import read_logfile
 
-file = "outputs/Vorticity_logging.txt"
+plt.rcParams["savefig.dpi"] = 400
 
-with open(file,"r") as f:
-    text = f.read()
+file = Path("outputs/Vorticity_log_long.txt")
 
-matches_vals = re.findall(r'max\(omega_s\)=([0-9.eE+-]+)', text)
-vorticities = [float(val) for val in matches_vals]
-matches_time = re.findall(r'Time=([0-9.eE+-]+)', text)
-times = [float(time) for time in matches_time]
 
+times, vorticities = read_logfile(file, "max(omega_s)")
+print(vorticities)
 plt.scatter(times, vorticities, s = 0.3)
+plt.xlabel("time")
+plt.ylabel(r"$\omega_{s, max}$")
 plt.show()
+#plt.savefig("max_vorticity_agains_time.png")

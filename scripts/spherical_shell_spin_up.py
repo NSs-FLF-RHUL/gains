@@ -50,7 +50,7 @@ ncpu = MPI.COMM_WORLD.size
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
 Bprime = B / 2
-Ri = 0.5 #Add to parameter file
+Ri = 0.5  # Add to parameter file
 Ro = 1.0
 mesh = mesh_cpus(ncpu)
 
@@ -67,29 +67,30 @@ coords = d3.SphericalCoordinates("phi", "theta", "r")
 dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
 
 basis_core = SphericalBasis(coords, dist, Ri, dtype, **PARAMS)
-basis_shell = d3.ShellBasis(coords, 
-                            (PARAMS['Nphi'], PARAMS['Ntheta'], PARAMS['Nr']),
-                            radii=(Ri, Ro),
-                            dealias=PARAMS["dealias"],
-                            dtype=dtype
-                            )
+basis_shell = d3.ShellBasis(
+    coords,
+    (PARAMS["Nphi"], PARAMS["Ntheta"], PARAMS["Nr"]),
+    radii=(Ri, Ro),
+    dealias=PARAMS["dealias"],
+    dtype=dtype,
+)
 surface = basis_shell.outer_surface
 
-#Crust fields
+# Crust fields
 
-u_n_cr = dist.VectorField(coords, name = 'u_n_cr', bases=basis_shell)
-p_n_cr = dist.Field(name='p_n_cr', bases=basis_shell)
-tau_n_pcr = dist.Field(name='tau_n_pcr')
-tau_uncr_1 = dist.VectorField(coords, name='tau_nucr_1', bases = surface)
-tau_uncr_2 = dist.VectorField(coords, name='tau_nucr_2', bases=surface)
+u_n_cr = dist.VectorField(coords, name="u_n_cr", bases=basis_shell)
+p_n_cr = dist.Field(name="p_n_cr", bases=basis_shell)
+tau_n_pcr = dist.Field(name="tau_n_pcr")
+tau_uncr_1 = dist.VectorField(coords, name="tau_nucr_1", bases=surface)
+tau_uncr_2 = dist.VectorField(coords, name="tau_nucr_2", bases=surface)
 
-u_s_cr = dist.VectorField(coords, name = 'u_s_cr', bases=basis_shell)
-p_s_cr = dist.Field(name='p_s_cr', bases=basis_shell)
-tau_s_pcr = dist.Field(name='tau_s_pcr')
-tau_uscr_1 = dist.VectorField(coords, name='tau_sucr_1', bases = surface)
-tau_uscr_2 = dist.VectorField(coords, name='tau_sucr_2', bases=surface)
+u_s_cr = dist.VectorField(coords, name="u_s_cr", bases=basis_shell)
+p_s_cr = dist.Field(name="p_s_cr", bases=basis_shell)
+tau_s_pcr = dist.Field(name="tau_s_pcr")
+tau_uscr_1 = dist.VectorField(coords, name="tau_sucr_1", bases=surface)
+tau_uscr_2 = dist.VectorField(coords, name="tau_sucr_2", bases=surface)
 
-#Crust substitutions
+# Crust substitutions
 cross = d3.CrossProduct
 dot = d3.DotProduct
 curl = d3.Curl
@@ -112,23 +113,23 @@ ez_crust["g"][2] = np.cos(theta_crust)
 
 
 rvec = dist.VectorField(coords, bases=basis_shell.radial_basis)
-rvec['g'][2] = r_crust
+rvec["g"][2] = r_crust
 
-grad_uncr = d3.grad(u_n_cr) + rvec*lift_crust(tau_uncr_1)
-grad_uscr = d3.grad(u_s_cr) + rvec*lift_crust(tau_uscr_1)
+grad_uncr = d3.grad(u_n_cr) + rvec * lift_crust(tau_uncr_1)
+grad_uscr = d3.grad(u_s_cr) + rvec * lift_crust(tau_uscr_1)
 
 sintheta = dist.Field(name="sintheta", bases=basis_shell)
 sintheta["g"] = np.sin(theta_crust)
 uang = dist.VectorField(coords, bases=basis_shell)(r=radius).evaluate()
 uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
-omega_s = dist.VectorField(coords, name = "omega_s", bases = basis_shell)
+omega_s = dist.VectorField(coords, name="omega_s", bases=basis_shell)
 
 omega_s_r = dot(omega_s, er_crust)
 omega_s_theta = dot(omega_s, etheta_crust)
 omega_s_phi = dot(omega_s, ephi_crust)
 
 u_ns = u_n_cr - u_s_cr
-omega_s = (curl(u_s_cr) + 2 * ez_crust)
+omega_s = curl(u_s_cr) + 2 * ez_crust
 omega_unit = omega_s / 2
 F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
 
@@ -139,23 +140,37 @@ strain_rate_s_cr = grad_uscr + d3.trans(grad_uscr)
 shear_stress_s_cr_i = d3.angular(d3.radial(strain_rate_s_cr(r=Ri), index=1))
 shear_stress_s_cr_o = d3.angular(d3.radial(strain_rate_s_cr(r=Ro), index=1))
 
-#Problem for crust (testing)
+# Problem for crust (testing)
 
-problem = d3.IVP([u_n_cr, p_n_cr, tau_n_pcr, tau_uncr_1, tau_uncr_2
-                  , u_s_cr, p_s_cr, tau_s_pcr, tau_uscr_1, tau_uscr_2], namespace=locals())
+problem = d3.IVP(
+    [
+        u_n_cr,
+        p_n_cr,
+        tau_n_pcr,
+        tau_uncr_1,
+        tau_uncr_2,
+        u_s_cr,
+        p_s_cr,
+        tau_s_pcr,
+        tau_uscr_1,
+        tau_uscr_2,
+    ],
+    namespace=locals(),
+)
 problem.add_equation("trace(grad_uncr) + tau_n_pcr = 0")
 problem.add_equation("trace(grad_uscr) + tau_s_pcr = 0")
 problem.add_equation("integ(p_n_cr) = 0")
 problem.add_equation("integ(p_s_cr) = 0")
 
-problem.add_equation("dt(u_n_cr) - Ek*div(grad_uncr) + grad(p_n_cr) " \
-"+ lift_crust(tau_uncr_2) = - u_n_cr@grad(u_n_cr) -" \
-" 2*cross(ez_crust,u_n_cr) + x_s/x_n * F_mf" 
+problem.add_equation(
+    "dt(u_n_cr) - Ek*div(grad_uncr) + grad(p_n_cr) "
+    "+ lift_crust(tau_uncr_2) = - u_n_cr@grad(u_n_cr) -"
+    " 2*cross(ez_crust,u_n_cr) + x_s/x_n * F_mf"
 )
 
 problem.add_equation(
     "dt(u_s_cr) + grad(p_s_cr) + lift_crust(tau_uscr_2) = "
-    "-u_s_cr@grad(u_s_cr) - F_mf - 2*cross(ez_crust, u_s_cr)" 
+    "-u_s_cr@grad(u_s_cr) - F_mf - 2*cross(ez_crust, u_s_cr)"
 )
 
 problem.add_equation("radial(u_n_cr(r=Ro)) = 0")
@@ -215,9 +230,9 @@ AZ_avg = solver.evaluator.add_file_handler(
 )
 AZ_avg.add_task(dot(er_crust, u_s_cr), name="u_n_r")
 AZ_avg.add_task(dot(etheta_crust, u_s_cr), name="u_n_theta")
-#AZ_avg.add_task(az_avg(ephi_crust, u_s_cr), name="u_n_phi")
+# AZ_avg.add_task(az_avg(ephi_crust, u_s_cr), name="u_n_phi")
 AZ_avg.add_task(az_avg(dot(ephi_crust, u_s_cr)), name="u_s_phi")
-AZ_avg.add_task(dot(F_mf, F_mf), name = "mag_mf")
+AZ_avg.add_task(dot(F_mf, F_mf), name="mag_mf")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
@@ -249,7 +264,8 @@ CFL.add_velocity(u_s_cr)
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n_cr @ u_n_cr) * PARAMS["Ek"], name="Re_n")
-flow.add_property(np.sqrt(omega_s @ omega_s), name = "vorticity_mag")
+flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
+
 
 # Main loop
 @profile(args["profile"], PARAMS)
@@ -259,15 +275,18 @@ def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
 
 
 try:
-    logger.info('Starting main loop')
+    logger.info("Starting main loop")
     while solver.proceed:
         timestep = CFL.compute_timestep()
         solver.step(timestep)
-        if (solver.iteration-1) % 10 == 0:
-            max_omega = flow.max('vorticity_mag')
-            logger.info('Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f' %(solver.iteration, solver.sim_time, timestep, max_omega))
+        if (solver.iteration - 1) % 10 == 0:
+            max_omega = flow.max("vorticity_mag")
+            logger.info(
+                "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f"
+                % (solver.iteration, solver.sim_time, timestep, max_omega)
+            )
 except:
-    logger.error('Exception raised, triggering end of main loop.')
+    logger.error("Exception raised, triggering end of main loop.")
     raise
 finally:
     solver.log_stats()

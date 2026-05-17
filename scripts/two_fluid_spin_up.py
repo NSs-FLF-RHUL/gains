@@ -63,8 +63,9 @@ mesh = mesh_cpus(ncpu)
 logger.info(f"running on processor mesh={mesh}")
 
 # Basis
-
-basis = SphericalBasis(mesh, dtype, **PARAMS)
+coords = d3.SphericalCoordinates("phi", "theta", "r")
+dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
+basis = SphericalBasis(coords, dist, radius, dtype, **PARAMS)
 
 # Fields
 u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)
@@ -98,6 +99,7 @@ ephi["g"][0] = 1
 ez = basis.dist.VectorField(basis.coords, bases=basis.ball)
 ez["g"][1] = -np.sin(theta)
 ez["g"][2] = np.cos(theta)  # unit vector in z direction
+
 u_ns = u_n - u_s
 omega_s = curl(u_s) + 2 * ez
 omega_unit = omega_s / (np.sqrt(dot(omega_s, omega_s)) + 1e-14)
@@ -212,6 +214,7 @@ CFL.add_velocity(u_s)
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
+flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 
 
 # Main loop
@@ -221,4 +224,19 @@ def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
 
 
-evolve(solver)
+try:
+    logger.info("Starting main loop")
+    while solver.proceed:
+        timestep = CFL.compute_timestep()
+        solver.step(timestep)
+        if (solver.iteration - 1) % 10 == 0:
+            max_omega = flow.max("vorticity_mag")
+            logger.info(
+                "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f"
+                % (solver.iteration, solver.sim_time, timestep, max_omega)
+            )
+except:
+    logger.error("Exception raised, triggering end of main loop.")
+    raise
+finally:
+    solver.log_stats()

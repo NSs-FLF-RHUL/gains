@@ -1,15 +1,19 @@
 """Stores custom logging/main loops."""
 
-import dedalus
-import dedalus.public as d3
 from logging import Logger
 
-def track_vorticity(logger: Logger,
-                    flow: d3.GlobalFlowProperty,
-                    solver: dedalus.core.solvers.InitialValueSolver,
-                    CFL: d3.CFL) -> None:
+import dedalus
+import dedalus.public as d3
+
+
+def track_vorticity(
+    logger: Logger,
+    flow: d3.GlobalFlowProperty,
+    solver: dedalus.core.solvers.InitialValueSolver,
+    CFL: d3.CFL,  # noqa: N803 (Allows argument to be capitalised)
+) -> None:
     """
-    Custom main loop that tracks and logs the maximum superfluid vorticity.
+    Create main loop that tracks and logs the maximum superfluid vorticity.
 
     Should be called as an alternative to solver.evolve.
 
@@ -18,7 +22,6 @@ def track_vorticity(logger: Logger,
     :param solver: The IVP solver defined by the script.
     :param CFL: The CFL condition used by the script.
     """
-
     try:
         logger.info("Starting main loop")
         while solver.proceed:

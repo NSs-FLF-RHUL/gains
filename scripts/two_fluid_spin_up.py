@@ -10,7 +10,6 @@ import json
 import logging
 from pathlib import Path
 
-import dedalus.core as d3core
 import dedalus.public as d3
 import numpy as np
 from dedalus.public import CrossProduct as Cross
@@ -20,12 +19,10 @@ from mpi4py import MPI
 
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
+from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
-
-
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
-from gains.utils.loggers import track_vorticity
 
 # Setup
 logger = logging.getLogger(__name__)

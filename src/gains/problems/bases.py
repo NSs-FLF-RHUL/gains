@@ -15,7 +15,14 @@ class SphericalBasis:
         """Define surface of the sphere."""
         return self.ball.surface
 
-    def __init__(self, mesh: list[int], dtype: type, **params: float) -> None:
+    def __init__(
+        self,
+        coords: d3.SphericalCoordinates,
+        dist: d3.Distributor,
+        dtype: type,
+        radius: float,
+        **params: float,
+    ) -> None:
         """
         Initialise spherical basis, including the surface.
 
@@ -32,4 +39,3 @@ class SphericalBasis:
             dealias=params["dealias"],
             dtype=dtype,
         )
-        self.sphere = self.ball.surface

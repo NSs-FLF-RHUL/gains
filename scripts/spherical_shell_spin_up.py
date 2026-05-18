@@ -15,11 +15,11 @@ import numpy as np
 from mpi4py import MPI
 
 from gains.params.spherical_shell import parameters as default_params
+from gains.problems.bases import ShellBasis
 from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
-from gains.problems.bases import ShellBasis
 
 # Setup
 logger = logging.getLogger(__name__)

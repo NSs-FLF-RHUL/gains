@@ -19,9 +19,10 @@ from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
 
-# Parameters - load in from parameter file
+
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
+from gains.utils.loggers import track_vorticity
 
 # Setup
 logger = logging.getLogger(__name__)
@@ -219,24 +220,9 @@ flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 
 # Main loop
 @profile(args["profile"], PARAMS)
-def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
-    """Define a function to call the dedalus evolve method with profiling."""
-    return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+def main_loop() -> None:
+    """Decorate main loop."""
+    return track_vorticity(logger, flow, solver, CFL)
 
 
-try:
-    logger.info("Starting main loop")
-    while solver.proceed:
-        timestep = CFL.compute_timestep()
-        solver.step(timestep)
-        if (solver.iteration - 1) % 10 == 0:
-            max_omega = flow.max("vorticity_mag")
-            logger.info(
-                "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f"
-                % (solver.iteration, solver.sim_time, timestep, max_omega)
-            )
-except:
-    logger.exception("Exception raised, triggering end of main loop.")
-    raise
-finally:
-    solver.log_stats()
+main_loop()

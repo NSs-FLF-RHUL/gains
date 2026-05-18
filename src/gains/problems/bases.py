@@ -6,6 +6,10 @@ import dedalus.public as d3
 class SphericalBasis:
     """Initialise bases and distributor to solve spherical problems in dedalus."""
 
+    coords: d3.SphericalCoordinates
+    dist: d3.Distributor
+    ball: d3.BallBasis
+
     def __init__(self, mesh: list[int], dtype: type, **params: float) -> None:
         """
         Initialise spherical basis, including the surface.

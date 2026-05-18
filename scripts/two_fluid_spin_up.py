@@ -13,6 +13,9 @@ from pathlib import Path
 import dedalus.core as d3core
 import dedalus.public as d3
 import numpy as np
+from dedalus.public import CrossProduct as Cross
+from dedalus.public import Curl
+from dedalus.public import DotProduct as Dot
 from mpi4py import MPI
 
 from gains.params.single_spin_up_rotating import parameters as default_params
@@ -80,9 +83,6 @@ tau_u_n = basis.dist.VectorField(basis.coords, name="tau_u_n", bases=basis.spher
 tau_u_s = basis.dist.VectorField(basis.coords, name="tau_u_s", bases=basis.sphere)
 
 # Substitutions
-cross = d3.CrossProduct
-dot = d3.DotProduct
-curl = d3.Curl
 lift = lambda a: d3.Lift(a, basis.ball, -1)
 
 x_s = 0.95  # Neutron fraction
@@ -100,11 +100,10 @@ ephi["g"][0] = 1
 ez = basis.dist.VectorField(basis.coords, bases=basis.ball)
 ez["g"][1] = -np.sin(theta)
 ez["g"][2] = np.cos(theta)  # unit vector in z direction
-
 u_ns = u_n - u_s
-omega_s = curl(u_s) + 2 * ez
-omega_unit = omega_s / (np.sqrt(dot(omega_s, omega_s)) + 1e-14)
-F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
+omega_s = Curl(u_s) + 2 * ez
+omega_unit = omega_s / (np.sqrt(Dot(omega_s, omega_s)) + 1e-14)
+F_mf = B * (Cross(omega_unit, Cross(omega_s, u_ns))) + Bprime * Cross(omega_s, u_ns)
 
 sintheta = basis.dist.Field(name="sintheta", bases=basis.ball)
 sintheta["g"] = np.sin(theta)
@@ -168,9 +167,9 @@ def vol_avg(a: d3.Field) -> d3.Field:
 
 
 # define every component of velocity (for output)
-u_n_r = dot(u_n, er)
-u_n_theta = dot(u_n, etheta)
-u_n_phi = dot(u_n, ephi)
+u_n_r = Dot(u_n, er)
+u_n_theta = Dot(u_n, etheta)
+u_n_phi = Dot(u_n, ephi)
 
 save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
 save_path.mkdir(parents=True, exist_ok=True)
@@ -180,10 +179,10 @@ AZ_avg = solver.evaluator.add_file_handler(
     sim_dt=0.05,
     max_writes=100,
 )
-AZ_avg.add_task(dot(er, u_n), name="u_n_r")
-AZ_avg.add_task(dot(etheta, u_n), name="u_n_theta")
+AZ_avg.add_task(Dot(er, u_n), name="u_n_r")
+AZ_avg.add_task(Dot(etheta, u_n), name="u_n_theta")
 AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
-AZ_avg.add_task(az_avg(dot(ephi, u_s)), name="u_s_phi")
+AZ_avg.add_task(az_avg(Dot(ephi, u_s)), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),

@@ -54,9 +54,15 @@ if __name__ == "__main__":
         path_2, 40, ax[1], rotating=True, delta_omega=PARAMS["Delta_Omega"]
     )
 
+<<<<<<< HEAD
     path_3 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s12.h5"
     mesh = plot_angular_velocity(
         path_3, 10, ax[2], rotating=True, delta_omega=PARAMS["Delta_Omega"]
+=======
+    path_3 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s5.h5"
+    plot_angular_velocity(
+        path_3, 90, ax[2], rotating=True, delta_omega=PARAMS["Delta_Omega"]
+>>>>>>> main
     )
 
     plt.show()

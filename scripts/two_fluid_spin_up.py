@@ -236,7 +236,7 @@ try:
                 % (solver.iteration, solver.sim_time, timestep, max_omega)
             )
 except:
-    logger.error("Exception raised, triggering end of main loop.")
+    logger.exception("Exception raised, triggering end of main loop.")
     raise
 finally:
     solver.log_stats()

@@ -1,3 +1,10 @@
+"""
+Solve the HVBK equations for a spherical shell subject to a boundary spin up.
+
+Equations and mutual friction are in the same form as
+J. R. Fuentes and Vanessa Graber 2024 ApJ 974 300.
+"""
+
 import datetime
 import json
 import logging
@@ -230,9 +237,8 @@ AZ_avg = solver.evaluator.add_file_handler(
 )
 AZ_avg.add_task(dot(er_crust, u_s_cr), name="u_n_r")
 AZ_avg.add_task(dot(etheta_crust, u_s_cr), name="u_n_theta")
-# AZ_avg.add_task(az_avg(ephi_crust, u_s_cr), name="u_n_phi")
+AZ_avg.add_task(az_avg(dot(ephi_crust, u_n_cr)), name="u_n_phi")
 AZ_avg.add_task(az_avg(dot(ephi_crust, u_s_cr)), name="u_s_phi")
-AZ_avg.add_task(dot(F_mf, F_mf), name="mag_mf")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
@@ -286,7 +292,7 @@ try:
                 % (solver.iteration, solver.sim_time, timestep, max_omega)
             )
 except:
-    logger.error("Exception raised, triggering end of main loop.")
+    logger.exception("Exception raised, triggering end of main loop.")
     raise
 finally:
     solver.log_stats()

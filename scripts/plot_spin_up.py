@@ -59,7 +59,6 @@ if __name__ == "__main__":
         path_3, 10, ax[2], rotating=True, delta_omega=PARAMS["Delta_Omega"]
     )
 
-    # cbar = fig.colorbar(mesh, ax=ax[2], pad=0.1, orientation="vertical")
     plt.show()
     plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
     plt.close()

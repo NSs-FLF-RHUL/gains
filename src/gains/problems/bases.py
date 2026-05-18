@@ -7,7 +7,12 @@ class SphericalBasis:
     """Initialise bases and distributor to solve spherical problems in dedalus."""
 
     def __init__(
-        self, coords, dist, radius: float, dtype: type, **params: float
+        self,
+        coords: d3.SphericalCoordinates,
+        dist: d3.Distributor,
+        radius: float,
+        dtype: type,
+        **params: float,
     ) -> None:
         """
         Initialise spherical basis, including the surface.

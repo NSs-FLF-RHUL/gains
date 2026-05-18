@@ -17,8 +17,8 @@ file_full = Path("outputs/norm_methods_comparison/Full_norm_log.txt")
 
 times, vorticities_approx = read_logfile(file_approx, "max(omega_s)")
 vorticities_full = read_logfile(file_full, "max(omega_s)")[1]
-plt.scatter(times, vorticities_approx, s=0.3, label = "Approximation")
-plt.scatter(times, vorticities_full, s=0.3, label = "Full normalisation")
+plt.scatter(times, vorticities_approx, s=0.3, label="Approximation")
+plt.scatter(times, vorticities_full, s=0.3, label="Full normalisation")
 plt.xlabel("time")
 plt.ylabel(r"$\omega_{s, max}$")
 plt.legend()

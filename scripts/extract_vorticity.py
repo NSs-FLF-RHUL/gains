@@ -12,11 +12,14 @@ from gains.utils.misc import read_logfile
 
 plt.rcParams["savefig.dpi"] = 400
 
-file = Path("outputs/Vorticity_log_long.txt")
+file_approx = Path("outputs/norm_methods_comparison/Approx_norm_log.txt")
+file_full = Path("outputs/norm_methods_comparison/Full_norm_log.txt")
 
-
-times, vorticities = read_logfile(file, "max(omega_s)")
-plt.scatter(times, vorticities, s=0.3)
+times, vorticities_approx = read_logfile(file_approx, "max(omega_s)")
+vorticities_full = read_logfile(file_full, "max(omega_s)")[1]
+plt.scatter(times, vorticities_approx, s=0.3, label = "Approximation")
+plt.scatter(times, vorticities_full, s=0.3, label = "Full normalisation")
 plt.xlabel("time")
 plt.ylabel(r"$\omega_{s, max}$")
-plt.savefig("max_vorticity_agains_time.png")
+plt.legend()
+plt.savefig("outputs/norm_methods_comparison/Both_compare.png")

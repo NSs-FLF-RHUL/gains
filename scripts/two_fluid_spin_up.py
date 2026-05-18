@@ -15,6 +15,10 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
+from dedalus.public import CrossProduct as cross
+from dedalus.public import DotProduct as dot
+from dedalus.public import Curl as curl
+
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
@@ -78,9 +82,6 @@ tau_u_n = basis.dist.VectorField(basis.coords, name="tau_u_n", bases=basis.spher
 tau_u_s = basis.dist.VectorField(basis.coords, name="tau_u_s", bases=basis.sphere)
 
 # Substitutions
-cross = d3.CrossProduct
-dot = d3.DotProduct
-curl = d3.Curl
 lift = lambda a: d3.Lift(a, basis.ball, -1)
 
 x_s = 0.95  # Neutron fraction

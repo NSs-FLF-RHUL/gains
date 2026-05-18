@@ -14,12 +14,12 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
-from gains.params.single_spin_up_rotating import parameters as default_params
-from gains.problems.bases import SphericalBasis
+from gains.params.spherical_shell import parameters as default_params
 from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
+from gains.problems.bases import ShellBasis
 
 # Setup
 logger = logging.getLogger(__name__)
@@ -54,10 +54,9 @@ ncpu = MPI.COMM_WORLD.size
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
 Bprime = B / 2
-Ri = 0.5  # Add to parameter file
-Ro = 1.0
+Ri = PARAMS["Ri"]
+Ro = PARAMS["Ro"]
 mesh = mesh_cpus(ncpu)
-
 nu_hyper = 1e-6
 
 x_s = 0.95  # Neutron fraction
@@ -69,16 +68,9 @@ logger.info(f"running on processor mesh={mesh}")
 
 coords = d3.SphericalCoordinates("phi", "theta", "r")
 dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
-
-basis_core = SphericalBasis(coords, dist, Ri, dtype, **PARAMS)
-basis_shell = d3.ShellBasis(
-    coords,
-    (PARAMS["Nphi"], PARAMS["Ntheta"], PARAMS["Nr"]),
-    radii=(Ri, Ro),
-    dealias=PARAMS["dealias"],
-    dtype=dtype,
-)
-surface = basis_shell.outer_surface
+basis = ShellBasis(coords, dist, dtype, **PARAMS)
+basis_shell = basis.shell
+surface = basis.surface
 
 # Crust fields
 
@@ -138,11 +130,11 @@ omega_unit = omega_s / 2
 F_mf = B * (cross(omega_unit, cross(omega_s, u_ns))) + Bprime * cross(omega_s, u_ns)
 
 strain_rate_n_cr = grad_uncr + d3.trans(grad_uncr)
-shear_stress_n_cr = d3.angular(d3.radial(strain_rate_n_cr(r=Ri), index=1))
+shear_stress_n_cr = d3.angular(d3.radial(strain_rate_n_cr(r=PARAMS["Ri"]), index=1))
 
 strain_rate_s_cr = grad_uscr + d3.trans(grad_uscr)
-shear_stress_s_cr_i = d3.angular(d3.radial(strain_rate_s_cr(r=Ri), index=1))
-shear_stress_s_cr_o = d3.angular(d3.radial(strain_rate_s_cr(r=Ro), index=1))
+shear_stress_s_cr_i = d3.angular(d3.radial(strain_rate_s_cr(r=PARAMS["Ri"]), index=1))
+shear_stress_s_cr_o = d3.angular(d3.radial(strain_rate_s_cr(r=PARAMS["Ro"]), index=1))
 
 # Problem for crust (testing)
 

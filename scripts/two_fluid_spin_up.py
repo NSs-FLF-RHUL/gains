@@ -1,4 +1,9 @@
-"""Simulates the spin up of a full basis.sphere containing a viscous newtonian fluid."""
+"""
+Solve the HVBK equations for a spherical star subject to a boundary spin up.
+
+Equations and mutual friction are in the same form as
+J. R. Fuentes and Vanessa Graber 2024 ApJ 974 300.
+"""
 
 import datetime
 import json
@@ -8,22 +13,26 @@ from pathlib import Path
 import dedalus.core as d3core
 import dedalus.public as d3
 import numpy as np
+from dedalus.public import CrossProduct as Cross
+from dedalus.public import Curl
+from dedalus.public import DotProduct as Dot
 from mpi4py import MPI
 
-# Parameters - load in from parameter file
-from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
+
+# Parameters - load in from parameter file
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
 
+# Setup
 logger = logging.getLogger(__name__)
 
 parser = create_parser_simulation()
 add_profiling_options(parser)
-
 args = vars(parser.parse_args())
+
 
 if args["parameter_file"] is not None:
     with Path.open(args["parameter_file"]) as param_file:
@@ -37,93 +46,92 @@ PARAMS["checkpoint_path"] = args["checkpoint_path"]
 PARAMS["output_dir"] = (
     args["output_dir"]
     if args["output_dir"] is not None
-    else "single_spin_up_"
+    else "two_fluid_spin_up_"
     + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
 )
-PARAMS["profile"] = args["profile"]
 
-# Additional Parameters - not likely to change between runs
 radius = 1
 timestepper = d3.SBDF2
 cfl_safety = 0.2
 max_timestep = 1e-2
 dtype = np.float64
-comm = MPI.COMM_WORLD
-ncpu = comm.size
+ncpu = MPI.COMM_WORLD.size
+
+Ek = PARAMS["Ek"]
+B = PARAMS["B"]
+Bprime = B / 2
 
 mesh = mesh_cpus(ncpu)
-basis = SphericalBasis(mesh, dtype, **PARAMS)
 
 logger.info(f"running on processor mesh={mesh}")
 
+# Basis
+
+basis = SphericalBasis(mesh, dtype, **PARAMS)
+
 # Fields
 u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)
+u_s = basis.dist.VectorField(basis.coords, name="u_s", bases=basis.ball)
 p_n = basis.dist.Field(name="p_n", bases=basis.ball)
-omega_n = basis.dist.VectorField(basis.coords, name="omega_n", bases=basis.ball)
+p_s = basis.dist.Field(name="p_s", bases=basis.ball)
 
 tau_p_n = basis.dist.Field(name="tau_p_n")
+tau_p_s = basis.dist.Field(name="tau_p_s")
 tau_u_n = basis.dist.VectorField(basis.coords, name="tau_u_n", bases=basis.sphere)
-tau_omega_n = basis.dist.VectorField(
-    basis.coords, name="tau_omega_n", bases=basis.sphere
-)
+tau_u_s = basis.dist.VectorField(basis.coords, name="tau_u_s", bases=basis.sphere)
 
 # Substitutions
-phi, theta, r = basis.dist.local_grids(basis.ball)
+lift = lambda a: d3.Lift(a, basis.ball, -1)
 
-r_vec = basis.dist.VectorField(basis.coords, bases=basis.ball)
-r_vec["g"][2] = r
-r_vec["g"][1] = theta
-r_vec["g"][0] = phi
+x_s = 0.95  # Neutron fraction
+x_n = 0.05  # Proton/electron fraction
+
+phi, theta, r = basis.dist.local_grids(basis.ball)
 er = basis.dist.VectorField(basis.coords)
 etheta = basis.dist.VectorField(basis.coords)
 ephi = basis.dist.VectorField(basis.coords)
+
 er["g"][2] = 1
 etheta["g"][1] = 1
 ephi["g"][0] = 1
 
-
 ez = basis.dist.VectorField(basis.coords, bases=basis.ball)
 ez["g"][1] = -np.sin(theta)
 ez["g"][2] = np.cos(theta)  # unit vector in z direction
+u_ns = u_n - u_s
+omega_s = Curl(u_s) + 2 * ez
+omega_unit = omega_s / (np.sqrt(Dot(omega_s, omega_s)) + 1e-14)
+F_mf = B * (Cross(omega_unit, Cross(omega_s, u_ns))) + Bprime * Cross(omega_s, u_ns)
 
-
-# This field is for the Boundary Conditions
 sintheta = basis.dist.Field(name="sintheta", bases=basis.ball)
-mask = basis.dist.Field(name="mask", bases=basis.sphere)
-
 sintheta["g"] = np.sin(theta)
-mask["g"] = window_equator(theta, 0.5, np.float64)
+uang = basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
+uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
+strain_rate = d3.grad(u_s) + d3.trans(d3.grad(u_s))
+shear_stress = d3.angular(d3.radial(strain_rate(r=1), index=1))
+# problem - HVBK equations spin up in basis.sphere
+problem = d3.IVP(
+    [u_n, u_s, p_n, p_s, tau_p_n, tau_p_s, tau_u_n, tau_u_s], namespace=locals()
+)
 
-
-uang_r1 = basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
-
-uang_r1["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
-
-
-def lift(a: d3.Field) -> d3.Field:
-    """Lift operand to derivative basis."""
-    return d3.Lift(a, basis.ball, -1)
-
-
-dot = d3.DotProduct
-curl = d3.Curl
-cross = d3.CrossProduct
-
-Ek = PARAMS["Ek"]  # Seperately defined for use in equations
-
-problem = d3.IVP([p_n, u_n, tau_p_n, tau_u_n], namespace=locals())
 problem.add_equation("div(u_n) + tau_p_n = 0")
+problem.add_equation("div(u_s) + tau_p_s = 0")
+problem.add_equation("integ(p_n) = 0")
+problem.add_equation("integ(p_s) = 0")
+
 problem.add_equation(
-    "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
-    "-2*cross(ez,u_n)"
+    "dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + x_s/x_n * F_mf"
+    "- 2*cross(ez,u_n)"
 )
 problem.add_equation(
-    "angular(u_n(r=radius)) = mask*angular(uang_r1) + (1-mask)*angular(u_n(r=radius))"
-)  # spin up at outer boundary
-problem.add_equation("radial(u_n(r=radius)) = 0")  # impenetrable bc
-problem.add_equation("integ(p_n) = 0")  # Pressure gauge normal fluid
+    "dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)"
+)
 
-# Solver
+problem.add_equation("radial(u_n(r=radius)) = 0")
+problem.add_equation("radial(u_s(r=radius)) = 0")
+problem.add_equation("angular(u_n(r=radius)) = angular(uang)")
+problem.add_equation("shear_stress = 0")
+
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
 
@@ -134,9 +142,11 @@ else:
     # Initial condition
     u_n.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
     u_n.low_pass_filter(scales=0.5)
+    u_s.fill_random("g", seed=42, distribution="normal", scale=1e-10)
+    u_s.low_pass_filter(scales=0.5)
     timestep = max_timestep
-# Analysis
 
+# Analysis
 volume = (4 / 3) * np.pi * radius**3
 
 
@@ -156,9 +166,9 @@ def vol_avg(a: d3.Field) -> d3.Field:
 
 
 # define every component of velocity (for output)
-u_n_r = dot(u_n, er)
-u_n_theta = dot(u_n, etheta)
-u_n_phi = dot(u_n, ephi)
+u_n_r = Dot(u_n, er)
+u_n_theta = Dot(u_n, etheta)
+u_n_phi = Dot(u_n, ephi)
 
 save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
 save_path.mkdir(parents=True, exist_ok=True)
@@ -168,10 +178,10 @@ AZ_avg = solver.evaluator.add_file_handler(
     sim_dt=0.05,
     max_writes=100,
 )
-AZ_avg.add_task(dot(er, u_n), name="u_n_r")
-AZ_avg.add_task(dot(etheta, u_n), name="u_n_theta")
+AZ_avg.add_task(Dot(er, u_n), name="u_n_r")
+AZ_avg.add_task(Dot(etheta, u_n), name="u_n_theta")
 AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
-
+AZ_avg.add_task(az_avg(Dot(ephi, u_s)), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
@@ -185,8 +195,8 @@ slices.add_task(
 
 # Checkpoint
 checkpoint = solver.evaluator.add_file_handler(
-    f"outputs/{PARAMS['output_dir']}/su_equator/checkpoint",
-    sim_dt=50,
+    "outputs/su_equator/checkpoint",
+    wall_dt=3600,
     max_writes=1,
     parallel="gather",
 )
@@ -197,15 +207,18 @@ CFL = d3.CFL(
     solver, timestep, cadence=1, safety=0.3, threshold=0.1, max_dt=max_timestep
 )
 CFL.add_velocity(u_n)
+CFL.add_velocity(u_s)
+
 
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 
 
-@profile(dirname=PARAMS["profile"], run_output_dir=PARAMS["output_dir"])
+# Main loop
+@profile(args["profile"], PARAMS)
 def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
-    """Call solver.evolve, but decorate with the profiling function."""
+    """Define a function to call the dedalus evolve method with profiling."""
     return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
 
 

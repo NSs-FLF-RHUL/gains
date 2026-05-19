@@ -32,7 +32,7 @@ add_profiling_options(parser)
 args = vars(parser.parse_args())
 
 if args["logfile"] is not None:
-    logpath = Path(f"outputs/{args["output_dir"]}/{args["logfile"]}.txt")
+    logpath = Path(f"outputs/{args['output_dir']}/{args['logfile']}.txt")
     logpath.parent.mkdir(exist_ok=True)
     FileOutputHandler = logging.FileHandler(logpath)
     logger.addHandler(FileOutputHandler)

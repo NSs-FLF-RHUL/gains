@@ -39,6 +39,13 @@ def create_parser_simulation() -> argparse.ArgumentParser:
         " json format.",
     )
 
+    parser.add_argument(
+    "--logfile",
+    type=str,
+    default=None,
+    help="Name of logfile, if you want to create one."
+)
+
     return parser
 
 

@@ -66,7 +66,7 @@ logger.info(f"running on processor mesh={mesh}")
 # Basis
 coords = d3.SphericalCoordinates("phi", "theta", "r")
 dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
-basis = SphericalBasis(coords, dist, radius, dtype, **PARAMS)
+basis = SphericalBasis(coords, dist, dtype, radius, **PARAMS)
 
 # Fields
 u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)

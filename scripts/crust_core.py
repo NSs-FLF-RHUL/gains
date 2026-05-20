@@ -177,3 +177,81 @@ problem.add_equation("angular(u_b(r=Ri)) = angular(u_s(r=Ri))")
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
+
+if PARAMS["use_checkpoint"]:
+    write, timestep = solver.load_state(PARAMS["checkpoint_path"])
+else:
+    # Initial condition
+    u_s.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
+    u_s.low_pass_filter(scales=0.5)
+    u_b.fill_random("g", seed=67, distribution="normal", scale=1e-10)  # Random noise
+    u_b.low_pass_filter(scales=0.5)
+    timestep = max_timestep
+
+# Analysis
+volume = (4 / 3) * np.pi * radius**3
+
+
+def az_avg(a: d3.Field) -> d3.Field:
+    """Average over the phi coordinate."""
+    return d3.Average(a, coords.coords[0])
+
+
+def s2_avg(a: d3.Field) -> d3.Field:
+    """Average over all angular coordinates."""
+    return d3.Average(a, coords.S2basis.coordsys)
+
+
+def vol_avg(a: d3.Field) -> d3.Field:
+    """Average over whole basis.sphere."""
+    return d3.Integrate(a / volume, coords)
+
+u_b_r = Dot(u_b, er)
+u_b_theta = Dot(u_b, etheta)
+u_b_phi = Dot(u_b, ephi)
+
+u_s_r = Dot(u_s, er)
+u_s_theta = Dot(u_s, etheta)
+u_s_phi = Dot(u_s, ephi)
+
+save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path.mkdir(parents=True, exist_ok=True)
+
+AZ_avg = solver.evaluator.add_file_handler(
+    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    sim_dt=0.05,
+    max_writes=100,
+)
+AZ_avg.add_task(az_avg(u_b_r), name="u_b_r")
+AZ_avg.add_task(az_avg(u_b_theta), name="u_b_theta")
+AZ_avg.add_task(az_avg(u_b_phi), name="u_b_phi")
+
+AZ_avg.add_task(az_avg(u_s_r), name="u_s_r")
+AZ_avg.add_task(az_avg(u_s_theta), name="u_s_theta")
+AZ_avg.add_task(az_avg(u_s_phi), name="u_s_phi")
+
+CFL = d3.CFL(
+    solver, timestep, cadence=1, safety=0.5, threshold=0.1, max_dt=max_timestep
+)
+CFL.add_velocity(u_b)
+CFL.add_velocity(u_s)
+
+flow = d3.GlobalFlowProperty(solver, cadence=10)
+flow.add_property(np.sqrt(u_s @ u_s) * PARAMS["Ek"], name="Re_n")
+
+try:
+    logger.info("Starting main loop")
+    while solver.proceed:
+        timestep = CFL.compute_timestep()
+        solver.step(timestep)
+        if (solver.iteration - 1) % 10 == 0:
+            re = flow.max("Re_n")
+            logger.info(
+                "Iteration=%i, Time=%e, dt=%e, max(Re)=%f"
+                % (solver.iteration, solver.sim_time, timestep, re)
+            )
+except:
+    logger.exception("Exception raised, triggering end of main loop.")
+    raise
+finally:
+    solver.log_stats()

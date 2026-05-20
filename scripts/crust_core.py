@@ -56,7 +56,6 @@ PARAMS["output_dir"] = (
     + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
 )
 
-radius = 1
 timestepper = d3.SBDF2
 cfl_safety = 0.2
 max_timestep = 1e-2
@@ -66,6 +65,9 @@ ncpu = MPI.COMM_WORLD.size
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
 Bprime = B / 2
+Ri = PARAMS["Ri"]
+Ro = PARAMS["Ro"]
+radius = Ro
 
 mesh = mesh_cpus(ncpu)
 
@@ -74,18 +76,19 @@ logger.info(f"running on processor mesh={mesh}")
 # Basis
 coords = d3.SphericalCoordinates("phi", "theta", "r")
 dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
-basis_core = SphericalBasis(coords, dist, dtype, radius, **PARAMS)
+basis_core = SphericalBasis(coords, dist, dtype, Ri, **PARAMS)
 basis_crust = ShellBasis(coords, dist, dtype, **PARAMS)
 
 # Fields
 u_b = dist.VectorField(coords, name = "u_b", bases=basis_core.ball)
 p_b = dist.Field(name="p_b", bases = basis_core.ball)
-tau_p_b = dist.Field(name="tau_p_b", bases=basis_core.ball)
-tau_u_b = dist.VectorField(coords, name="tau_u_b", bases=basis_core.sphere)
+tau_p_b = dist.Field(name="tau_p_b")
+tau_u_b_1 = dist.VectorField(coords, name="tau_u_b_1", bases=basis_core.sphere)
+tau_u_b_2 = dist.VectorField(coords, name = "tau_u_b_2", bases=basis_core.sphere)
 
 u_s = dist.VectorField(coords, name = "u_s", bases = basis_crust.shell)
 p_s = dist.Field(name = "p_s", bases=basis_crust.shell)
-tau_p_s = dist.Field(name = "tau_p_s", bases = basis_crust.shell)
+tau_p_s = dist.Field(name = "tau_p_s")
 tau_u_s_1 = dist.VectorField(coords, name = "tau_u_s_1", bases = basis_crust.surface)
 tau_u_s_2 = dist.VectorField(coords, name = "tau_u_s_2", bases = basis_crust.surface)
 
@@ -100,23 +103,26 @@ ephi['g'][0] = 1
 
 #Subsititutions: crust
 lift_basis_s = basis_crust.shell.derivative_basis(1)
-lift_s = lambda a: d3.Lift(a, lift_s, -1)
+lift_s = lambda a: d3.Lift(a, lift_basis_s, -1)
 phi_s, theta_s, r_s = dist.local_grids(basis_crust.shell)
 ez_s = dist.VectorField(coords, bases=basis_crust.shell)
 ez_s['g'][1] = - np.sin(theta_s)
 ez_s['g'][2] = np.cos(theta_s)
 
-rvec = dist.VectorField(coords, bases = basis_crust.shell.radial_basis)
-rvec['g'][2] = r_s
+rvec_s = dist.VectorField(coords, bases = basis_crust.shell.radial_basis)
+rvec_s['g'][2] = r_s
 
-grad_u_s = d3.grad(u_s) + rvec * lift_s(tau_u_s_1)
-stheta_s = d3.Field(name="stheta", bases=basis_crust.shell)
+grad_u_s = d3.grad(u_s) + rvec_s * lift_s(tau_u_s_1)
+stheta_s = dist.Field(name="stheta", bases=basis_crust.shell)
 stheta_s['g'] = np.sin(theta_s)
 uang_s = dist.VectorField(coords, bases=basis_crust.shell)(r=radius).evaluate()
 uang_s["g"][0, :] = (PARAMS["Delta_Omega"] * stheta_s)(r=radius).evaluate()["g"]
 
-strain_s_surface = grad_u_s + d3.trans(grad_u_s)
-shear_stress_s_surface = d3.angular(d3.radial(strain_s_surface(r=PARAMS["Ri"]), index=1))
+strain_s = grad_u_s + d3.trans(grad_u_s)
+shear_stress_s_surface = d3.angular(d3.radial(strain_s(r=PARAMS["Ro"]), index=1))
+
+shear_stress_s_interface = d3.angular(d3.radial(strain_s(r=PARAMS["Ri"]), index=1))
+traction_s_interface = -p_s(r=PARAMS["Ri"])*er + Ek*d3.radial(strain_s(r=Ri), index=1)
 
 #Subsititutions: Core
 lift_b = lambda a: d3.Lift(a, basis_core.ball, -1)
@@ -126,4 +132,48 @@ ez_b = dist.VectorField(coords, bases=basis_core.ball)
 ez_b['g'][1] = -np.sin(theta_b)
 ez_b['g'][2] = np.cos(theta_b)
 
+rvec_b = dist.VectorField(coords, bases=basis_core.ball.radial_basis)
+rvec_b['g'][2] = r_b
 
+grad_u_b = d3.grad(u_b) + rvec_b * lift_b(tau_u_b_1)
+
+strain_b = grad_u_b + d3.trans(grad_u_b)
+shear_stress_b_interface = d3.angular(d3.radial(strain_b(r=PARAMS["Ri"]), index=1))
+
+traction_b_interface = -p_b(r=PARAMS["Ri"])*er + Ek* d3.radial(strain_b(r=Ri), index=1)
+
+# Problem
+problem = d3.IVP(
+    [
+        u_s,
+        p_s,
+        tau_p_s,
+        tau_u_s_1,
+        tau_u_s_2,
+        u_b,
+        p_b,
+        tau_p_b,
+        tau_u_b_2
+    ],
+    namespace=locals()
+)
+
+problem.add_equation("trace(grad_u_s) + tau_p_s = 0")
+problem.add_equation("div(u_b) + tau_p_b = 0")
+problem.add_equation("integ(p_b) = 0")
+problem.add_equation("integ(p_s) = 0")
+
+problem.add_equation("dt(u_b) - Ek*lap(u_b) + grad(p_b) + lift_b(tau_u_b_2) = -u_b@grad(u_b) - 2*cross(ez_b, u_b)")
+problem.add_equation("dt(u_s) - Ek*div(grad_u_s) + grad(p_s) + lift_s(tau_u_s_2) = -u_s@grad(u_s) - 2*cross(ez_s, u_s)")
+
+problem.add_equation("radial(u_s(r=Ro)) = 0") # Zero Penetration
+problem.add_equation("angular(u_s(r=Ro)) = angular(uang_s)") # Surface spin up
+
+problem.add_equation("radial(u_s(r=Ri)) = 0")
+problem.add_equation("shear_stress_s_interface = 0")
+
+problem.add_equation("radial(u_b(r=Ri)) = 0")
+problem.add_equation("angular(u_b(r=Ri)) = angular(u_s(r=Ri))")
+
+solver = problem.build_solver(timestepper)
+solver.stop_sim_time = PARAMS["stop_sim_time"]

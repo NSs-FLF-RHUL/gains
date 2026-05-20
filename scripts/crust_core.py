@@ -102,4 +102,28 @@ ephi['g'][0] = 1
 lift_basis_s = basis_crust.shell.derivative_basis(1)
 lift_s = lambda a: d3.Lift(a, lift_s, -1)
 phi_s, theta_s, r_s = dist.local_grids(basis_crust.shell)
+ez_s = dist.VectorField(coords, bases=basis_crust.shell)
+ez_s['g'][1] = - np.sin(theta_s)
+ez_s['g'][2] = np.cos(theta_s)
+
+rvec = dist.VectorField(coords, bases = basis_crust.shell.radial_basis)
+rvec['g'][2] = r_s
+
+grad_u_s = d3.grad(u_s) + rvec * lift_s(tau_u_s_1)
+stheta_s = d3.Field(name="stheta", bases=basis_crust.shell)
+stheta_s['g'] = np.sin(theta_s)
+uang_s = dist.VectorField(coords, bases=basis_crust.shell)(r=radius).evaluate()
+uang_s["g"][0, :] = (PARAMS["Delta_Omega"] * stheta_s)(r=radius).evaluate()["g"]
+
+strain_s_surface = grad_u_s + d3.trans(grad_u_s)
+shear_stress_s_surface = d3.angular(d3.radial(strain_s_surface(r=PARAMS["Ri"]), index=1))
+
+#Subsititutions: Core
+lift_b = lambda a: d3.Lift(a, basis_core.ball, -1)
+phi_b, theta_b, r_b = dist.local_grids(basis_core.ball)
+
+ez_b = dist.VectorField(coords, bases=basis_core.ball)
+ez_b['g'][1] = -np.sin(theta_b)
+ez_b['g'][2] = np.cos(theta_b)
+
 

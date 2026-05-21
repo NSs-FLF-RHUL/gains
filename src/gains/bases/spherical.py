@@ -12,6 +12,7 @@ class SphericalBasis(BaseBasis):
     """A spherical basis that includes the surface."""
 
     ball: d3.BallBasis
+    radius: float
 
     @property
     def sphere(self) -> d3.SphereBasis:
@@ -31,6 +32,7 @@ class SphericalBasis(BaseBasis):
         :param params: Other simulation parameters
         """
         super().__init__(mesh, dtype)
+        self.radius = radius
         self.ball = d3.BallBasis(
             self.coords,
             shape=(params["Nphi"], params["Ntheta"], params["Nr"]),

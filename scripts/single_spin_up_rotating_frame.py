@@ -10,10 +10,11 @@ import dedalus.public as d3
 import numpy as np
 from mpi4py import MPI
 
-# Parameters - load in from parameter file
-from gains.initial_conditions.single_component_spin_up import window_equator
+from gains.bases.spherical import SphericalBasis
 from gains.params.single_spin_up_rotating import parameters as default_params
-from gains.problems.bases import SphericalBasis
+from gains.problems.single_spin_up_rotating_frame import (
+    SingleSpinUpRotatingFrameProblem,
+)
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
@@ -52,76 +53,18 @@ comm = MPI.COMM_WORLD
 ncpu = comm.size
 
 mesh = mesh_cpus(ncpu)
-basis = SphericalBasis(mesh, dtype, **PARAMS)
+basis = SphericalBasis(mesh, radius, dtype, **PARAMS)
 
 logger.info(f"running on processor mesh={mesh}")
 
-# Fields
-u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)
-p_n = basis.dist.Field(name="p_n", bases=basis.ball)
-omega_n = basis.dist.VectorField(basis.coords, name="omega_n", bases=basis.ball)
-
-tau_p_n = basis.dist.Field(name="tau_p_n")
-tau_u_n = basis.dist.VectorField(basis.coords, name="tau_u_n", bases=basis.sphere)
-tau_omega_n = basis.dist.VectorField(
-    basis.coords, name="tau_omega_n", bases=basis.sphere
-)
-
-# Substitutions
-phi, theta, r = basis.dist.local_grids(basis.ball)
-
-r_vec = basis.dist.VectorField(basis.coords, bases=basis.ball)
-r_vec["g"][2] = r
-r_vec["g"][1] = theta
-r_vec["g"][0] = phi
-er = basis.dist.VectorField(basis.coords)
-etheta = basis.dist.VectorField(basis.coords)
-ephi = basis.dist.VectorField(basis.coords)
-er["g"][2] = 1
-etheta["g"][1] = 1
-ephi["g"][0] = 1
-
-
-ez = basis.dist.VectorField(basis.coords, bases=basis.ball)
-ez["g"][1] = -np.sin(theta)
-ez["g"][2] = np.cos(theta)  # unit vector in z direction
-
-
-# This field is for the Boundary Conditions
-sintheta = basis.dist.Field(name="sintheta", bases=basis.ball)
-mask = basis.dist.Field(name="mask", bases=basis.sphere)
-
-sintheta["g"] = np.sin(theta)
-mask["g"] = window_equator(theta, 0.5, np.float64)
-
-
-uang_r1 = basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
-
-uang_r1["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
-
-
-def lift(a: d3.Field) -> d3.Field:
-    """Lift operand to derivative basis."""
-    return d3.Lift(a, basis.ball, -1)
-
+setup = SingleSpinUpRotatingFrameProblem(basis, **PARAMS)
+problem = setup.problem
+u_n = setup.fields["u_n"]
+er, etheta, ephi = setup.get_spherical_units()
 
 dot = d3.DotProduct
 curl = d3.Curl
 cross = d3.CrossProduct
-
-Ek = PARAMS["Ek"]  # Seperately defined for use in equations
-
-problem = d3.IVP([p_n, u_n, tau_p_n, tau_u_n], namespace=locals())
-problem.add_equation("div(u_n) + tau_p_n = 0")
-problem.add_equation(
-    "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
-    "-2*cross(ez,u_n)"
-)
-problem.add_equation(
-    "angular(u_n(r=radius)) = mask*angular(uang_r1) + (1-mask)*angular(u_n(r=radius))"
-)  # spin up at outer boundary
-problem.add_equation("radial(u_n(r=radius)) = 0")  # impenetrable bc
-problem.add_equation("integ(p_n) = 0")  # Pressure gauge normal fluid
 
 # Solver
 solver = problem.build_solver(timestepper)
@@ -156,9 +99,7 @@ def vol_avg(a: d3.Field) -> d3.Field:
 
 
 # define every component of velocity (for output)
-u_n_r = dot(u_n, er)
-u_n_theta = dot(u_n, etheta)
-u_n_phi = dot(u_n, ephi)
+u_n_r, u_n_theta, u_n_phi = setup.field_projection("u_n")
 
 save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
 save_path.mkdir(parents=True, exist_ok=True)

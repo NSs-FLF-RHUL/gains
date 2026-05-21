@@ -36,3 +36,14 @@ class SphericalBasis(BaseBasis):
             dealias=params["dealias"],
             dtype=dtype,
         )
+
+    def unit_ez(self) -> d3.Field:
+        """Return the unit vector in the z-direction."""
+        ez = self.dist.VectorField(self.coords, bases=self.ball)
+
+        _, theta, _ = self.dist.local_grids(self.ball)
+
+        ez["g"][1] = -np.sin(theta)
+        ez["g"][2] = np.cos(theta)
+
+        return ez

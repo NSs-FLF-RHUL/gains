@@ -33,11 +33,24 @@ class BaseProblem:
         self.fields = {}
         self._intermediate_fields = {}
 
-        self._store_constants(**params)
+        self._store_given_constants(**params)
+        self._store_derived_constants()
         self.construct_fields()
         self.construct_intermediate_fields()
 
-    def _store_constants(self, **constant_values: float) -> None:
+    def _store_derived_constants(self) -> None:
+        """
+        Construct any constants we need for the problem's system of equations.
+
+        Unlike `_store_given_constants`, these constants should be objects, values, or
+        other static instances that we can derive from the constants we have already
+        been given, or any other attributes of the instance itself.
+
+        By default, the method simply passes. But it can be overridden by subclasses if
+        necessary.
+        """
+
+    def _store_given_constants(self, **constant_values: float) -> None:
         """
         Store any constants needed by the problem's system of equations.
 

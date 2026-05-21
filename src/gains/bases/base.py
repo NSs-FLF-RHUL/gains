@@ -23,11 +23,19 @@ class BaseBasis:
         self.coords = d3.SphericalCoordinates("phi", "theta", "r")
         self.dist = d3.Distributor(self.coords, mesh=mesh, dtype=dtype)
 
+    def field(self, *args, **kwargs) -> d3.Field:
+        """Create a new `Field` that is attached to this basis."""
+        return self.dist.Field(*args, **kwargs)
+
+    def vector_field(self, *args, **kwargs) -> d3.Field:
+        """Create a new `VectorField` that is attached to this basis."""
+        return self.dist.VectorField(self.coords, *args, **kwargs)
+
     def unit_vectors(self) -> tuple[d3.Field, d3.Field, d3.Field]:
         r"""Return unit vectors for the $r, \theta, \phi$ directions, in that order."""
-        er = self.dist.VectorField(self.coords)
-        etheta = self.dist.VectorField(self.coords)
-        ephi = self.dist.VectorField(self.coords)
+        er = self.vector_field(self.coords)
+        etheta = self.vector_field(self.coords)
+        ephi = self.vector_field(self.coords)
 
         er["g"][2] = 1
         etheta["g"][1] = 1

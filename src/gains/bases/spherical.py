@@ -1,5 +1,7 @@
 """Spherical basis."""
 
+from collections.abc import Callable
+
 import dedalus.public as d3
 import numpy as np
 
@@ -36,6 +38,15 @@ class SphericalBasis(BaseBasis):
             dealias=params["dealias"],
             dtype=dtype,
         )
+
+    def lift_operator(self) -> Callable[[d3.Field], d3.Lift]:
+        """Return the Lift operator for this basis."""
+
+        def _lift(a: d3.Field) -> d3.Lift:
+            """Lift operand `a` to derivative basis."""
+            return d3.Lift(a, self.ball, -1)
+
+        return _lift
 
     def unit_ez(self) -> d3.Field:
         """Return the unit vector in the z-direction."""

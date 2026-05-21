@@ -41,6 +41,9 @@ class BaseProblem:
         """
         Store any constants needed by the problem's system of equations.
 
+        Constants may be any static values. This can include callable objects, or static
+        class instances.
+
         Passed keyword arguments are stored if their names match one of the designated
         constants for this class of problem, as dictated by `_equation_constant_names`.
         """

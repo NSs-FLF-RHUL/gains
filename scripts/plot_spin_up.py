@@ -47,9 +47,16 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
     
     plot_angular_velocity_sequence(args["times_plot"],ax,args["output_dir"],"u_b_phi", **PARAMS)
-    plt.show()
+
     #plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
     plt.close()
+    path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
+    data = h5py.File(path_plot, mode="r")
+    ur = data["tasks"]["u_n_r"][:, -1, :, :]
+    utheta = data["tasks"]["u_n_theta"][:, -1, :, :]
+    uphi = data["tasks"]["u_s_phi"]
+    theta = uphi.dims[2][0][:].ravel()
+    r = uphi.dims[3][0][:].ravel()
 
     fig = plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0)
     plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")

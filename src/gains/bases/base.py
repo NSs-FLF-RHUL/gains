@@ -33,9 +33,9 @@ class BaseBasis:
 
     def unit_vectors(self) -> tuple[d3.Field, d3.Field, d3.Field]:
         r"""Return unit vectors for the $r, \theta, \phi$ directions, in that order."""
-        er = self.vector_field(self.coords)
-        etheta = self.vector_field(self.coords)
-        ephi = self.vector_field(self.coords)
+        er = self.vector_field()
+        etheta = self.vector_field()
+        ephi = self.vector_field()
 
         er["g"][2] = 1
         etheta["g"][1] = 1

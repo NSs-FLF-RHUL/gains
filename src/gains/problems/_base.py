@@ -51,7 +51,7 @@ class BaseProblem:
     def _construct_problem(self) -> None:
         """Define the system of equations that this problem solves."""
         self.problem = d3.IVP(
-            list(self.fields.keys()),
+            list(self.fields.values()),
             namespace={
                 **self.fields,
                 **self._equation_constants,

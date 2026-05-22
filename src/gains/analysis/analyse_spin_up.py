@@ -98,23 +98,25 @@ def plot_stream(
     return fig
 
 
-def get_angular_coords(path: str | Path) -> np.ndarray:
+def get_angular_coords(path: str | Path, target_field: str) -> np.ndarray:
     """
     Return r and theta coordinates from a given dedalus output file.
 
     :param path: The path to the output file.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :returns r: The radial coordinates.
     :returns theta: The meridional coordinates.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_s_phi"]
-    r = u_n_phi.dims[3][0][:].ravel()
-    theta = u_n_phi.dims[2][0][:].ravel()
+    u_phi = data["tasks"][target_field]
+    r = u_phi.dims[3][0][:].ravel()
+    theta = u_phi.dims[2][0][:].ravel()
     return r, theta
 
 
 def get_angular_coords_single(
-    path: str | Path, r_index: int, theta_index: int
+    path: str | Path, r_index: int, theta_index: int, target_field: str
 ) -> tuple[float, float]:
     """
     Return a radial and meridional coordinate of specified independant indicies.
@@ -122,13 +124,15 @@ def get_angular_coords_single(
     :param path: path to the u_n_phi data file.
     :param r_index: Index of the desired radial coordinate.
     :param theta_index: Index of the desired meridional coordinate.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :returns r: The radial coordinate at r_index.
     :returns theta: The meridional coordinate at theta_index.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_s_phi"]
-    r = u_n_phi.dims[3][0][r_index]
-    theta = u_n_phi.dims[2][0][theta_index]
+    u_phi = data["tasks"][target_field]
+    r = u_phi.dims[3][0][r_index]
+    theta = u_phi.dims[2][0][theta_index]
     return r, theta
 
 
@@ -152,7 +156,7 @@ def calculate_angular_speed(
 
 
 def calculate_angular_speed_single(
-    path: str | Path, r_arg: int, theta_arg: int, u_phis: np.ndarray
+    path: str | Path, r_arg: int, theta_arg: int, u_phis: np.ndarray, target_field: str
 ) -> float:
     """
     Calculate angular speed for a specific radius and longitude.
@@ -162,9 +166,11 @@ def calculate_angular_speed_single(
     :param r_arg: Index for the desired radius.
     :param theta_arg: Index for the desired longitude.
     :param u_phis: Azimuthally averaged array of azimuthal velocities.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :returns: The angular speed at the specified r and theta.
     """
-    r, theta = get_angular_coords_single(path, r_arg, theta_arg)
+    r, theta = get_angular_coords_single(path, r_arg, theta_arg, target_field)
     u_phi = u_phis[theta_arg][r_arg]
     return u_phi / (r * np.sin(theta))
 
@@ -173,6 +179,7 @@ def plot_angular_velocity(
     path: str | Path,
     t: int,
     ax: mpl.projections.polar.PolarAxes,
+    target_field: str,
     *,
     rotating: bool,
     delta_omega: float,
@@ -189,14 +196,14 @@ def plot_angular_velocity(
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_s_phi"][t, -1, :, :]
-    r, theta = get_angular_coords(path)
+    u_phi = data["tasks"][target_field][t, -1, :, :]
+    r, theta = get_angular_coords(path, target_field)
     if not rotating:
-        u_n_background = 1.0 * np.outer(np.sin(theta), r)
+        u_background = 1.0 * np.outer(np.sin(theta), r)
     else:
-        u_n_background = np.zeros_like(u_n_phi)
+        u_background = np.zeros_like(u_phi)
 
-    du_n_phi = u_n_phi - u_n_background
+    du_n_phi = u_phi - u_background
     omega = calculate_angular_speed(r, theta, du_n_phi)
     time = np.array(data["scales/sim_time"])
     r_m, theta_m = np.meshgrid(r, theta)
@@ -224,6 +231,7 @@ def plot_angular_velocity(
 def get_angular_speed_vs_time(
     coord: LabeledCoordinate,
     target: float,
+    target_field: str,
     n_writes: int,
     path_list: list[Path],
     ntheta: int,
@@ -233,6 +241,8 @@ def get_angular_speed_vs_time(
 
     :param coord: The coordinate to be varied - should be r or theta.
     :param target: Value of the coordinate we want.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :param n_writes: Number of writes per .h5 file.
     :param path_list: List of paths to files to analyse.
     :param ntheta: The number of theta values.
@@ -251,14 +261,14 @@ def get_angular_speed_vs_time(
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
         for j in range(n_writes):
-            u_n_phi = data["tasks"]["u_s_phi"][j, -1, :, :]
+            u_phi = data["tasks"][target_field][j, -1, :, :]
             if coord.label == "r":
                 omega_r = calculate_angular_speed_single(
-                    path, c_get, int(theta_resolution / 2), u_n_phi
+                    path, c_get, int(theta_resolution / 2), u_phi, target_field
                 )  # theta arg esnures the equator is selected.
             elif coord.label == "theta":
                 omega_r = calculate_angular_speed_single(
-                    path, -1, c_get, u_n_phi
+                    path, -1, c_get, u_phi, target_field
                 )  # r arg ensures the surface is selected.
             else:
                 raise NotImplementedError(err_msg)
@@ -276,6 +286,7 @@ def plot_against_time(
     ek: float,
     ntheta: int,
     targets: np.ndarray | list,
+    target_field: str,
 ) -> tuple[list[Path], mpl.figure]:
     """
     Plot a range of coordinate values against time.
@@ -287,6 +298,8 @@ def plot_against_time(
     :param ntheta: The number of theta values.
     :param targets: The values of the coordinate to measure the angular speed
     against time.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :returns path_list: A list of only .h5 files in the specified path.
     """
     path = Path(path)
@@ -303,7 +316,7 @@ def plot_against_time(
     for i in range(len(targets)):
         target = targets[i]
         omega_r, times = get_angular_speed_vs_time(
-            coord, target, 100, path_list, ntheta=ntheta
+            coord, target, target_field, 100, path_list, ntheta=ntheta
         )
         ax.plot(
             times,

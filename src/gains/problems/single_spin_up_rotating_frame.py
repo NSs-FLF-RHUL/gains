@@ -1,3 +1,5 @@
+"""Problem setup for single-spin up, rotating frame."""
+
 import numpy as np
 
 from gains.bases.spherical import SphericalBasis
@@ -6,7 +8,7 @@ from gains.problems._base import BaseProblem
 
 
 class SingleSpinUpRotatingFrameProblem(BaseProblem):
-    """"""
+    """Single spin-up rotating frame problem."""
 
     basis: SphericalBasis
 
@@ -19,12 +21,13 @@ class SingleSpinUpRotatingFrameProblem(BaseProblem):
         """
         return ("Delta_Omega", "Ek")
 
-    def _store_derived_constants(self):
+    def _store_derived_constants(self) -> None:
         self._equation_constants["radius"] = self.basis.radius
         self._equation_constants["lift"] = self.basis.lift_operator()
         self._equation_constants["ez"] = self.basis.unit_ez()
 
     def add_problem_equations(self) -> None:
+        """Define the system of equations for this problem."""
         self.problem.add_equation("div(u_n) + tau_p_n = 0")
         self.problem.add_equation(
             "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n) = "
@@ -41,6 +44,7 @@ class SingleSpinUpRotatingFrameProblem(BaseProblem):
         self.problem.add_equation("integ(p_n) = 0")
 
     def construct_fields(self) -> None:
+        """Construct named fields to solve for in this problem."""
         self.fields["u_n"] = self.new_vector_field(name="u_n", bases=self.basis.ball)
         self.fields["p_n"] = self.new_field(name="p_n", bases=self.basis.ball)
 
@@ -50,6 +54,7 @@ class SingleSpinUpRotatingFrameProblem(BaseProblem):
         )
 
     def construct_intermediate_fields(self) -> None:
+        """Construct fields required by the system of equations."""
         self._intermediate_fields["omega_n"] = self.new_vector_field(
             name="omega_n", bases=self.basis.ball
         )

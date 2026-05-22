@@ -55,6 +55,8 @@ testpaths = ["tests"]
 fix = true
 force-exclude = true
 lint.ignore = [
+  "ANN002", # typehints for *args
+  "ANN003", # typehints for **kwargs
   "COM812", # trailing commas (ruff-format recommended)
   "D203",   # no-blank-line-before-class
   "D212",   # multi-line-summary-first-line

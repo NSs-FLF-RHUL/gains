@@ -173,7 +173,7 @@ save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
-    sim_dt=0.05,
+    sim_dt=PARAMS["snapshot_dt"],
     max_writes=100,
 )
 AZ_avg.add_task(Dot(er, u_n), name="u_n_r")
@@ -183,7 +183,7 @@ AZ_avg.add_task(az_avg(Dot(ephi, u_s)), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
-    sim_dt=0.025,
+    sim_dt=PARAMS["snapshots_dt"],
     max_writes=100,
 )
 

@@ -228,6 +228,40 @@ def plot_angular_velocity(
     return mesh
 
 
+def plot_angular_velocity_sequence(
+    target_times, ax, output_dir, target_field, **params
+) -> plt.pcolormesh:
+    """
+    Plot a sequence of plots of the angular speed at different times.
+
+    :param target_times: The times to plot angular velocity.
+    :param ax: List of axes from matplotlib subplots.
+    :param output_dir: Location of simulation outputs.
+    :param target_field: The group name of the target velocity field in the
+    output file.
+    :param params: Simulation parameters.
+    :returns mesh: pcolormesh for setting colourbar if this is wanted.
+    """
+    saved_times = np.arange(0, params["stop_sim_time"], params["snapshot_dt"])
+    for i in range(len(target_times)):
+        time = target_times[i]
+        target_index = get_arg_of_nearest(time, saved_times)[0]
+        file_suffix = int(np.ceil(target_index / 100))
+        file_index = target_index % 100
+        path = (
+            output_dir / f"su_equator/AZ_avg_equator/AZ_avg_equator_s{file_suffix}.h5"
+        )
+        mesh = plot_angular_velocity(
+            path,
+            file_index,
+            ax[i],
+            rotating=True,
+            delta_omega=params["Delta_Omega"],
+            target_field=target_field,
+        )
+    return mesh
+
+
 def get_angular_speed_vs_time(
     coord: LabeledCoordinate,
     target: float,

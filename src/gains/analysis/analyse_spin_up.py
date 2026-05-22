@@ -176,7 +176,7 @@ def plot_angular_velocity(
     *,
     rotating: bool,
     delta_omega: float,
-) -> None:
+) -> plt.pcolormesh:
     """
     Take an output of single_spin_up_rotating_frame.py and plots the angular velocity.
 
@@ -186,6 +186,7 @@ def plot_angular_velocity(
     axis is modified in place by this function.
     :param rotating: Set true if the simulation was done in the
     rotating reference frame.
+    :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     data = h5py.File(path, mode="r")
     u_n_phi = data["tasks"]["u_s_phi"][t, -1, :, :]

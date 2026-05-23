@@ -62,7 +62,8 @@ max_timestep = 1e-2
 dtype = np.float64
 ncpu = MPI.COMM_WORLD.size
 
-Ek = PARAMS["Ek"]
+Ek_shell = PARAMS["Ek"]*(PARAMS["Ro"]-PARAMS["Ri"])**2
+Ek_ball = PARAMS["Ek"]*PARAMS["Ri"]**2
 B = PARAMS["B"]
 Bprime = B / 2
 Ri = PARAMS["Ri"]
@@ -122,7 +123,6 @@ strain_s = grad_u_s + d3.trans(grad_u_s)
 shear_stress_s_surface = d3.angular(d3.radial(strain_s(r=PARAMS["Ro"]), index=1))
 
 shear_stress_s_interface = d3.angular(d3.radial(strain_s(r=PARAMS["Ri"]), index=1))
-traction_s_interface = -p_s(r=PARAMS["Ri"])*er + Ek*d3.radial(strain_s(r=Ri), index=1)
 
 #Subsititutions: Core
 lift_b = lambda a: d3.Lift(a, basis_core.ball, -1)
@@ -139,8 +139,6 @@ grad_u_b = d3.grad(u_b) + rvec_b * lift_b(tau_u_b_1)
 
 strain_b = grad_u_b + d3.trans(grad_u_b)
 shear_stress_b_interface = d3.angular(d3.radial(strain_b(r=PARAMS["Ri"]), index=1))
-
-traction_b_interface = -p_b(r=PARAMS["Ri"])*er + Ek* d3.radial(strain_b(r=Ri), index=1)
 
 # Problem
 problem = d3.IVP(
@@ -163,8 +161,8 @@ problem.add_equation("div(u_b) + tau_p_b = 0")
 problem.add_equation("integ(p_b) = 0")
 problem.add_equation("integ(p_s) = 0")
 
-problem.add_equation("dt(u_b) - Ek*lap(u_b) + grad(p_b) + lift_b(tau_u_b_2) = -u_b@grad(u_b) - 2*cross(ez_b, u_b)")
-problem.add_equation("dt(u_s) - Ek*div(grad_u_s) + grad(p_s) + lift_s(tau_u_s_2) = -u_s@grad(u_s) - 2*cross(ez_s, u_s)")
+problem.add_equation("dt(u_b) - Ek_ball*lap(u_b) + grad(p_b) + lift_b(tau_u_b_2) = -u_b@grad(u_b) - 2*cross(ez_b, u_b)")
+problem.add_equation("dt(u_s) - Ek_shell*div(grad_u_s) + grad(p_s) + lift_s(tau_u_s_2) = -u_s@grad(u_s) - 2*cross(ez_s, u_s)")
 
 problem.add_equation("radial(u_s(r=Ro)) = 0") # Zero Penetration
 problem.add_equation("angular(u_s(r=Ro)) = angular(uang_s)") # Surface spin up

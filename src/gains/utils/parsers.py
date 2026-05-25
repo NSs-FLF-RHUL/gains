@@ -94,7 +94,7 @@ def create_parser_analysis() -> argparse.ArgumentParser:
     parser.add_argument(
         "--times_plot",
         type=float,
-        nargs=3,
+        nargs="*",
         default=[0.5, 4, 20],
         help="Three values of time to plot angular velocity at.",
     )

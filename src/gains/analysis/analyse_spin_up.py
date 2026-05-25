@@ -246,7 +246,7 @@ def plot_angular_velocity_sequence(
     for i in range(len(target_times)):
         time = target_times[i]
         target_index = get_arg_of_nearest(time, saved_times)[0]
-        file_suffix = int(np.ceil(target_index / 100))
+        file_suffix = target_index // 100 + 1
         file_index = target_index % 100
         path = (
             output_dir / f"su_equator/AZ_avg_equator/AZ_avg_equator_s{file_suffix}.h5"

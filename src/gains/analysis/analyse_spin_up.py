@@ -175,6 +175,25 @@ def calculate_angular_speed_single(
     return u_phi / (r * np.sin(theta))
 
 
+def read_angular_velocity(
+        path,
+        t,
+        target_field,
+        *,
+        rotating,
+):
+        data = h5py.File(path, mode="r")
+        u_phi = data["tasks"][target_field][t, -1, :, :]
+        r, theta = get_angular_coords(path, target_field)
+        if not rotating:
+            u_background = 1.0 * np.outer(np.sin(theta), r)
+        else:
+            u_background = np.zeros_like(u_phi)
+
+        du_n_phi = u_phi - u_background
+        omega = calculate_angular_speed(r, theta, du_n_phi)
+        return r, theta, omega
+
 def plot_angular_velocity(
     path: str | Path,
     t: int,
@@ -196,15 +215,7 @@ def plot_angular_velocity(
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     data = h5py.File(path, mode="r")
-    u_phi = data["tasks"][target_field][t, -1, :, :]
-    r, theta = get_angular_coords(path, target_field)
-    if not rotating:
-        u_background = 1.0 * np.outer(np.sin(theta), r)
-    else:
-        u_background = np.zeros_like(u_phi)
-
-    du_n_phi = u_phi - u_background
-    omega = calculate_angular_speed(r, theta, du_n_phi)
+    r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
     time = np.array(data["scales/sim_time"])
     r_m, theta_m = np.meshgrid(r, theta)
     mesh = ax.pcolormesh(
@@ -227,6 +238,53 @@ def plot_angular_velocity(
     ax.set_title(r"$t =$" + str(time[t])[:4])
     return mesh
 
+
+def plot_angular_velocity_split(
+        path,
+        t,
+        ax,
+        core_field,
+        crust_field,
+        *,
+        rotating,
+        delta_omega
+):
+    data = data = h5py.File(path, mode="r")
+    meshes = []
+    
+    for field in [core_field, crust_field]:
+        
+        u_phi = data["tasks"][field][t, -1, :, :]
+        r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
+        time = np.array(data["scales/sim_time"])
+        r_m, theta_m = np.meshgrid(r, theta)
+        mesh = ax.pcolormesh(
+        theta_m,
+        r_m,
+        omega,
+        clim=(0, delta_omega),
+        cmap="RdBu_r",
+        edgecolors="face",
+    )
+
+        meshes.append(mesh)
+    
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    ax.set_rorigin(0)
+    ax.set_ylim(0, 1.0)
+    ax.set_thetamin(0)
+    ax.set_thetamax(180)
+    ax.grid(visible=False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title(r"$t =$" + str(time[t])[:4])
+    r_boundary = min(r)
+    ax.plot(
+        theta, np.full_like(theta, r_boundary), linestyle = "--", color='black'
+    )
+    
+    return meshes
 
 def plot_angular_velocity_sequence(
     target_times, ax, output_dir, target_field, **params

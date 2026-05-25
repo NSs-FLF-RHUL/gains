@@ -44,24 +44,25 @@ if __name__ == "__main__":
 
     anim_check = input("Plot frames for animation? [y/n]: ")
 
-    fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"})
     
     plot_angular_velocity_sequence(args["times_plot"],ax,args["output_dir"],"u_b_phi", **PARAMS)
-
+    plt.show()
     #plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
     plt.close()
-    path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
+    path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s6.h5"
     data = h5py.File(path_plot, mode="r")
-    ur = data["tasks"]["u_n_r"][:, -1, :, :]
-    utheta = data["tasks"]["u_n_theta"][:, -1, :, :]
+    ur = data["tasks"]["u_s_r"][:, -1, :, :]
+    utheta = data["tasks"]["u_s_theta"][:, -1, :, :]
     uphi = data["tasks"]["u_s_phi"]
     theta = uphi.dims[2][0][:].ravel()
     r = uphi.dims[3][0][:].ravel()
 
     fig = plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0)
-    plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
+    #plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
+    plt.show()
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
-    r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
+    r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_b_phi")
 
     r = LabeledCoordinate(r_check, "r")
     theta = LabeledCoordinate(theta_check, "theta")
@@ -70,13 +71,13 @@ if __name__ == "__main__":
 
     if args["coordinate"] == "r":
         path_list, fig = plot_against_time(
-            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"]
+            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"], "u_b_phi"
         )
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
     elif args["coordinate"] == "theta":
         path_list, fig = plot_against_time(
-            theta, "theta", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"]
+            theta, "theta", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"], "u_b_phi"
         )
         fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
 
@@ -96,7 +97,7 @@ if __name__ == "__main__":
                     1, 1, figsize=(16, 8), subplot_kw={"projection": "polar"}
                 )
                 plot_angular_velocity(
-                    path, j, ax, rotating=True, delta_omega=PARAMS["Delta_Omega"]
+                    path, j, ax, rotating=True, delta_omega=PARAMS["Delta_Omega"], target_field="u_b_phi"
                 )
                 save_path = args["frame_dir"] / f"frame_spin_up_{count:04d}.png"
                 plt.savefig(save_path)

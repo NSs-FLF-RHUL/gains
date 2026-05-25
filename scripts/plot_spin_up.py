@@ -15,7 +15,8 @@ from gains.analysis.analyse_spin_up import (
     plot_against_time,
     plot_angular_velocity,
     plot_stream,
-    plot_angular_velocity_sequence
+    plot_angular_velocity_sequence,
+    plot_angular_velocity_split
 )
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.utils.parsers import create_parser_analysis
@@ -45,8 +46,7 @@ if __name__ == "__main__":
     anim_check = input("Plot frames for animation? [y/n]: ")
 
     fig, ax = plt.subplots(1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"})
-    
-    plot_angular_velocity_sequence(args["times_plot"],ax,args["output_dir"],"u_b_phi", **PARAMS)
+    plot_angular_velocity_sequence(args["times_plot"],ax,args["output_dir"],("u_b_phi", "u_s_phi"), **PARAMS)
     plt.show()
     #plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
     plt.close()
@@ -59,8 +59,7 @@ if __name__ == "__main__":
     r = uphi.dims[3][0][:].ravel()
 
     fig = plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0)
-    #plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
-    plt.show()
+    plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
     r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_b_phi")
 

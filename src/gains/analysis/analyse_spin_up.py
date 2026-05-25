@@ -254,7 +254,6 @@ def plot_angular_velocity_split(
     
     for field in [core_field, crust_field]:
         
-        u_phi = data["tasks"][field][t, -1, :, :]
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
         time = np.array(data["scales/sim_time"])
         r_m, theta_m = np.meshgrid(r, theta)
@@ -309,14 +308,25 @@ def plot_angular_velocity_sequence(
         path = (
             output_dir / f"su_equator/AZ_avg_equator/AZ_avg_equator_s{file_suffix}.h5"
         )
-        mesh = plot_angular_velocity(
-            path,
-            file_index,
-            ax[i],
-            rotating=True,
-            delta_omega=params["Delta_Omega"],
-            target_field=target_field,
-        )
+        if isinstance(target_field, str):
+            mesh = plot_angular_velocity(
+                path,
+                file_index,
+                ax[i],
+                rotating=True,
+                delta_omega=params["Delta_Omega"],
+                target_field=target_field,
+            )
+        else:
+            mesh = plot_angular_velocity_split(
+                path,
+                file_index,
+                ax[i],
+                target_field[0],
+                target_field[1],
+                rotating=True,
+                delta_omega=params["Delta_Omega"]
+            )
     return mesh
 
 

@@ -47,19 +47,20 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"})
     plot_angular_velocity_sequence(args["times_plot"],ax,args["output_dir"],("u_b_phi", "u_s_phi"), **PARAMS)
-    plt.show()
-    #plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
+    plt.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
     plt.close()
-    path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s6.h5"
+    '''
+    path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
     data = h5py.File(path_plot, mode="r")
-    ur = data["tasks"]["u_s_r"][:, -1, :, :]
-    utheta = data["tasks"]["u_s_theta"][:, -1, :, :]
-    uphi = data["tasks"]["u_s_phi"]
+    ur = data["tasks"]["u_b_r"][:, -1, :, :]
+    utheta = data["tasks"]["u_b_theta"][:, -1, :, :]
+    uphi = data["tasks"]["u_b_phi"]
     theta = uphi.dims[2][0][:].ravel()
     r = uphi.dims[3][0][:].ravel()
-
-    fig = plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0)
-    plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
+    time = data["scales/sim_time"][1]
+    fig = plot_stream(r[::-1], theta, ur[1], utheta[1], 2.0, time)
+    plt.savefig(f"{args['fig_dir']}/meridional_streamlines_core.png")
+    '''
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
     r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_b_phi")
 
@@ -91,15 +92,35 @@ if __name__ == "__main__":
             path = path_list[i]
             data = h5py.File(path, mode="r")
             time = np.array(data["scales/sim_time"])
+            ur_b = data["tasks"]["u_b_r"][:, -1, :, :]
+            ur_s = data["tasks"]["u_s_r"][:, -1, :, :]
+            utheta_b = data["tasks"]["u_b_theta"][:, -1, :, :]
+            utheta_s = data["tasks"]["u_s_theta"][:, -1, :, :]
+            uphi_b = data["tasks"]["u_b_phi"]
+            uphi_s = data["tasks"]["u_s_phi"]
+
+            theta_b = uphi_b.dims[2][0][:].ravel()
+            r_b = uphi_b.dims[3][0][:].ravel()
+            theta_s = uphi_s.dims[2][0][:].ravel()
+            r_s = uphi_s.dims[3][0][:].ravel()
             for j in range(len(time)):
                 fig, ax = plt.subplots(
                     1, 1, figsize=(16, 8), subplot_kw={"projection": "polar"}
                 )
-                plot_angular_velocity(
-                    path, j, ax, rotating=True, delta_omega=PARAMS["Delta_Omega"], target_field="u_b_phi"
+                plot_angular_velocity_split(
+                    path, j, ax, rotating=True, core_field="u_s_phi", crust_field="u_b_phi", delta_omega=PARAMS["Delta_Omega"], crustcore_boundary=PARAMS["Ri"]
                 )
-                save_path = args["frame_dir"] / f"frame_spin_up_{count:04d}.png"
-                plt.savefig(save_path)
+                save_path_angular = args["frame_dir"] / f"frame_spin_up_angular_{count:04d}.png"
+                save_path_stream = args["frame_dir"] / f"frame_spin_up_stream_{count:04d}.png"
+
+                fig2, ax2 = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
+                plot_stream(r_b[::-1], theta_b, ur_b[j], utheta_b[j], 2.0, time[j], ax2, colour="#5bcefa")
+                plot_stream(r_s[::-1], theta_s, ur_s[j], utheta_s[j], 1.0, time[j], ax2, colour="#f5a9b8")
+                fig.canvas.draw()
+                fig2.canvas.draw()
+
+                fig.savefig(save_path_angular)
+                fig2.savefig(save_path_stream)
                 count = count + 1
                 if count % 20 == 0:
                     logger.info(f"saved frame {count:04d}.png")

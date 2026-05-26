@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
 
-from gains.utils.misc import extract_numerical_suffix, get_arg_of_nearest
+from gains.utils.misc import extract_numerical_suffix, get_arg_of_nearest, select_time
 
 
 class LabeledCoordinate:
@@ -50,6 +50,9 @@ def plot_stream(
     vr_n: np.ndarray,
     vtheta_n: np.ndarray,
     density: float | tuple[float],
+    time: float,
+    ax,
+    **kwargs
 ) -> mpl.figure:
     """
     Create streamline plots of the meridional flow.
@@ -64,38 +67,31 @@ def plot_stream(
     theta = np.linspace(0, np.pi, len(theta))
 
     rr, ttheta = np.meshgrid(rad, theta)
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
-
     un = vr_n[:, ::-1]
     vn = vtheta_n[:, ::-1] / rr[:, ::-1]
 
     un = my_interp2d(un, r[::-1], rad)
     vn = my_interp2d(vn, r[::-1], rad)
-
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     ax.set_rorigin(0)
-    ax.set_ylim(r.min(), r.max())
+    ax.set_ylim(0, 1.0)
     ax.set_thetamin(0)
     ax.set_thetamax(180)
     ax.grid(visible=False)
     ax.set_xticks([])
     ax.set_yticks([])
-
+    ax.set_title(f"t={time}")
     ax.streamplot(
         ttheta.T,
         rr.T,
         vn.T,
         un.T,
-        color="#d95f02",
+        color=kwargs["colour"],
         density=density,
         broken_streamlines=True,
         linewidth=1,
     )
-
-    fig.tight_layout()
-
-    return fig
 
 
 def get_angular_coords(path: str | Path, target_field: str) -> np.ndarray:
@@ -251,7 +247,8 @@ def plot_angular_velocity_split(
         crust_field,
         *,
         rotating,
-        delta_omega
+        delta_omega,
+        crustcore_boundary
 ):
     data = h5py.File(path, mode="r")
     meshes = []
@@ -266,9 +263,8 @@ def plot_angular_velocity_split(
     
     ax.set_ylim(0, 1.0)
     ax.set_title(r"$t =$" + str(time[t])[:4])
-    r_boundary = min(r)
     ax.plot(
-        theta, np.full_like(theta, r_boundary), linestyle = "--", color='black'
+        theta, np.full_like(theta, crustcore_boundary), linestyle = "--", color='black'
     )
     
     return meshes
@@ -287,20 +283,14 @@ def plot_angular_velocity_sequence(
     :param params: Simulation parameters.
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
-    saved_times = np.arange(0, params["stop_sim_time"], params["snapshot_dt"])
     for i in range(len(target_times)):
         time = target_times[i]
-        target_index = get_arg_of_nearest(time, saved_times)[0]
-        file_suffix = target_index // 100 + 1
-        file_index = target_index % 100
-        path = (
-            output_dir / f"su_equator/AZ_avg_equator/AZ_avg_equator_s{file_suffix}.h5"
-        )
+        path, file_index = select_time(100, time, output_dir, **params)
         if isinstance(target_field, str):
             mesh = plot_angular_velocity(
                 path,
                 file_index,
-                ax[i],
+                ax,
                 rotating=True,
                 delta_omega=params["Delta_Omega"],
                 target_field=target_field,
@@ -313,7 +303,8 @@ def plot_angular_velocity_sequence(
                 target_field[0],
                 target_field[1],
                 rotating=True,
-                delta_omega=params["Delta_Omega"]
+                delta_omega=params["Delta_Omega"],
+                crustcore_boundary=params["Ri"]
             )
     return mesh
 

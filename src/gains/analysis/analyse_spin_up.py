@@ -64,7 +64,6 @@ def plot_stream(
     theta = np.linspace(0, np.pi, len(theta))
 
     rr, ttheta = np.meshgrid(rad, theta)
-    plt.figure()
     fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
 
     un = vr_n[:, ::-1]
@@ -108,7 +107,7 @@ def get_angular_coords(path: str | Path) -> np.ndarray:
     :returns theta: The meridional coordinates.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_n_phi"]
+    u_n_phi = data["tasks"]["u_s_phi"]
     r = u_n_phi.dims[3][0][:].ravel()
     theta = u_n_phi.dims[2][0][:].ravel()
     return r, theta
@@ -127,7 +126,7 @@ def get_angular_coords_single(
     :returns theta: The meridional coordinate at theta_index.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_n_phi"]
+    u_n_phi = data["tasks"]["u_s_phi"]
     r = u_n_phi.dims[3][0][r_index]
     theta = u_n_phi.dims[2][0][theta_index]
     return r, theta
@@ -177,7 +176,7 @@ def plot_angular_velocity(
     *,
     rotating: bool,
     delta_omega: float,
-) -> None:
+) -> plt.pcolormesh:
     """
     Take an output of single_spin_up_rotating_frame.py and plots the angular velocity.
 
@@ -187,9 +186,10 @@ def plot_angular_velocity(
     axis is modified in place by this function.
     :param rotating: Set true if the simulation was done in the
     rotating reference frame.
+    :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_n_phi"][t, -1, :, :]
+    u_n_phi = data["tasks"]["u_s_phi"][t, -1, :, :]
     r, theta = get_angular_coords(path)
     if not rotating:
         u_n_background = 1.0 * np.outer(np.sin(theta), r)
@@ -198,10 +198,9 @@ def plot_angular_velocity(
 
     du_n_phi = u_n_phi - u_n_background
     omega = calculate_angular_speed(r, theta, du_n_phi)
-
     time = np.array(data["scales/sim_time"])
     r_m, theta_m = np.meshgrid(r, theta)
-    ax.pcolormesh(
+    mesh = ax.pcolormesh(
         theta_m,
         r_m,
         omega,
@@ -219,6 +218,7 @@ def plot_angular_velocity(
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_title(r"$t =$" + str(time[t])[:4])
+    return mesh
 
 
 def get_angular_speed_vs_time(

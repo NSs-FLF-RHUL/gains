@@ -10,7 +10,6 @@ import json
 import logging
 from pathlib import Path
 
-import dedalus.core as d3core
 import dedalus.public as d3
 import numpy as np
 from dedalus.public import CrossProduct as Cross
@@ -20,9 +19,8 @@ from mpi4py import MPI
 
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
+from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
-
-# Parameters - load in from parameter file
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
 
@@ -66,8 +64,9 @@ mesh = mesh_cpus(ncpu)
 logger.info(f"running on processor mesh={mesh}")
 
 # Basis
-
-basis = SphericalBasis(mesh, dtype, **PARAMS)
+coords = d3.SphericalCoordinates("phi", "theta", "r")
+dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
+basis = SphericalBasis(coords, dist, dtype, radius, **PARAMS)
 
 # Fields
 u_n = basis.dist.VectorField(basis.coords, name="u_n", bases=basis.ball)
@@ -137,7 +136,6 @@ solver.stop_sim_time = PARAMS["stop_sim_time"]
 
 if PARAMS["use_checkpoint"]:
     write, timestep = solver.load_state(PARAMS["checkpoint_path"])
-    # Shouldn't the initial condition be solid body rotation?
 else:
     # Initial condition
     u_n.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
@@ -213,13 +211,14 @@ CFL.add_velocity(u_s)
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
+flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 
 
 # Main loop
 @profile(args["profile"], PARAMS)
-def evolve(solver: d3core.solvers.InitialValueSolver) -> None:
-    """Define a function to call the dedalus evolve method with profiling."""
-    return solver.evolve(timestep_function=CFL.compute_timestep, log_cadence=10)
+def main_loop() -> None:
+    """Decorate main loop."""
+    return track_vorticity(logger, flow, solver, CFL)
 
 
-evolve(solver)
+main_loop()

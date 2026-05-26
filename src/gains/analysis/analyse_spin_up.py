@@ -194,6 +194,26 @@ def read_angular_velocity(
         omega = calculate_angular_speed(r, theta, du_n_phi)
         return r, theta, omega
 
+def plot_angular(ax, r, theta, omega_values, **params):
+    r_m, theta_m = np.meshgrid(r, theta)
+    mesh = ax.pcolormesh(
+        theta_m,
+        r_m,
+        omega_values,
+        clim=(0, params["Delta_Omega"]),
+        cmap="RdBu_r",
+        edgecolors="face",
+    )
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    ax.set_rorigin(0)
+    ax.set_thetamin(0)
+    ax.set_thetamax(180)
+    ax.grid(visible=False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    return mesh
+
 def plot_angular_velocity(
     path: str | Path,
     t: int,
@@ -217,24 +237,8 @@ def plot_angular_velocity(
     data = h5py.File(path, mode="r")
     r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
     time = np.array(data["scales/sim_time"])
-    r_m, theta_m = np.meshgrid(r, theta)
-    mesh = ax.pcolormesh(
-        theta_m,
-        r_m,
-        omega,
-        clim=(0, delta_omega),
-        cmap="RdBu_r",
-        edgecolors="face",
-    )
-    ax.set_theta_zero_location("N")
-    ax.set_theta_direction(-1)
-    ax.set_rorigin(0)
+    mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
     ax.set_ylim(r.min(), r.max())
-    ax.set_thetamin(0)
-    ax.set_thetamax(180)
-    ax.grid(visible=False)
-    ax.set_xticks([])
-    ax.set_yticks([])
     ax.set_title(r"$t =$" + str(time[t])[:4])
     return mesh
 
@@ -249,34 +253,18 @@ def plot_angular_velocity_split(
         rotating,
         delta_omega
 ):
-    data = data = h5py.File(path, mode="r")
+    data = h5py.File(path, mode="r")
     meshes = []
     
     for field in [core_field, crust_field]:
         
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
         time = np.array(data["scales/sim_time"])
-        r_m, theta_m = np.meshgrid(r, theta)
-        mesh = ax.pcolormesh(
-        theta_m,
-        r_m,
-        omega,
-        clim=(0, delta_omega),
-        cmap="RdBu_r",
-        edgecolors="face",
-    )
+        mesh=plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
 
         meshes.append(mesh)
     
-    ax.set_theta_zero_location("N")
-    ax.set_theta_direction(-1)
-    ax.set_rorigin(0)
     ax.set_ylim(0, 1.0)
-    ax.set_thetamin(0)
-    ax.set_thetamax(180)
-    ax.grid(visible=False)
-    ax.set_xticks([])
-    ax.set_yticks([])
     ax.set_title(r"$t =$" + str(time[t])[:4])
     r_boundary = min(r)
     ax.plot(

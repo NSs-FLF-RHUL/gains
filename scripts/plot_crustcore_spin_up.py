@@ -1,4 +1,4 @@
-"""Analysis and plotting of the results of the single fluid spin up."""
+"""Analysis and plotting of the results of simulations involving a coupled crust and core."""
 
 import json
 import logging

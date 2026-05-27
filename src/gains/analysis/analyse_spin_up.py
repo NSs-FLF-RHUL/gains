@@ -315,7 +315,7 @@ def plot_angular_velocity_split(
 
 def plot_angular_velocity_sequence(
     target_times: list[float],
-    ax: list[mpl.projections.polar.PolarAxes],
+    ax: list[mpl.projections.polar.PolarAxes] | mpl.projections.polar.PolarAxes,
     output_dir: Path,
     target_field: str,
     **kwargs,
@@ -338,7 +338,7 @@ def plot_angular_velocity_sequence(
             mesh = plot_angular_velocity(
                 path,
                 file_index,
-                ax,
+                ax[i],
                 rotating=True,
                 delta_omega=kwargs["Delta_Omega"],
                 target_field=target_field,

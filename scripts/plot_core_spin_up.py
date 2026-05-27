@@ -1,4 +1,4 @@
-"""Analysis and plotting of the results of simulations involving a core and unresolved crust."""
+"""Analysis and plotting of the results of simulations with only 1 basis."""
 
 import json
 import logging
@@ -14,8 +14,8 @@ from gains.analysis.analyse_spin_up import (
     get_angular_coords,
     plot_against_time,
     plot_angular_velocity,
+    plot_angular_velocity_sequence,
     plot_stream,
-    plot_angular_velocity_sequence
 )
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.utils.parsers import create_parser_analysis
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     plt.close()
 
     plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
-    
+
     plt.close()
 
     path_stream = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     theta = uphi.dims[2][0][:].ravel()
     r = uphi.dims[3][0][:].ravel()
     fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
-    plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0, time[-1], ax, colour = "#bada55")
+    plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0, time[-1], ax, colour="#bada55")
     plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
 
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
@@ -80,7 +80,13 @@ if __name__ == "__main__":
 
     if args["coordinate"] == "r":
         path_list, fig = plot_against_time(
-            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"], target_field="u_n_phi"
+            r,
+            "r",
+            path,
+            PARAMS["Ek"],
+            PARAMS["Ntheta"],
+            args["targets"],
+            target_field="u_n_phi",
         )
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
@@ -106,7 +112,12 @@ if __name__ == "__main__":
                     1, 1, figsize=(16, 8), subplot_kw={"projection": "polar"}
                 )
                 plot_angular_velocity(
-                    path, j, ax, "u_n_phi",rotating=True, delta_omega=PARAMS["Delta_Omega"]
+                    path,
+                    j,
+                    ax,
+                    "u_n_phi",
+                    rotating=True,
+                    delta_omega=PARAMS["Delta_Omega"],
                 )
                 save_path = args["frame_dir"] / f"frame_spin_up_{count:04d}.png"
                 plt.savefig(save_path)

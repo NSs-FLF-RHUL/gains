@@ -1,4 +1,4 @@
-"""Analysis and plotting of the results of simulations involving a coupled crust and core."""
+"""Analysis and plotting of the results of simulations involving 2 bases."""
 
 import json
 import logging

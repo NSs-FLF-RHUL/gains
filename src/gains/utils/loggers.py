@@ -39,11 +39,12 @@ def track_vorticity(
     finally:
         solver.log_stats()
 
+
 def track_reynolds_n(
-        logger: Logger,
-        flow: d3.GlobalFlowProperty,
-        solver: dedalus.core.solvers.InitialValueSolver,
-        CFL: d3.CFL,  # noqa: N803 (Allows argument to be capitalised)
+    logger: Logger,
+    flow: d3.GlobalFlowProperty,
+    solver: dedalus.core.solvers.InitialValueSolver,
+    CFL: d3.CFL,  # noqa: N803 (Allows argument to be capitalised)
 ) -> None:
     """
     Create main loop that tracks and logs the maximum reynolds number.
@@ -72,5 +73,3 @@ def track_reynolds_n(
         raise
     finally:
         solver.log_stats()
-
-

@@ -3,7 +3,7 @@ Solve Navier Stokes equations for 2 fluids coupled across a boundary.
 
 Both fluids have 0 penetration at the boundary. The crust fluid has 0 shear stress
 at the boundary, and the fluids match angular speed at the crust-core interface.
-The surface of the crust is spun up. 
+The surface of the crust is spun up.
 
 Each region is nondimensionalized using its own characteristic length scale, leading to
 distinct effective Ekman numbers in the core and shell.
@@ -12,8 +12,8 @@ distinct effective Ekman numbers in the core and shell.
 import datetime
 import json
 import logging
-from pathlib import Path
 from collections.abc import Callable
+from pathlib import Path
 
 import dedalus.public as d3
 import numpy as np
@@ -22,10 +22,10 @@ from mpi4py import MPI
 
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import ShellBasis, SphericalBasis
+from gains.utils.loggers import track_reynolds_n
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
-from gains.utils.loggers import track_reynolds_n
 
 # Setup
 logger = logging.getLogger(__name__)
@@ -235,8 +235,11 @@ CFL.add_velocity(u_s)
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_s @ u_s) * PARAMS["Ek"], name="Re_n")
 
+
 @profile(args["profile"])
 def main() -> Callable:
+    """Create main loop with profiling."""
     return track_reynolds_n(logger, flow, solver, CFL)
+
 
 main()

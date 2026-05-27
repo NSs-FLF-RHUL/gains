@@ -173,12 +173,23 @@ def calculate_angular_speed_single(
 
 
 def read_angular_velocity(
-    path,
-    t,
-    target_field,
+    path: str | Path,
+    t: int,
+    target_field: str,
     *,
-    rotating,
-):
+    rotating: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Caluclate the angular speed from a target velocity field.
+
+    :param path: Path to output file.
+    :param t: Index of snapshot within file.
+    :param target_field: Title of target velocity components hdf5 group.
+    :param rotating: Set true if simulation was done in the rotating frame.
+    :returns r: Array of radial coordinates from snapshot.
+    :returns theta: Array of polar angles from snapshot.
+    :returns omega: Array of calculated angular speeds.
+    """
     data = h5py.File(path, mode="r")
     u_phi = data["tasks"][target_field][t, -1, :, :]
     r, theta = get_angular_coords(path, target_field)
@@ -192,7 +203,22 @@ def read_angular_velocity(
     return r, theta, omega
 
 
-def plot_angular(ax, r, theta, omega_values, **kwargs):
+def plot_angular(
+    ax: mpl.projections.polar.PolarAxes,
+    r: np.ndarray,
+    theta: np.ndarray,
+    omega_values: np.ndarray,
+    **kwargs,
+) -> plt.pcolormesh:
+    """
+    Plot a given angular speed on a given coordinate grid.
+
+    :param ax: Polar axis to plot angular speed on.
+    :param r: Radial coordinates.
+    :param theta: Polar angles.
+    :param omega_values: Angular speeds.
+    :returns mesh: pcolormesh corresponding to the created plot.
+    """
     r_m, theta_m = np.meshgrid(r, theta)
     mesh = ax.pcolormesh(
         theta_m,
@@ -251,7 +277,7 @@ def plot_angular_velocity_split(
     *,
     rotating: bool,
     delta_omega: float,
-    crustcore_boundary: float
+    crustcore_boundary: float,
 ) -> list:
     """
     Plot angular velocities for coupled crust/core systems.
@@ -292,7 +318,7 @@ def plot_angular_velocity_sequence(
     ax: list[mpl.projections.polar.PolarAxes],
     output_dir: Path,
     target_field: str,
-    **kwargs
+    **kwargs,
 ) -> plt.pcolormesh:
     """
     Plot a sequence of plots of the angular speed at different times.

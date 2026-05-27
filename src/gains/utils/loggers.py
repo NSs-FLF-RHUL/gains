@@ -10,11 +10,7 @@ def track_vorticity(
     logger: Logger,
     flow: d3.GlobalFlowProperty,
     solver: dedalus.core.solvers.InitialValueSolver,
-<<<<<<< HEAD
-    CFL: d3.CFL,  # noqa: N803 (Allows argument to be capitalised)
-=======
     cfl: d3.CFL,
->>>>>>> main
 ) -> None:
     """
     Create main loop that tracks and logs the maximum superfluid vorticity.
@@ -24,20 +20,12 @@ def track_vorticity(
     :param logger: Logger used by the script.
     :param flow: dedalus flow object. Must track the maximum vorticity as vorticity_mag.
     :param solver: The IVP solver defined by the script.
-<<<<<<< HEAD
-    :param CFL: The CFL condition used by the script.
-=======
     :param cfl: The CFL condition used by the script.
->>>>>>> main
     """
     try:
         logger.info("Starting main loop")
         while solver.proceed:
-<<<<<<< HEAD
-            timestep = CFL.compute_timestep()
-=======
             timestep = cfl.compute_timestep()
->>>>>>> main
             solver.step(timestep)
             if (solver.iteration - 1) % 10 == 0:
                 max_omega = flow.max("vorticity_mag")
@@ -50,14 +38,13 @@ def track_vorticity(
         raise
     finally:
         solver.log_stats()
-<<<<<<< HEAD
 
 
 def track_reynolds_n(
     logger: Logger,
     flow: d3.GlobalFlowProperty,
     solver: dedalus.core.solvers.InitialValueSolver,
-    CFL: d3.CFL,  # noqa: N803 (Allows argument to be capitalised)
+    cfl: d3.CFL,
 ) -> None:
     """
     Create main loop that tracks and logs the maximum reynolds number.
@@ -73,7 +60,7 @@ def track_reynolds_n(
     try:
         logger.info("Starting main loop")
         while solver.proceed:
-            timestep = CFL.compute_timestep()
+            timestep = cfl.compute_timestep()
             solver.step(timestep)
             if (solver.iteration - 1) % 10 == 0:
                 re = flow.max("Re_n")
@@ -86,5 +73,3 @@ def track_reynolds_n(
         raise
     finally:
         solver.log_stats()
-=======
->>>>>>> main

@@ -51,9 +51,9 @@ def plot_stream(
     vtheta_n: np.ndarray,
     density: float | tuple[float],
     time: float,
-    ax,
-    **kwargs
-) -> mpl.figure:
+    ax: mpl.projections.polar.PolarAxes,
+    **kwargs,
+) -> None:
     """
     Create streamline plots of the meridional flow.
 
@@ -62,6 +62,7 @@ def plot_stream(
     :param vr_n: radial speed.
     :param vtheta_n: meridional speed.
     :param density: density of streamplot.
+    :param ax: Polar axis to render plots on.
     """
     rad = np.linspace(r[-1], r[0], len(r))
     theta = np.linspace(0, np.pi, len(theta))
@@ -81,7 +82,7 @@ def plot_stream(
     ax.grid(visible=False)
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_title(f"t={time}")
+    ax.set_title(f"t={round(time, 2)}")
     ax.streamplot(
         ttheta.T,
         rr.T,
@@ -172,31 +173,32 @@ def calculate_angular_speed_single(
 
 
 def read_angular_velocity(
-        path,
-        t,
-        target_field,
-        *,
-        rotating,
+    path,
+    t,
+    target_field,
+    *,
+    rotating,
 ):
-        data = h5py.File(path, mode="r")
-        u_phi = data["tasks"][target_field][t, -1, :, :]
-        r, theta = get_angular_coords(path, target_field)
-        if not rotating:
-            u_background = 1.0 * np.outer(np.sin(theta), r)
-        else:
-            u_background = np.zeros_like(u_phi)
+    data = h5py.File(path, mode="r")
+    u_phi = data["tasks"][target_field][t, -1, :, :]
+    r, theta = get_angular_coords(path, target_field)
+    if not rotating:
+        u_background = 1.0 * np.outer(np.sin(theta), r)
+    else:
+        u_background = np.zeros_like(u_phi)
 
-        du_n_phi = u_phi - u_background
-        omega = calculate_angular_speed(r, theta, du_n_phi)
-        return r, theta, omega
+    du_n_phi = u_phi - u_background
+    omega = calculate_angular_speed(r, theta, du_n_phi)
+    return r, theta, omega
 
-def plot_angular(ax, r, theta, omega_values, **params):
+
+def plot_angular(ax, r, theta, omega_values, **kwargs):
     r_m, theta_m = np.meshgrid(r, theta)
     mesh = ax.pcolormesh(
         theta_m,
         r_m,
         omega_values,
-        clim=(0, params["Delta_Omega"]),
+        clim=(0, kwargs["Delta_Omega"]),
         cmap="RdBu_r",
         edgecolors="face",
     )
@@ -209,6 +211,7 @@ def plot_angular(ax, r, theta, omega_values, **params):
     ax.set_xticks([])
     ax.set_yticks([])
     return mesh
+
 
 def plot_angular_velocity(
     path: str | Path,
@@ -240,37 +243,56 @@ def plot_angular_velocity(
 
 
 def plot_angular_velocity_split(
-        path,
-        t,
-        ax,
-        core_field,
-        crust_field,
-        *,
-        rotating,
-        delta_omega,
-        crustcore_boundary
-):
+    path: Path,
+    t: int,
+    ax: mpl.projections.polar.PolarAxes,
+    core_field: str,
+    crust_field: str,
+    *,
+    rotating: bool,
+    delta_omega: float,
+    crustcore_boundary: float
+) -> list:
+    """
+    Plot angular velocities for coupled crust/core systems.
+
+    :param path: Path to output file.
+    :param t: Index of snapshot to be plotted.
+    :param ax: Polar axis to plot the angular speed on.
+    :param core_field: Name of hdf5 group containing the core field.
+    :param crust_field: Name of hdf5 group containing the crust field.
+    :param rotating: Set true if the simulation was done in the
+    rotating reference frame.
+    :param delta_omega: Size of the spin up in the glitch.
+    :param crustcore_boundary: Radius of crust-core interface.
+    :returns meshes: pcolormesh objects for both the crust and core angular
+    velocity
+    """
     data = h5py.File(path, mode="r")
     meshes = []
-    
+    time = np.array(data["scales/sim_time"])
+
     for field in [core_field, crust_field]:
-        
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
-        time = np.array(data["scales/sim_time"])
-        mesh=plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
+        mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
 
         meshes.append(mesh)
-    
+
     ax.set_ylim(0, 1.0)
     ax.set_title(r"$t =$" + str(time[t])[:4])
     ax.plot(
-        theta, np.full_like(theta, crustcore_boundary), linestyle = "--", color='black'
+        theta, np.full_like(theta, crustcore_boundary), linestyle="--", color="black"
     )
-    
+
     return meshes
 
+
 def plot_angular_velocity_sequence(
-    target_times, ax, output_dir, target_field, **params
+    target_times: list[float],
+    ax: list[mpl.projections.polar.PolarAxes],
+    output_dir: Path,
+    target_field: str,
+    **kwargs
 ) -> plt.pcolormesh:
     """
     Plot a sequence of plots of the angular speed at different times.
@@ -280,19 +302,19 @@ def plot_angular_velocity_sequence(
     :param output_dir: Location of simulation outputs.
     :param target_field: The group name of the target velocity field in the
     output file.
-    :param params: Simulation parameters.
+    :param kwargs: Simulation parameters.
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     for i in range(len(target_times)):
         time = target_times[i]
-        path, file_index = select_time(100, time, output_dir, **params)
+        path, file_index = select_time(100, time, output_dir, **kwargs)
         if isinstance(target_field, str):
             mesh = plot_angular_velocity(
                 path,
                 file_index,
                 ax,
                 rotating=True,
-                delta_omega=params["Delta_Omega"],
+                delta_omega=kwargs["Delta_Omega"],
                 target_field=target_field,
             )
         else:
@@ -303,8 +325,8 @@ def plot_angular_velocity_sequence(
                 target_field[0],
                 target_field[1],
                 rotating=True,
-                delta_omega=params["Delta_Omega"],
-                crustcore_boundary=params["Ri"]
+                delta_omega=kwargs["Delta_Omega"],
+                crustcore_boundary=kwargs["Ri"],
             )
     return mesh
 

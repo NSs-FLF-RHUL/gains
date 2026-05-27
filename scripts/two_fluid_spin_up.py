@@ -31,6 +31,12 @@ parser = create_parser_simulation()
 add_profiling_options(parser)
 args = vars(parser.parse_args())
 
+if args["logfile"] is not None:
+    logpath = Path(f"outputs/{args['output_dir']}/{args['logfile']}.txt")
+    logpath.parent.mkdir(exist_ok=True)
+    FileOutputHandler = logging.FileHandler(logpath)
+    logger.addHandler(FileOutputHandler)
+
 
 if args["parameter_file"] is not None:
     with Path.open(args["parameter_file"]) as param_file:

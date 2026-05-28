@@ -14,6 +14,7 @@ from gains.analysis.analyse_spin_up import (
     get_angular_coords,
     plot_against_time,
     plot_angular_velocity,
+    plot_stream,
 )
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.utils.parsers import create_parser_analysis
@@ -44,22 +45,33 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
 
     path_1 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
-    plot_angular_velocity(
-        path_1, 10, ax[0], rotating=True, delta_omega=PARAMS["Delta_Omega"]
+    mesh = plot_angular_velocity(
+        path_1, 1, ax[0], rotating=True, delta_omega=PARAMS["Delta_Omega"]
     )
 
-    path_2 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s2.h5"
-    plot_angular_velocity(
+    path_2 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
+    mesh = plot_angular_velocity(
         path_2, 40, ax[1], rotating=True, delta_omega=PARAMS["Delta_Omega"]
     )
 
-    path_3 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
+    path_3 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s5.h5"
     plot_angular_velocity(
         path_3, 90, ax[2], rotating=True, delta_omega=PARAMS["Delta_Omega"]
     )
+
+    plt.show()
     plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
     plt.close()
 
+    data = h5py.File(path_2, mode="r")
+    ur = data["tasks"]["u_n_r"][:, -1, :, :]
+    utheta = data["tasks"]["u_n_theta"][:, -1, :, :]
+    uphi = data["tasks"]["u_s_phi"]
+    theta = uphi.dims[2][0][:].ravel()
+    r = uphi.dims[3][0][:].ravel()
+
+    fig = plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0)
+    plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
     r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
 

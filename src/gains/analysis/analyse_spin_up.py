@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
 
-from gains.utils.misc import extract_numerical_suffix, get_arg_of_nearest
+from gains.utils.misc import extract_numerical_suffix, get_arg_of_nearest, select_time
 
 
 class LabeledCoordinate:
@@ -50,7 +50,10 @@ def plot_stream(
     vr_n: np.ndarray,
     vtheta_n: np.ndarray,
     density: float | tuple[float],
-) -> mpl.figure:
+    time: float,
+    ax: mpl.projections.polar.PolarAxes,
+    **kwargs,
+) -> None:
     """
     Create streamline plots of the meridional flow.
 
@@ -59,62 +62,58 @@ def plot_stream(
     :param vr_n: radial speed.
     :param vtheta_n: meridional speed.
     :param density: density of streamplot.
+    :param ax: Polar axis to render plots on.
     """
     rad = np.linspace(r[-1], r[0], len(r))
     theta = np.linspace(0, np.pi, len(theta))
 
     rr, ttheta = np.meshgrid(rad, theta)
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
-
     un = vr_n[:, ::-1]
     vn = vtheta_n[:, ::-1] / rr[:, ::-1]
 
     un = my_interp2d(un, r[::-1], rad)
     vn = my_interp2d(vn, r[::-1], rad)
-
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     ax.set_rorigin(0)
-    ax.set_ylim(r.min(), r.max())
+    ax.set_ylim(0, 1.0)
     ax.set_thetamin(0)
     ax.set_thetamax(180)
     ax.grid(visible=False)
     ax.set_xticks([])
     ax.set_yticks([])
-
+    ax.set_title(f"t={round(time, 2)}")
     ax.streamplot(
         ttheta.T,
         rr.T,
         vn.T,
         un.T,
-        color="#d95f02",
+        color=kwargs["colour"],
         density=density,
         broken_streamlines=True,
         linewidth=1,
     )
 
-    fig.tight_layout()
 
-    return fig
-
-
-def get_angular_coords(path: str | Path) -> np.ndarray:
+def get_angular_coords(path: str | Path, target_field: str) -> np.ndarray:
     """
     Return r and theta coordinates from a given dedalus output file.
 
     :param path: The path to the output file.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :returns r: The radial coordinates.
     :returns theta: The meridional coordinates.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_s_phi"]
-    r = u_n_phi.dims[3][0][:].ravel()
-    theta = u_n_phi.dims[2][0][:].ravel()
+    u_phi = data["tasks"][target_field]
+    r = u_phi.dims[3][0][:].ravel()
+    theta = u_phi.dims[2][0][:].ravel()
     return r, theta
 
 
 def get_angular_coords_single(
-    path: str | Path, r_index: int, theta_index: int
+    path: str | Path, r_index: int, theta_index: int, target_field: str
 ) -> tuple[float, float]:
     """
     Return a radial and meridional coordinate of specified independant indicies.
@@ -122,13 +121,15 @@ def get_angular_coords_single(
     :param path: path to the u_n_phi data file.
     :param r_index: Index of the desired radial coordinate.
     :param theta_index: Index of the desired meridional coordinate.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :returns r: The radial coordinate at r_index.
     :returns theta: The meridional coordinate at theta_index.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_s_phi"]
-    r = u_n_phi.dims[3][0][r_index]
-    theta = u_n_phi.dims[2][0][theta_index]
+    u_phi = data["tasks"][target_field]
+    r = u_phi.dims[3][0][r_index]
+    theta = u_phi.dims[2][0][theta_index]
     return r, theta
 
 
@@ -152,7 +153,7 @@ def calculate_angular_speed(
 
 
 def calculate_angular_speed_single(
-    path: str | Path, r_arg: int, theta_arg: int, u_phis: np.ndarray
+    path: str | Path, r_arg: int, theta_arg: int, u_phis: np.ndarray, target_field: str
 ) -> float:
     """
     Calculate angular speed for a specific radius and longitude.
@@ -162,17 +163,87 @@ def calculate_angular_speed_single(
     :param r_arg: Index for the desired radius.
     :param theta_arg: Index for the desired longitude.
     :param u_phis: Azimuthally averaged array of azimuthal velocities.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :returns: The angular speed at the specified r and theta.
     """
-    r, theta = get_angular_coords_single(path, r_arg, theta_arg)
+    r, theta = get_angular_coords_single(path, r_arg, theta_arg, target_field)
     u_phi = u_phis[theta_arg][r_arg]
     return u_phi / (r * np.sin(theta))
+
+
+def read_angular_velocity(
+    path: str | Path,
+    t: int,
+    target_field: str,
+    *,
+    rotating: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Caluclate the angular speed from a target velocity field.
+
+    :param path: Path to output file.
+    :param t: Index of snapshot within file.
+    :param target_field: Title of target velocity components hdf5 group.
+    :param rotating: Set true if simulation was done in the rotating frame.
+    :returns r: Array of radial coordinates from snapshot.
+    :returns theta: Array of polar angles from snapshot.
+    :returns omega: Array of calculated angular speeds.
+    """
+    data = h5py.File(path, mode="r")
+    u_phi = data["tasks"][target_field][t, -1, :, :]
+    r, theta = get_angular_coords(path, target_field)
+    if not rotating:
+        u_background = 1.0 * np.outer(np.sin(theta), r)
+    else:
+        u_background = np.zeros_like(u_phi)
+
+    du_n_phi = u_phi - u_background
+    omega = calculate_angular_speed(r, theta, du_n_phi)
+    return r, theta, omega
+
+
+def plot_angular(
+    ax: mpl.projections.polar.PolarAxes,
+    r: np.ndarray,
+    theta: np.ndarray,
+    omega_values: np.ndarray,
+    **kwargs,
+) -> plt.pcolormesh:
+    """
+    Plot a given angular speed on a given coordinate grid.
+
+    :param ax: Polar axis to plot angular speed on.
+    :param r: Radial coordinates.
+    :param theta: Polar angles.
+    :param omega_values: Angular speeds.
+    :returns mesh: pcolormesh corresponding to the created plot.
+    """
+    r_m, theta_m = np.meshgrid(r, theta)
+    mesh = ax.pcolormesh(
+        theta_m,
+        r_m,
+        omega_values,
+        clim=(0, kwargs["Delta_Omega"]),
+        cmap="RdBu_r",
+        edgecolors="face",
+    )
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    ax.set_rorigin(0)
+    ax.set_thetamin(0)
+    ax.set_thetamax(180)
+    ax.grid(visible=False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    return mesh
 
 
 def plot_angular_velocity(
     path: str | Path,
     t: int,
     ax: mpl.projections.polar.PolarAxes,
+    target_field: str,
     *,
     rotating: bool,
     delta_omega: float,
@@ -189,41 +260,107 @@ def plot_angular_velocity(
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     data = h5py.File(path, mode="r")
-    u_n_phi = data["tasks"]["u_s_phi"][t, -1, :, :]
-    r, theta = get_angular_coords(path)
-    if not rotating:
-        u_n_background = 1.0 * np.outer(np.sin(theta), r)
-    else:
-        u_n_background = np.zeros_like(u_n_phi)
-
-    du_n_phi = u_n_phi - u_n_background
-    omega = calculate_angular_speed(r, theta, du_n_phi)
+    r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
     time = np.array(data["scales/sim_time"])
-    r_m, theta_m = np.meshgrid(r, theta)
-    mesh = ax.pcolormesh(
-        theta_m,
-        r_m,
-        omega,
-        clim=(0, delta_omega),
-        cmap="RdBu_r",
-        edgecolors="face",
-    )
-    ax.set_theta_zero_location("N")
-    ax.set_theta_direction(-1)
-    ax.set_rorigin(0)
+    mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
     ax.set_ylim(r.min(), r.max())
-    ax.set_thetamin(0)
-    ax.set_thetamax(180)
-    ax.grid(visible=False)
-    ax.set_xticks([])
-    ax.set_yticks([])
     ax.set_title(r"$t =$" + str(time[t])[:4])
+    return mesh
+
+
+def plot_angular_velocity_split(
+    path: Path,
+    t: int,
+    ax: mpl.projections.polar.PolarAxes,
+    core_field: str,
+    crust_field: str,
+    *,
+    rotating: bool,
+    delta_omega: float,
+    crustcore_boundary: float,
+) -> list:
+    """
+    Plot angular velocities for coupled crust/core systems.
+
+    :param path: Path to output file.
+    :param t: Index of snapshot to be plotted.
+    :param ax: Polar axis to plot the angular speed on.
+    :param core_field: Name of hdf5 group containing the core field.
+    :param crust_field: Name of hdf5 group containing the crust field.
+    :param rotating: Set true if the simulation was done in the
+    rotating reference frame.
+    :param delta_omega: Size of the spin up in the glitch.
+    :param crustcore_boundary: Radius of crust-core interface.
+    :returns meshes: pcolormesh objects for both the crust and core angular
+    velocity
+    """
+    data = h5py.File(path, mode="r")
+    meshes = []
+    time = np.array(data["scales/sim_time"])
+
+    for field in [core_field, crust_field]:
+        r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
+        mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
+
+        meshes.append(mesh)
+
+    ax.set_ylim(0, 1.0)
+    ax.set_title(r"$t =$" + str(time[t])[:4])
+    ax.plot(
+        theta, np.full_like(theta, crustcore_boundary), linestyle="--", color="black"
+    )
+
+    return meshes
+
+
+def plot_angular_velocity_sequence(
+    target_times: list[float],
+    ax: list[mpl.projections.polar.PolarAxes] | mpl.projections.polar.PolarAxes,
+    output_dir: Path,
+    target_field: str,
+    **kwargs,
+) -> plt.pcolormesh:
+    """
+    Plot a sequence of plots of the angular speed at different times.
+
+    :param target_times: The times to plot angular velocity.
+    :param ax: List of axes from matplotlib subplots.
+    :param output_dir: Location of simulation outputs.
+    :param target_field: The group name of the target velocity field in the
+    output file.
+    :param kwargs: Simulation parameters.
+    :returns mesh: pcolormesh for setting colourbar if this is wanted.
+    """
+    for i in range(len(target_times)):
+        time = target_times[i]
+        path, file_index = select_time(100, time, output_dir, **kwargs)
+        if isinstance(target_field, str):
+            mesh = plot_angular_velocity(
+                path,
+                file_index,
+                ax[i],
+                rotating=True,
+                delta_omega=kwargs["Delta_Omega"],
+                target_field=target_field,
+            )
+        else:
+            mesh = plot_angular_velocity_split(
+                path,
+                file_index,
+                ax[i],
+                target_field[0],
+                target_field[1],
+                rotating=True,
+                delta_omega=kwargs["Delta_Omega"],
+                crustcore_boundary=kwargs["Ri"],
+            )
     return mesh
 
 
 def get_angular_speed_vs_time(
     coord: LabeledCoordinate,
     target: float,
+    target_field: str,
     n_writes: int,
     path_list: list[Path],
     ntheta: int,
@@ -233,6 +370,8 @@ def get_angular_speed_vs_time(
 
     :param coord: The coordinate to be varied - should be r or theta.
     :param target: Value of the coordinate we want.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :param n_writes: Number of writes per .h5 file.
     :param path_list: List of paths to files to analyse.
     :param ntheta: The number of theta values.
@@ -251,14 +390,14 @@ def get_angular_speed_vs_time(
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
         for j in range(n_writes):
-            u_n_phi = data["tasks"]["u_s_phi"][j, -1, :, :]
+            u_phi = data["tasks"][target_field][j, -1, :, :]
             if coord.label == "r":
                 omega_r = calculate_angular_speed_single(
-                    path, c_get, int(theta_resolution / 2), u_n_phi
+                    path, c_get, int(theta_resolution / 2), u_phi, target_field
                 )  # theta arg esnures the equator is selected.
             elif coord.label == "theta":
                 omega_r = calculate_angular_speed_single(
-                    path, -1, c_get, u_n_phi
+                    path, -1, c_get, u_phi, target_field
                 )  # r arg ensures the surface is selected.
             else:
                 raise NotImplementedError(err_msg)
@@ -276,6 +415,7 @@ def plot_against_time(
     ek: float,
     ntheta: int,
     targets: np.ndarray | list,
+    target_field: str,
 ) -> tuple[list[Path], mpl.figure]:
     """
     Plot a range of coordinate values against time.
@@ -287,6 +427,8 @@ def plot_against_time(
     :param ntheta: The number of theta values.
     :param targets: The values of the coordinate to measure the angular speed
     against time.
+    :param target_field: The group name of the target velocity field in the
+    output file.
     :returns path_list: A list of only .h5 files in the specified path.
     """
     path = Path(path)
@@ -303,7 +445,7 @@ def plot_against_time(
     for i in range(len(targets)):
         target = targets[i]
         omega_r, times = get_angular_speed_vs_time(
-            coord, target, 100, path_list, ntheta=ntheta
+            coord, target, target_field, 100, path_list, ntheta=ntheta
         )
         ax.plot(
             times,

@@ -34,7 +34,8 @@ def mask_theta(theta: np.ndarray, width: float, center: float) -> np.ndarray:
     mask = np.tanh((theta + a) / 0.1) - np.tanh((theta - a) / 0.1)
     return 0.5 * mask
 
+
 def mask_r(rs, Nr):
-    delta_r = 1.0/(Nr*2.0)
-    mask = np.exp(-((rs-1.0)/delta_r)**2)
+    delta_r = 1.0 / (Nr * 2.0)
+    mask = np.exp(-(((rs - 1.0) / delta_r) ** 2))
     return mask

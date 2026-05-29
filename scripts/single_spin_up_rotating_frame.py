@@ -11,7 +11,7 @@ import numpy as np
 from mpi4py import MPI
 
 # Parameters - load in from parameter file
-from gains.initial_conditions.single_component_spin_up import mask_theta, mask_r
+from gains.initial_conditions.single_component_spin_up import mask_r, mask_theta
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
@@ -97,7 +97,7 @@ mask_radial = basis.dist.Field(name="mask_radial", bases=basis.ball)
 sintheta["g"] = np.sin(theta)
 mask_equator["g"] = mask_theta(theta, 0.3, 3.0)
 mask_radial["g"] = mask_r(r, PARAMS["Nr"])
-u_n_target = basis.dist.VectorField(coords, name = "u_n_target", bases=basis.ball)
+u_n_target = basis.dist.VectorField(coords, name="u_n_target", bases=basis.ball)
 u_n_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)
 
 strain_rate = d3.grad(u_n) + d3.trans(d3.grad(u_n))
@@ -124,7 +124,7 @@ problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation(
     "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
     "-2*cross(ez,u_n) "
-    "+100*(mask_equator*mask_radial*(u_n_target - u_n))" #Boundary forcing to enforce glitch
+    "+100*(mask_equator*mask_radial*(u_n_target - u_n))"  # Boundary forcing to enforce glitch
 )
 
 problem.add_equation("radial(u_n(r=radius)) = 0")  # impenetrable bc

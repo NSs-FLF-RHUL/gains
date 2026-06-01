@@ -1,12 +1,19 @@
 """
-Solve Navier Stokes equations for 2 fluids coupled across a boundary.
+Solve HVBK equations for a resolved core and crust.
 
-Both fluids have 0 penetration at the boundary. The crust fluid has 0 shear stress
-at the boundary, and the fluids match angular speed at the crust-core interface.
-The surface of the crust is spun up.
+The superfluids both satisfy 0 shear stress and 0 penetration across
+the interface, and the crust superfluid also satisfies these conditions
+at the surface.
+
+The normal fluids both also are subject to 0 penetration at the interface.
+The angular velocities of the normal fluids are matched at the interface.
+The normal fluid in the crust is subject to a spin up at the surface.
 
 Each region is nondimensionalized using its own characteristic length scale, leading to
 distinct effective Ekman numbers in the core and shell.
+
+The mutual friction is in the same form as
+J. R. Fuentes and Vanessa Graber 2024 ApJ 974 300.
 """
 
 import datetime

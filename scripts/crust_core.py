@@ -20,6 +20,10 @@ import numpy as np
 from dedalus.public import DotProduct as Dot
 from mpi4py import MPI
 
+from dedalus.public import CrossProduct as Cross
+from dedalus.public import DotProduct as Dot
+from dedalus.public import Curl
+
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import ShellBasis, SphericalBasis
 from gains.utils.loggers import track_reynolds_n
@@ -70,6 +74,8 @@ Bprime = B / 2
 Ri = PARAMS["Ri"]
 Ro = PARAMS["Ro"]
 radius = Ro
+x_b_n = 0.05 # Proton fraction - core
+x_b_s = 0.95 # Neutron fraction - core
 
 mesh = mesh_cpus(ncpu)
 
@@ -81,13 +87,23 @@ dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
 basis_core = SphericalBasis(coords, dist, dtype, Ri, **PARAMS)
 basis_crust = ShellBasis(coords, dist, dtype, **PARAMS)
 
-# Fields
-u_b = dist.VectorField(coords, name="u_b", bases=basis_core.ball)
-p_b = dist.Field(name="p_b", bases=basis_core.ball)
-tau_p_b = dist.Field(name="tau_p_b")
-tau_u_b_1 = dist.VectorField(coords, name="tau_u_b_1", bases=basis_core.sphere)
-tau_u_b_2 = dist.VectorField(coords, name="tau_u_b_2", bases=basis_core.sphere)
+# Fields - naming is field_basis_fluid
 
+# Core (ball basis)
+u_b_n = dist.VectorField(coords, name="u_b_n", bases=basis_core.ball)
+p_b_n = dist.Field(name="p_b_n", bases=basis_core.ball)
+u_b_s = dist.VectorField(coords, name="u_b_s", bases=basis_core.ball)
+p_b_s = dist.Field(name = "p_b_s", bases=basis_core.ball)
+
+tau_p_b_n = dist.Field(name="tau_p_b")
+tau_u_b_n_1 = dist.VectorField(coords, name="tau_u_b_n_1", bases=basis_core.sphere)
+tau_u_b_n_2 = dist.VectorField(coords, name="tau_u_b_n_2", bases=basis_core.sphere)
+
+tau_p_b_s = dist.Field(name="tau_p_b_s")
+tau_u_b_s_1 = dist.VectorField(coords, name="tau_u_b_s_1", bases=basis_core.sphere)
+tau_u_b_s_2 = dist.VectorField(coords, name="tau_u_b_s_2", bases=basis_core.sphere)
+
+# Crust (shell basis)
 u_s = dist.VectorField(coords, name="u_s", bases=basis_crust.shell)
 p_s = dist.Field(name="p_s", bases=basis_crust.shell)
 tau_p_s = dist.Field(name="tau_p_s")
@@ -136,26 +152,42 @@ ez_b["g"][2] = np.cos(theta_b)
 rvec_b = dist.VectorField(coords, bases=basis_core.ball.radial_basis)
 rvec_b["g"][2] = r_b
 
-grad_u_b = d3.grad(u_b) + rvec_b * lift_b(tau_u_b_1)
+grad_u_b_n = d3.grad(u_b_n) + rvec_b * lift_b(tau_u_b_n_1)
 
-strain_b = grad_u_b + d3.trans(grad_u_b)
-shear_stress_b_interface = d3.angular(d3.radial(strain_b(r=PARAMS["Ri"]), index=1))
+strain_b_n = grad_u_b_n + d3.trans(grad_u_b_n)
+shear_stress_b_interface = d3.angular(d3.radial(strain_b_n(r=PARAMS["Ri"]), index=1))
+
+strain_b_s = d3.grad(u_b_s) + d3.trans(d3.grad(u_b_s))
+shear_stress_b_s_interface = d3.angular(d3.radial(strain_b_s(r=PARAMS["Ri"]), index=1))
+
+omega_b_s = dist.VectorField(coords, name="omega_s", bases=basis_core.ball) # Superfluid vorticity
+
+u_b_ns = u_b_n - u_b_s
+omega_b_s = Curl(u_b_s) + 2 * ez_b
+omega_unit = omega_b_s / 2
+F_mf = B * (Cross(omega_unit, Cross(omega_b_s, u_b_ns))) + Bprime * Cross(omega_b_s, u_b_ns)
 
 # Problem
 problem = d3.IVP(
-    [u_s, p_s, tau_p_s, tau_u_s_1, tau_u_s_2, u_b, p_b, tau_p_b, tau_u_b_2],
+    [u_s, p_s, tau_p_s, tau_u_s_1, tau_u_s_2, u_b_n, p_b_n, tau_p_b_n, tau_u_b_n_2, u_b_s, p_b_s, tau_p_b_s, tau_u_b_s_2],
     namespace=locals(),
 )
 
 problem.add_equation("trace(grad_u_s) + tau_p_s = 0")
-problem.add_equation("div(u_b) + tau_p_b = 0")
-problem.add_equation("integ(p_b) = 0")
+problem.add_equation("div(u_b_n) + tau_p_b_n = 0")
+problem.add_equation("div(u_b_s) + tau_p_b_s = 0")
+problem.add_equation("integ(p_b_n) = 0")
 problem.add_equation("integ(p_s) = 0")
+problem.add_equation("integ(p_b_s) = 0")
 
 problem.add_equation(
-    "dt(u_b) - Ek_ball*lap(u_b) + grad(p_b) + lift_b(tau_u_b_2) = -u_b@grad(u_b) "
-    "- 2*cross(ez_b, u_b)"
+    "dt(u_b_n) - Ek_ball*lap(u_b_n) + grad(p_b_n) + lift_b(tau_u_b_n_2) = -u_b_s@grad(u_b_n) "
+    "- 2*cross(ez_b, u_b_n) + x_b_s/x_b_n * F_mf"
 )
+
+problem.add_equation("dt(u_b_s) + grad(p_b_s) + lift_b(tau_u_b_s_2) = -u_b_s@grad(u_b_s)"
+                     " - 2*cross(ez_b,u_b_s) - F_mf")
+
 problem.add_equation(
     "dt(u_s) - Ek_shell*div(grad_u_s) + grad(p_s) + lift_s(tau_u_s_2) = -u_s@grad(u_s) "
     "- 2*cross(ez_s, u_s)"
@@ -167,8 +199,11 @@ problem.add_equation("angular(u_s(r=Ro)) = angular(uang_s)")  # Surface spin up
 problem.add_equation("radial(u_s(r=Ri)) = 0")
 problem.add_equation("shear_stress_s_interface = 0")
 
-problem.add_equation("radial(u_b(r=Ri)) = 0")
-problem.add_equation("angular(u_b(r=Ri)) = angular(u_s(r=Ri))")
+problem.add_equation("radial(u_b_n(r=Ri)) = 0")
+problem.add_equation("angular(u_b_n(r=Ri)) = angular(u_s(r=Ri))")
+
+problem.add_equation("radial(u_b_s(r=Ri)) = 0")
+problem.add_equation("shear_stress_b_s_interface = 0")
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
@@ -179,8 +214,10 @@ else:
     # Initial condition
     u_s.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
     u_s.low_pass_filter(scales=0.5)
-    u_b.fill_random("g", seed=67, distribution="normal", scale=1e-10)  # Random noise
-    u_b.low_pass_filter(scales=0.5)
+    u_b_n.fill_random("g", seed=67, distribution="normal", scale=1e-10)  # Random noise
+    u_b_n.low_pass_filter(scales=0.5)
+    u_b_s.fill_random("g", seed=42, distribution="normal", scales=1e-10)
+    u_b_s.low_pass_filter(scales=0.5)
     timestep = max_timestep
 
 # Analysis
@@ -202,9 +239,9 @@ def vol_avg(a: d3.Field) -> d3.Field:
     return d3.Integrate(a / volume, coords)
 
 
-u_b_r = Dot(u_b, er)
-u_b_theta = Dot(u_b, etheta)
-u_b_phi = Dot(u_b, ephi)
+u_b_n_r = Dot(u_b_n, er)
+u_b_n_theta = Dot(u_b_n, etheta)
+u_b_n_phi = Dot(u_b_n, ephi)
 
 u_s_r = Dot(u_s, er)
 u_s_theta = Dot(u_s, etheta)
@@ -218,9 +255,9 @@ AZ_avg = solver.evaluator.add_file_handler(
     sim_dt=0.05,
     max_writes=100,
 )
-AZ_avg.add_task(az_avg(u_b_r), name="u_b_r")
-AZ_avg.add_task(az_avg(u_b_theta), name="u_b_theta")
-AZ_avg.add_task(az_avg(u_b_phi), name="u_b_phi")
+AZ_avg.add_task(az_avg(u_b_n_r), name="u_b_r")
+AZ_avg.add_task(az_avg(u_b_n_theta), name="u_b_theta")
+AZ_avg.add_task(az_avg(u_b_n_phi), name="u_b_phi")
 
 AZ_avg.add_task(az_avg(u_s_r), name="u_s_r")
 AZ_avg.add_task(az_avg(u_s_theta), name="u_s_theta")
@@ -229,14 +266,14 @@ AZ_avg.add_task(az_avg(u_s_phi), name="u_s_phi")
 CFL = d3.CFL(
     solver, timestep, cadence=1, safety=0.5, threshold=0.1, max_dt=max_timestep
 )
-CFL.add_velocity(u_b)
+CFL.add_velocity(u_b_n)
 CFL.add_velocity(u_s)
 
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_s @ u_s) * PARAMS["Ek"], name="Re_n")
 
 
-@profile(args["profile"])
+@profile(args["profile"], PARAMS)
 def main() -> Callable:
     """Create main loop with profiling."""
     return track_reynolds_n(logger, flow, solver, CFL)

@@ -152,11 +152,6 @@ ez_b["g"][2] = np.cos(theta_b)
 rvec_b = dist.VectorField(coords, bases=basis_core.ball.radial_basis)
 rvec_b["g"][2] = r_b
 
-grad_u_b_n = d3.grad(u_b_n) + rvec_b * lift_b(tau_u_b_n_1)
-
-strain_b_n = grad_u_b_n + d3.trans(grad_u_b_n)
-shear_stress_b_interface = d3.angular(d3.radial(strain_b_n(r=PARAMS["Ri"]), index=1))
-
 strain_b_s = d3.grad(u_b_s) + d3.trans(d3.grad(u_b_s))
 shear_stress_b_s_interface = d3.angular(d3.radial(strain_b_s(r=PARAMS["Ri"]), index=1))
 

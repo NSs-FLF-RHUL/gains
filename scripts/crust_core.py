@@ -225,7 +225,7 @@ problem.add_equation("integ(p_b_s) = 0")
 problem.add_equation("integ(p_s_s) = 0")
 
 problem.add_equation(
-    "dt(u_b_n) - Ek_ball*lap(u_b_n) + grad(p_b_n) + lift_b(tau_u_b_n_2) = -u_b_s@grad(u_b_n) "
+    "dt(u_b_n) - Ek_ball*lap(u_b_n) + grad(p_b_n) + lift_b(tau_u_b_n_2) = -u_b_n@grad(u_b_n) "
     "- 2*cross(ez_b, u_b_n) + x_b_s/x_b_n * F_mf_b"
 )
 
@@ -269,9 +269,9 @@ else:
     u_s_n.low_pass_filter(scales=0.5)
     u_b_n.fill_random("g", seed=67, distribution="normal", scale=1e-10)  # Random noise
     u_b_n.low_pass_filter(scales=0.5)
-    u_b_s.fill_random("g", seed=42, distribution="normal", scales=1e-10)
+    u_b_s.fill_random("g", seed=42, distribution="normal", scales=1e-10) # Random noise
     u_b_s.low_pass_filter(scales=0.5)
-    u_s_s.fill_random("g", seed=67, distribution="normal", scale=1e-10)
+    u_s_s.fill_random("g", seed=67, distribution="normal", scale=1e-10) # Random noise
     u_s_s.low_pass_filter(scales=0.5)
     timestep = max_timestep
 
@@ -310,13 +310,13 @@ AZ_avg = solver.evaluator.add_file_handler(
     sim_dt=0.05,
     max_writes=100,
 )
-AZ_avg.add_task(az_avg(u_b_n_r), name="u_b_r")
-AZ_avg.add_task(az_avg(u_b_n_theta), name="u_b_theta")
-AZ_avg.add_task(az_avg(u_b_n_phi), name="u_b_phi")
+AZ_avg.add_task(az_avg(u_b_n_r), name="u_b_n_r")
+AZ_avg.add_task(az_avg(u_b_n_theta), name="u_b_n_theta")
+AZ_avg.add_task(az_avg(u_b_n_phi), name="u_b_n_phi")
 
-AZ_avg.add_task(az_avg(u_s_n_r), name="u_s_r")
-AZ_avg.add_task(az_avg(u_s_n_theta), name="u_s_theta")
-AZ_avg.add_task(az_avg(u_s_n_phi), name="u_s_phi")
+AZ_avg.add_task(az_avg(u_s_n_r), name="u_s_n_r")
+AZ_avg.add_task(az_avg(u_s_n_theta), name="u_s_n_theta")
+AZ_avg.add_task(az_avg(u_s_n_phi), name="u_s_n_phi")
 
 CFL = d3.CFL(
     solver, timestep, cadence=1, safety=0.5, threshold=0.1, max_dt=max_timestep
@@ -328,7 +328,7 @@ flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_s_n @ u_s_n) * PARAMS["Ek"], name="Re_n")
 
 
-@profile(args["profile"], PARAMS)
+@profile(args["profile"], args["output_dir"])
 def main() -> Callable:
     """Create main loop with profiling."""
     return track_reynolds_n(logger, flow, solver, CFL)

@@ -47,21 +47,21 @@ if __name__ == "__main__":
         1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"}
     )
     plot_angular_velocity_sequence(
-        args["times_plot"], ax, args["output_dir"], ("u_b_phi", "u_s_phi"), **PARAMS
+        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"), **PARAMS
     )
-    plt.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
+    plt.savefig("{}/angular_speed_sequence_NF.png".format(args["fig_dir"]))
     plt.close()
 
     path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
     data = h5py.File(path_plot, mode="r")
     time = np.array(data["scales/sim_time"])
     fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
-    ur_b = data["tasks"]["u_b_r"][:, -1, :, :]
-    ur_s = data["tasks"]["u_s_r"][:, -1, :, :]
-    utheta_b = data["tasks"]["u_b_theta"][:, -1, :, :]
-    utheta_s = data["tasks"]["u_s_theta"][:, -1, :, :]
-    uphi_b = data["tasks"]["u_b_phi"]
-    uphi_s = data["tasks"]["u_s_phi"]
+    ur_b = data["tasks"]["u_b_n_r"][:, -1, :, :]
+    ur_s = data["tasks"]["u_s_n_r"][:, -1, :, :]
+    utheta_b = data["tasks"]["u_b_n_theta"][:, -1, :, :]
+    utheta_s = data["tasks"]["u_s_n_theta"][:, -1, :, :]
+    uphi_b = data["tasks"]["u_b_n_phi"]
+    uphi_s = data["tasks"]["u_s_n_phi"]
 
     theta_b = uphi_b.dims[2][0][:].ravel()
     r_b = uphi_b.dims[3][0][:].ravel()
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     plt.savefig(f"{args['fig_dir']}/meridional_streamlines_core.png")
 
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
-    r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_b_phi")
+    r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_b_n_phi")
 
     r = LabeledCoordinate(r_check, "r")
     theta = LabeledCoordinate(theta_check, "theta")
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     if args["coordinate"] == "r":
         path_list, fig = plot_against_time(
-            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"], "u_b_phi"
+            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"], "u_b_n_phi"
         )
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
             PARAMS["Ek"],
             PARAMS["Ntheta"],
             args["targets"],
-            "u_b_phi",
+            "u_b_n_phi",
         )
         fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
 
@@ -113,12 +113,12 @@ if __name__ == "__main__":
             path = path_list[i]
             data = h5py.File(path, mode="r")
             time = np.array(data["scales/sim_time"])
-            ur_b = data["tasks"]["u_b_r"][:, -1, :, :]
-            ur_s = data["tasks"]["u_s_r"][:, -1, :, :]
-            utheta_b = data["tasks"]["u_b_theta"][:, -1, :, :]
-            utheta_s = data["tasks"]["u_s_theta"][:, -1, :, :]
-            uphi_b = data["tasks"]["u_b_phi"]
-            uphi_s = data["tasks"]["u_s_phi"]
+            ur_b = data["tasks"]["u_b_n_r"][:, -1, :, :]
+            ur_s = data["tasks"]["u_s_n_r"][:, -1, :, :]
+            utheta_b = data["tasks"]["u_b_n_theta"][:, -1, :, :]
+            utheta_s = data["tasks"]["u_s_n_theta"][:, -1, :, :]
+            uphi_b = data["tasks"]["u_b_n_phi"]
+            uphi_s = data["tasks"]["u_s_n_phi"]
 
             theta_b = uphi_b.dims[2][0][:].ravel()
             r_b = uphi_b.dims[3][0][:].ravel()
@@ -133,8 +133,8 @@ if __name__ == "__main__":
                     j,
                     ax,
                     rotating=True,
-                    core_field="u_s_phi",
-                    crust_field="u_b_phi",
+                    core_field="u_s_n_phi",
+                    crust_field="u_b_n_phi",
                     delta_omega=PARAMS["Delta_Omega"],
                     crustcore_boundary=PARAMS["Ri"],
                 )

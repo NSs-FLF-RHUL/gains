@@ -33,7 +33,7 @@ from dedalus.public import Curl
 
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import ShellBasis, SphericalBasis
-from gains.utils.loggers import track_reynolds_n
+from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import create_parser_simulation
 from gains.utils.profile import add_profiling_options, profile
@@ -77,7 +77,7 @@ ncpu = MPI.COMM_WORLD.size
 Ek_shell = PARAMS["Ek"] * (PARAMS["Ro"] - PARAMS["Ri"]) ** 2
 Ek_ball = PARAMS["Ek"] * PARAMS["Ri"] ** 2
 B = PARAMS["B"]
-Bprime = B / 2
+Bprime = 0 #PARAMS["B"]/2
 Ri = PARAMS["Ri"]
 Ro = PARAMS["Ro"]
 radius = Ro
@@ -97,7 +97,6 @@ basis_core = SphericalBasis(coords, dist, dtype, Ri, **PARAMS)
 basis_crust = ShellBasis(coords, dist, dtype, **PARAMS)
 
 # Fields - naming is field_basis_fluid
-
 # Core (ball basis)
 u_b_n = dist.VectorField(coords, name="u_b_n", bases=basis_core.ball)
 p_b_n = dist.Field(name="p_b_n", bases=basis_core.ball)
@@ -163,11 +162,11 @@ shear_stress_s_n_interface = d3.angular(d3.radial(strain_s_n(r=PARAMS["Ri"]), in
 shear_stress_s_s_interface = d3.angular(d3.radial(strain_s_s(r=PARAMS["Ri"]), index=1))
 shear_stress_s_s_surface = d3.angular(d3.radial(strain_s_s(r=PARAMS["Ro"]), index=1))
 
-omega_s_s = dist.VectorField(coords, name="omega_s", bases=basis_core.ball) # Superfluid vorticity
+omega_s_s = dist.VectorField(coords, name="omega_s_s", bases=basis_core.ball) # Superfluid vorticity
 
 u_s_ns = u_s_n - u_s_s
 omega_s_s = Curl(u_s_s) + 2 * ez_s
-omega_unit_s = omega_s_s / 2
+omega_unit_s = omega_s_s / 2 # Numerically unstable if fully normalised
 F_mf_s = B * (Cross(omega_unit_s, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(omega_s_s, u_s_ns)
 
 # Subsititutions for Core
@@ -178,8 +177,6 @@ ez_b = dist.VectorField(coords, bases=basis_core.ball)
 ez_b["g"][1] = -np.sin(theta_b)
 ez_b["g"][2] = np.cos(theta_b)
 
-rvec_b = dist.VectorField(coords, bases=basis_core.ball.radial_basis)
-rvec_b["g"][2] = r_b
 
 strain_b_s = d3.grad(u_b_s) + d3.trans(d3.grad(u_b_s))
 shear_stress_b_s_interface = d3.angular(d3.radial(strain_b_s(r=PARAMS["Ri"]), index=1))
@@ -224,39 +221,34 @@ problem.add_equation("integ(p_s_n) = 0")
 problem.add_equation("integ(p_b_s) = 0")
 problem.add_equation("integ(p_s_s) = 0")
 
-problem.add_equation(
-    "dt(u_b_n) - Ek_ball*lap(u_b_n) + grad(p_b_n) + lift_b(tau_u_b_n_2) = -u_b_n@grad(u_b_n) "
-    "- 2*cross(ez_b, u_b_n) + x_b_s/x_b_n * F_mf_b"
-)
+# Crust momentum equations equations
+problem.add_equation("dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s")
+problem.add_equation("dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s")
 
-problem.add_equation("dt(u_b_s) + grad(p_b_s) + lift_b(tau_u_b_s_2) = -u_b_s@grad(u_b_s)"
-                     " - 2*cross(ez_b,u_b_s) - F_mf_b")
+# Core momentum equations
+problem.add_equation("dt(u_b_n) - Ek_ball*lap(u_b_n) + grad(p_b_n) + lift_b(tau_u_b_n_2) = -u_b_n@grad(u_b_n) - 2*cross(ez_b, u_b_n) + x_b_s/x_b_n * F_mf_b")
+problem.add_equation("dt(u_b_s) + grad(p_b_s) + lift_b(tau_u_b_s_2) = - u_b_s@grad(u_b_s) - 2*cross(ez_b, u_b_s) - F_mf_b")
 
-problem.add_equation(
-    "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2) = -u_s_n@grad(u_s_n) "
-    "- 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
-)
+# Surface boundary conditions
+problem.add_equation("radial(u_s_n(r=Ro)) = 0") # No penetration, normal fluid
+problem.add_equation("angular(u_s_n(r=Ro)) = angular(uang_s)") # Spin up, normal fluid
 
-problem.add_equation(
-    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) "
-    "- 2* cross(ez_s, u_s_s) - F_mf_s"
-)
+problem.add_equation("radial(u_s_s(r=Ro)) = 0") # No penetration, superfluid
+problem.add_equation("shear_stress_s_s_surface = 0") # Stress free, superfluid
 
-problem.add_equation("radial(u_s_n(r=Ro)) = 0")  # Zero Penetration
-problem.add_equation("angular(u_s_n(r=Ro)) = angular(uang_s)")  # Surface spin up
-problem.add_equation("radial(u_s_s(r=Ro)) = 0")
-problem.add_equation("shear_stress_s_s_surface = 0")
+# Iterface boundary conditions, crust side
+problem.add_equation("radial(u_s_n(r=Ri)) = 0") # No penetration, normal fluid
+problem.add_equation("shear_stress_s_n_interface = 0") # Stress free, normal fluid
 
-problem.add_equation("radial(u_s_n(r=Ri)) = 0")
-problem.add_equation("shear_stress_s_n_interface = 0")
-problem.add_equation("radial(u_s_s(r=Ri)) = 0")
-problem.add_equation("shear_stress_s_s_interface = 0")
+problem.add_equation("radial(u_s_s(r=Ri)) = 0") # No penetration, superfluid
+problem.add_equation("shear_stress_s_s_interface = 0") # Stress free, superfluid
 
-problem.add_equation("radial(u_b_n(r=Ri)) = 0")
-problem.add_equation("angular(u_b_n(r=Ri)) = angular(u_s_n(r=Ri))")
+# Interface boundary condition, core side
+problem.add_equation("radial(u_b_n(r=Ri)) = 0") # No penetration, normal fluid
+problem.add_equation("angular(u_b_n(r=Ri)) = angular(u_s_n(r=Ri))") # Tangential velocity conservation, normal fluid
 
-problem.add_equation("radial(u_b_s(r=Ri)) = 0")
-problem.add_equation("shear_stress_b_s_interface = 0")
+problem.add_equation("radial(u_b_s(r=Ri)) = 0") # No penetration, superfluid
+problem.add_equation("shear_stress_b_s_interface = 0") # Stress free, superfluid
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
@@ -269,7 +261,7 @@ else:
     u_s_n.low_pass_filter(scales=0.5)
     u_b_n.fill_random("g", seed=67, distribution="normal", scale=1e-10)  # Random noise
     u_b_n.low_pass_filter(scales=0.5)
-    u_b_s.fill_random("g", seed=42, distribution="normal", scales=1e-10) # Random noise
+    u_b_s.fill_random("g", seed=42, distribution="normal", scale=1e-10) # Random noise
     u_b_s.low_pass_filter(scales=0.5)
     u_s_s.fill_random("g", seed=67, distribution="normal", scale=1e-10) # Random noise
     u_s_s.low_pass_filter(scales=0.5)
@@ -302,6 +294,14 @@ u_s_n_r = Dot(u_s_n, er)
 u_s_n_theta = Dot(u_s_n, etheta)
 u_s_n_phi = Dot(u_s_n, ephi)
 
+u_b_s_r = Dot(u_b_s, er)
+u_b_s_theta = Dot(u_b_s, etheta)
+u_b_s_phi = Dot(u_b_s, ephi)
+
+u_s_s_r = Dot(u_s_s, er)
+u_s_s_theta = Dot(u_s_s, etheta)
+u_s_s_phi = Dot(u_s_s, ephi)
+
 save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
 save_path.mkdir(parents=True, exist_ok=True)
 
@@ -318,20 +318,30 @@ AZ_avg.add_task(az_avg(u_s_n_r), name="u_s_n_r")
 AZ_avg.add_task(az_avg(u_s_n_theta), name="u_s_n_theta")
 AZ_avg.add_task(az_avg(u_s_n_phi), name="u_s_n_phi")
 
+AZ_avg.add_task(az_avg(u_b_s_r), name="u_b_s_r")
+AZ_avg.add_task(az_avg(u_b_s_theta), name="u_b_s_theta")
+AZ_avg.add_task(az_avg(u_b_s_phi), name="u_b_s_phi")
+
+AZ_avg.add_task(az_avg(u_s_s_r), name="u_s_s_r")
+AZ_avg.add_task(az_avg(u_s_s_theta), name="u_s_s_theta")
+AZ_avg.add_task(az_avg(u_s_s_phi), name="u_s_s_phi")
+
 CFL = d3.CFL(
     solver, timestep, cadence=1, safety=0.5, threshold=0.1, max_dt=max_timestep
 )
 CFL.add_velocity(u_b_n)
 CFL.add_velocity(u_s_n)
+CFL.add_velocity(u_b_s)
+CFL.add_velocity(u_s_s)
 
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_s_n @ u_s_n) * PARAMS["Ek"], name="Re_n")
-
+flow.add_property(np.sqrt(omega_b_s @ omega_b_s), name="vorticity_mag")
 
 @profile(args["profile"], args["output_dir"])
 def main() -> Callable:
     """Create main loop with profiling."""
-    return track_reynolds_n(logger, flow, solver, CFL)
+    return track_vorticity(logger, flow, solver, CFL)
 
 
 main()

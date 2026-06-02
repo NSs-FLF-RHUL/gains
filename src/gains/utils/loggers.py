@@ -68,8 +68,8 @@ def track_reynolds_n(
                     "Iteration=%i, Time=%e, dt=%e, max(Re)=%f"
                     % (solver.iteration, solver.sim_time, timestep, re)
                 )
-    except Exception as e:
+    except:
         logger.exception("Exception raised, triggering end of main loop.")
-        raise e
+        raise
     finally:
         solver.log_stats()

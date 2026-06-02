@@ -38,3 +38,38 @@ def track_vorticity(
         raise
     finally:
         solver.log_stats()
+
+
+def track_reynolds_n(
+    logger: Logger,
+    flow: d3.GlobalFlowProperty,
+    solver: dedalus.core.solvers.InitialValueSolver,
+    cfl: d3.CFL,
+) -> None:
+    """
+    Create main loop that tracks and logs the maximum reynolds number.
+
+    Should be called as an alternative to solver.evolve.
+
+    :param logger: Logger used by the script.
+    :param flow: dedalus flow object. Must track the normal fluid
+    reynlods number as Re_n.
+    :param solver: The IVP solver defined by the script.
+    :param CFL: The CFL condition used by the script.
+    """
+    try:
+        logger.info("Starting main loop")
+        while solver.proceed:
+            timestep = cfl.compute_timestep()
+            solver.step(timestep)
+            if (solver.iteration - 1) % 10 == 0:
+                re = flow.max("Re_n")
+                logger.info(
+                    "Iteration=%i, Time=%e, dt=%e, max(Re)=%f"
+                    % (solver.iteration, solver.sim_time, timestep, re)
+                )
+    except:
+        logger.exception("Exception raised, triggering end of main loop.")
+        raise
+    finally:
+        solver.log_stats()

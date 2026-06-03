@@ -2,6 +2,37 @@
 
 import argparse
 from pathlib import Path
+from typing import Any
+
+
+class SimulationCLI(argparse.ArgumentParser):
+    """Command-line interface for simulation scripts."""
+
+    sim_name: str
+    is_profiling: bool
+
+    def __init__(
+        self, *args, profiling: bool = False, sim_name: str = "simulation", **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+
+        self.sim_name = str(sim_name)
+
+        if profiling:
+            self.add_profiling_options()
+        else:
+            self.is_profiling = False
+
+    def _default_dir_name(self) -> str:
+        """"""
+
+    def add_profiling_options(self) -> None:
+        """"""
+
+    def parse_args(
+        self, *args, default_params: dict[str, Any] | None = None, **kwargs
+    ) -> dict[str, Any]:
+        args = super().parse_args(*args, **kwargs)
 
 
 def create_parser_simulation() -> argparse.ArgumentParser:

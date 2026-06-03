@@ -3,6 +3,7 @@
 import argparse
 import json
 from datetime import datetime
+from logging import FileHandler, Logger
 from pathlib import Path
 from typing import Any
 
@@ -10,25 +11,28 @@ from typing import Any
 class SimulationCLI(argparse.ArgumentParser):
     """Command-line interface for simulation scripts."""
 
-    sim_name: str
     is_profiling: bool
+    log_path: Path | None
+    sim_name: str
 
     def __init__(
         self,
         *args,
-        profiling: bool = False,
+        profiling_option: bool = False,
         sim_name: str = "simulation",
         description: str = "Simulate glitch on the boundary of a spherical star",
         **kwargs,
-    ):
+    ) -> None:
+        """Assemble CLI for the simulation."""
         super().__init__(*args, description=description, **kwargs)
         self._add_standard_args()
 
         self.sim_name = str(sim_name)
+        self.log_path = None
 
-        if profiling:
+        if profiling_option:
             self.is_profiling = True
-            self.add_profiling_options(is_profiling=profiling)
+            self.add_profiling_options(is_profiling=profiling_option)
         else:
             self.is_profiling = False
 
@@ -68,7 +72,9 @@ class SimulationCLI(argparse.ArgumentParser):
 
     def _default_dir_name(self) -> str:
         """Generate a default name for an output directory."""
-        return self.sim_name + datetime.now().astimezone().strftime("%Y-%m-%d-%H:%M")
+        return (
+            self.sim_name + "_" + datetime.now().astimezone().strftime("%Y-%m-%d-%H:%M")
+        )
 
     def add_profiling_options(self, *, is_profiling: bool) -> None:
         """Add profiling option to CLI, if applicable."""
@@ -84,18 +90,30 @@ class SimulationCLI(argparse.ArgumentParser):
             self.is_profiling = False
 
     def parse_args(
-        self, *args, default_params: dict[str, Any] | None = None, **kwargs
+        self,
+        logger: Logger,
+        *args,
+        default_params: dict[str, Any] | None = None,
+        **kwargs,
     ) -> dict[str, Any]:
         """
         Parse arguments and handle any immediate processing logic.
 
+        Note that the input `logger` will be edited by this method, having a handler
+        added to the given instance in the event a `logfile` was specified.
+
+        :param logger: Logger instance that is handling main simulation.
         :param default_params: Defaults to use for simulation parameters, if
             no `--parameter_file` was provided.
         :returns params: Parameter values loaded into a dictionary.
         """
-        args = super().parse_args(*args, **kwargs)
+        args = vars(super().parse_args(*args, **kwargs))
 
-        # Handle default parameter load
+        if args.get("logfile"):
+            self.log_path = Path(f"outputs/{args['output_dir']}/{args['logfile']}.txt")
+            self.log_path.parent.mkdir(exist_ok=True)
+            logger.addHandler(FileHandler(self.log_path))
+
         if args["parameter_file"] is not None:
             with Path.open(args["parameter_file"]) as param_file:
                 params = json.load(param_file)
@@ -106,9 +124,7 @@ class SimulationCLI(argparse.ArgumentParser):
 
         params["use_checkpoint"] = args["use_checkpoint"]
         params["checkpoint_path"] = args["checkpoint_path"]
-
-        if self.is_profiling:
-            params["profile"] = args["profile"]
+        params["profile"] = args.get("profile", False)
 
         params["output_dir"] = (
             args["output_dir"]
@@ -117,15 +133,6 @@ class SimulationCLI(argparse.ArgumentParser):
         )
 
         return params
-
-
-def create_parser_simulation() -> argparse.ArgumentParser:
-    """Create argument parser for simulations in a rotating spherical star."""
-    parser = argparse.ArgumentParser(
-        description="simulate glitch on the boundary of a spherical star"
-    )
-
-    return parser
 
 
 def create_parser_analysis() -> argparse.ArgumentParser:

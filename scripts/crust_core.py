@@ -9,8 +9,6 @@ Each region is nondimensionalized using its own characteristic length scale, lea
 distinct effective Ekman numbers in the core and shell.
 """
 
-import datetime
-import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
@@ -24,38 +22,14 @@ from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import ShellBasis, SphericalBasis
 from gains.utils.loggers import track_reynolds_n
 from gains.utils.misc import mesh_cpus
-from gains.utils.parsers import create_parser_simulation
-from gains.utils.profile import add_profiling_options, profile
+from gains.utils.parsers import SimulationCLI
+from gains.utils.profile import profile
 
 # Setup
 logger = logging.getLogger(__name__)
 
-parser = create_parser_simulation()
-add_profiling_options(parser)
-args = vars(parser.parse_args())
-
-if args["logfile"] is not None:
-    logpath = Path(f"outputs/{args['output_dir']}/{args['logfile']}.txt")
-    logpath.parent.mkdir(exist_ok=True)
-    FileOutputHandler = logging.FileHandler(logpath)
-    logger.addHandler(FileOutputHandler)
-
-
-if args["parameter_file"] is not None:
-    with Path.open(args["parameter_file"]) as param_file:
-        PARAMS = json.load(param_file)
-
-else:
-    PARAMS = default_params
-
-PARAMS["use_checkpoint"] = args["use_checkpoint"]
-PARAMS["checkpoint_path"] = args["checkpoint_path"]
-PARAMS["output_dir"] = (
-    args["output_dir"]
-    if args["output_dir"] is not None
-    else "two_fluid_spin_up_"
-    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
-)
+parser = SimulationCLI(profiling_option=True, sim_name="two_fluid_spin_up")
+PARAMS = parser.parse_args(logger, default_params=default_params)
 
 timestepper = d3.SBDF2
 cfl_safety = 0.2
@@ -236,7 +210,7 @@ flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_s @ u_s) * PARAMS["Ek"], name="Re_n")
 
 
-@profile(args["profile"])
+@profile(PARAMS["profile"])
 def main() -> Callable:
     """Create main loop with profiling."""
     return track_reynolds_n(logger, flow, solver, CFL)

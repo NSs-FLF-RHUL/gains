@@ -5,8 +5,6 @@ Equations and mutual friction are in the same form as
 J. R. Fuentes and Vanessa Graber 2024 ApJ 974 300.
 """
 
-import datetime
-import json
 import logging
 from pathlib import Path
 
@@ -21,38 +19,13 @@ from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
-from gains.utils.parsers import create_parser_simulation
-from gains.utils.profile import add_profiling_options, profile
+from gains.utils.parsers import SimulationCLI
+from gains.utils.profile import profile
 
 # Setup
 logger = logging.getLogger(__name__)
-
-parser = create_parser_simulation()
-add_profiling_options(parser)
-args = vars(parser.parse_args())
-
-if args["logfile"] is not None:
-    logpath = Path(f"outputs/{args['output_dir']}/{args['logfile']}.txt")
-    logpath.parent.mkdir(exist_ok=True)
-    FileOutputHandler = logging.FileHandler(logpath)
-    logger.addHandler(FileOutputHandler)
-
-
-if args["parameter_file"] is not None:
-    with Path.open(args["parameter_file"]) as param_file:
-        PARAMS = json.load(param_file)
-
-else:
-    PARAMS = default_params
-
-PARAMS["use_checkpoint"] = args["use_checkpoint"]
-PARAMS["checkpoint_path"] = args["checkpoint_path"]
-PARAMS["output_dir"] = (
-    args["output_dir"]
-    if args["output_dir"] is not None
-    else "two_fluid_spin_up_"
-    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
-)
+parser = SimulationCLI(profiling_option=True, sim_name="two_fluid_spin_up")
+PARAMS = parser.parse_args(logger, default_params=default_params)
 
 radius = 1
 timestepper = d3.SBDF2
@@ -221,7 +194,7 @@ flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 
 
 # Main loop
-@profile(args["profile"], PARAMS)
+@profile(PARAMS["profile"], PARAMS)
 def main_loop() -> None:
     """Decorate main loop."""
     return track_vorticity(logger, flow, solver, CFL)

@@ -416,7 +416,7 @@ def plot_against_time(
     ntheta: int,
     targets: np.ndarray | list,
     target_field: str,
-) -> tuple[list[Path], mpl.figure]:
+) -> tuple[list[Path], plt.Figure]:
     """
     Plot a range of coordinate values against time.
 
@@ -430,6 +430,7 @@ def plot_against_time(
     :param target_field: The group name of the target velocity field in the
     output file.
     :returns path_list: A list of only .h5 files in the specified path.
+    :returns fig: Figure on which the plot was drawn.
     """
     path = Path(path)
 

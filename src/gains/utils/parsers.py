@@ -28,7 +28,21 @@ class SimulationCLI(argparse.ArgumentParser):
         description: str = "Simulate glitch on the boundary of a spherical star",
         **kwargs,
     ) -> None:
-        """Assemble CLI for the simulation."""
+        """
+        Assemble CLI for the simulation.
+
+        `*args` and `**kwargs` are forwarded to `argparse.ArgumentParser`.
+
+        :param profiling_option: Adds the `--profile` option to the CLI, allowing for
+            profiling runs.
+        :param sim_name: Name for the simulation, which is used when creating default
+            directories if no explicit alternative is given.
+        :param place_all_outputs_under: Directory under which to place all output files.
+            Arguments like `--output_dir` will be interpreted as relative to this
+            directory.
+        :param description: Description for the CLI interface for the script. Passed to
+            `argparse.ArgumentParser`.
+        """
         kwargs["description"] = description
         super().__init__(*args, **kwargs)
 
@@ -108,10 +122,12 @@ class SimulationCLI(argparse.ArgumentParser):
         **kwargs,
     ) -> dict[str, Any]:
         """
-        Parse arguments and handle any immediate processing logic.
+        Parse arguments, handle processing logic, and return simulation parameters.
 
         Note that the input `logger` will be edited by this method, having a handler
         added to the given instance in the event a `logfile` was specified.
+
+        `*args` and `**kwargs` are forwarded to `argparse.ArgumentParser.parse_args()`.
 
         :param logger: Logger instance that is handling main simulation.
         :param default_params: Defaults to use for simulation parameters, if

@@ -26,7 +26,8 @@ class SimulationCLI(argparse.ArgumentParser):
         self.sim_name = str(sim_name)
 
         if profiling:
-            self.add_profiling_options()
+            self.is_profiling = True
+            self.add_profiling_options(is_profiling=profiling)
         else:
             self.is_profiling = False
 
@@ -68,8 +69,18 @@ class SimulationCLI(argparse.ArgumentParser):
         """Generate a default name for an output directory."""
         return self.sim_name + datetime.now().astimezone().strftime("%Y-%m-%d-%H:%M")
 
-    def add_profiling_options(self) -> None:
-        """"""
+    def add_profiling_options(self, *, is_profiling: bool) -> None:
+        """Add profiling option to CLI, if applicable."""
+        if is_profiling:
+            self.is_profiling = True
+            self.add_argument(
+                "--profile",
+                default=None,
+                type=str,
+                help="Output directory for profiling results.",
+            )
+        else:
+            self.is_profiling = False
 
     def parse_args(
         self, *args, default_params: dict[str, Any] | None = None, **kwargs

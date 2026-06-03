@@ -13,9 +13,15 @@ class SimulationCLI(argparse.ArgumentParser):
     is_profiling: bool
 
     def __init__(
-        self, *args, profiling: bool = False, sim_name: str = "simulation", **kwargs
+        self,
+        *args,
+        profiling: bool = False,
+        sim_name: str = "simulation",
+        description: str = "Simulate glitch on the boundary of a spherical star",
+        **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, description=description, **kwargs)
+        self._add_standard_args()
 
         self.sim_name = str(sim_name)
 
@@ -23,6 +29,40 @@ class SimulationCLI(argparse.ArgumentParser):
             self.add_profiling_options()
         else:
             self.is_profiling = False
+
+    def _add_standard_args(self) -> None:
+        """Add arguments that all simulation CLIs accept to the instance."""
+        self.add_argument(
+            "--use_checkpoint",
+            type=bool,
+            default=False,
+            help="Boolean argument to determine if to use a checkpoint file.",
+        )
+        self.add_argument(
+            "--checkpoint_path",
+            type=str,
+            default="outputs/checkpoints/checkpoints_sNumber.h5",
+            help="Path to the checkpoint file you want to use.",
+        )
+        self.add_argument(
+            "--output_dir",
+            type=str,
+            default=None,
+            help="Directory to store simulation outputs",
+        )
+        self.add_argument(
+            "--parameter_file",
+            type=Path,
+            default=None,
+            help="relative path to parameter file to use for this run, saved in"
+            " json format.",
+        )
+        self.add_argument(
+            "--logfile",
+            type=str,
+            default=None,
+            help="Name of logfile, if you want to create one.",
+        )
 
     def _default_dir_name(self) -> str:
         """Generate a default name for an output directory."""
@@ -41,42 +81,6 @@ def create_parser_simulation() -> argparse.ArgumentParser:
     """Create argument parser for simulations in a rotating spherical star."""
     parser = argparse.ArgumentParser(
         description="simulate glitch on the boundary of a spherical star"
-    )
-
-    parser.add_argument(
-        "--use_checkpoint",
-        type=bool,
-        default=False,
-        help="Boolean argument to determine if to use a checkpoint file.",
-    )
-
-    parser.add_argument(
-        "--checkpoint_path",
-        type=str,
-        default="outputs/checkpoints/checkpoints_sNumber.h5",
-        help="Path to the checkpoint file you want to use.",
-    )
-
-    parser.add_argument(
-        "--output_dir",
-        type=str,
-        default=None,
-        help="Directory to store simulation outputs",
-    )
-
-    parser.add_argument(
-        "--parameter_file",
-        type=Path,
-        default=None,
-        help="relative path to parameter file to use for this run, saved in"
-        " json format.",
-    )
-
-    parser.add_argument(
-        "--logfile",
-        type=str,
-        default=None,
-        help="Name of logfile, if you want to create one.",
     )
 
     return parser

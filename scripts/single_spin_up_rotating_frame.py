@@ -18,7 +18,9 @@ from gains.utils.profile import profile
 
 logger = logging.getLogger(__name__)
 
-parser = SimulationCLI(profiling_option=True, sim_name="single_spin_up")
+parser = SimulationCLI(
+    profiling_option=True, place_all_outputs_under="outputs", sim_name="single_spin_up"
+)
 PARAMS = parser.parse_args(logger, default_params=default_params)
 
 # Additional Parameters - not likely to change between runs
@@ -139,11 +141,11 @@ u_n_r = dot(u_n, er)
 u_n_theta = dot(u_n, etheta)
 u_n_phi = dot(u_n, ephi)
 
-save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path: Path = PARAMS["output_dir"] / "su_equator"
 save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    str(save_path / "AZ_avg_equator"),
     sim_dt=0.05,
     max_writes=100,
 )
@@ -153,7 +155,7 @@ AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
 
 
 slices = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
+    str(save_path / "slices"),
     sim_dt=0.025,
     max_writes=100,
 )
@@ -164,7 +166,7 @@ slices.add_task(
 
 # Checkpoint
 checkpoint = solver.evaluator.add_file_handler(
-    f"outputs/{PARAMS['output_dir']}/su_equator/checkpoint",
+    str(save_path / "checkpoint"),
     sim_dt=50,
     max_writes=1,
     parallel="gather",

@@ -28,7 +28,11 @@ from gains.utils.profile import profile
 # Setup
 logger = logging.getLogger(__name__)
 
-parser = SimulationCLI(profiling_option=True, sim_name="two_fluid_spin_up")
+parser = SimulationCLI(
+    profiling_option=True,
+    place_all_outputs_under="outputs",
+    sim_name="two_fluid_spin_up",
+)
 PARAMS = parser.parse_args(logger, default_params=default_params)
 
 timestepper = d3.SBDF2
@@ -184,11 +188,11 @@ u_s_r = Dot(u_s, er)
 u_s_theta = Dot(u_s, etheta)
 u_s_phi = Dot(u_s, ephi)
 
-save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path: Path = PARAMS["output_dir"] / "su_equator"
 save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    str(save_path / "AZ_avg_equator"),
     sim_dt=0.05,
     max_writes=100,
 )

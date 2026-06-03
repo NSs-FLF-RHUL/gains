@@ -24,7 +24,11 @@ from gains.utils.profile import profile
 
 # Setup
 logger = logging.getLogger(__name__)
-parser = SimulationCLI(profiling_option=True, sim_name="two_fluid_spin_up")
+parser = SimulationCLI(
+    profiling_option=True,
+    place_all_outputs_under="outputs",
+    sim_name="two_fluid_spin_up",
+)
 PARAMS = parser.parse_args(logger, default_params=default_params)
 
 radius = 1
@@ -147,11 +151,11 @@ u_n_r = Dot(u_n, er)
 u_n_theta = Dot(u_n, etheta)
 u_n_phi = Dot(u_n, ephi)
 
-save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path: Path = PARAMS["output_dir"] / "su_equator"
 save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    str(save_path / "AZ_avg_equator"),
     sim_dt=0.05,
     max_writes=100,
 )
@@ -161,7 +165,7 @@ AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
 AZ_avg.add_task(az_avg(Dot(ephi, u_s)), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
+    str(save_path / "slices"),
     sim_dt=0.025,
     max_writes=100,
 )

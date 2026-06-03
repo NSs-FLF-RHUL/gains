@@ -17,6 +17,7 @@ class SimulationCLI(argparse.ArgumentParser):
 
     is_profiling: bool
     log_path: Path | None
+    place_all_outputs_under: Path
     sim_name: str
 
     def __init__(
@@ -24,6 +25,7 @@ class SimulationCLI(argparse.ArgumentParser):
         *args,
         profiling_option: bool = False,
         sim_name: str = "simulation",
+        place_all_outputs_under: Path | str = "outputs",
         description: str = "Simulate glitch on the boundary of a spherical star",
         **kwargs,
     ) -> None:
@@ -31,8 +33,9 @@ class SimulationCLI(argparse.ArgumentParser):
         super().__init__(*args, description=description, **kwargs)
         self._add_standard_args()
 
-        self.sim_name = str(sim_name)
         self.log_path = None
+        self.place_all_outputs_under = Path(place_all_outputs_under)
+        self.sim_name = str(sim_name)
         self._default_output_dir = self._default_dir_name()
 
         if profiling_option:
@@ -115,7 +118,10 @@ class SimulationCLI(argparse.ArgumentParser):
         args = vars(super().parse_args(*args, **kwargs))
 
         if args.get("logfile"):
-            self.log_path = Path(f"outputs/{args['output_dir']}/{args['logfile']}.txt")
+            self.log_path = (
+                self.place_all_outputs_under
+                / f"{args['output_dir']}/{args['logfile']}.txt"
+            )
             self.log_path.parent.mkdir(exist_ok=True)
             logger.addHandler(FileHandler(self.log_path))
 
@@ -129,9 +135,9 @@ class SimulationCLI(argparse.ArgumentParser):
 
         params["use_checkpoint"] = args["use_checkpoint"]
         params["checkpoint_path"] = args["checkpoint_path"]
-        params["profile"] = args.get("profile", False)
+        params["profile"] = args.get("profile", None)
 
-        params["output_dir"] = (
+        params["output_dir"] = self.place_all_outputs_under / (
             args["output_dir"]
             if args["output_dir"] is not None
             else self._default_output_dir

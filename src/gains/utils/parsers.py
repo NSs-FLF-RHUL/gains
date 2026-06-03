@@ -1,6 +1,7 @@
 """Standardised command-line interfaces to scripts."""
 
 import argparse
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -85,7 +86,37 @@ class SimulationCLI(argparse.ArgumentParser):
     def parse_args(
         self, *args, default_params: dict[str, Any] | None = None, **kwargs
     ) -> dict[str, Any]:
+        """
+        Parse arguments and handle any immediate processing logic.
+
+        :param default_params: Defaults to use for simulation parameters, if
+            no `--parameter_file` was provided.
+        :returns params: Parameter values loaded into a dictionary.
+        """
         args = super().parse_args(*args, **kwargs)
+
+        # Handle default parameter load
+        if args["parameter_file"] is not None:
+            with Path.open(args["parameter_file"]) as param_file:
+                params = json.load(param_file)
+        elif default_params:
+            params = dict(default_params)
+        else:
+            params = {}
+
+        params["use_checkpoint"] = args["use_checkpoint"]
+        params["checkpoint_path"] = args["checkpoint_path"]
+
+        if self.is_profiling:
+            params["profile"] = args["profile"]
+
+        params["output_dir"] = (
+            args["output_dir"]
+            if args["output_dir"] is not None
+            else self._default_dir_name()
+        )
+
+        return params
 
 
 def create_parser_simulation() -> argparse.ArgumentParser:

@@ -1,6 +1,7 @@
 """Standardised command-line interfaces to scripts."""
 
 import argparse
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +25,8 @@ class SimulationCLI(argparse.ArgumentParser):
             self.is_profiling = False
 
     def _default_dir_name(self) -> str:
-        """"""
+        """Generate a default name for an output directory."""
+        return self.sim_name + datetime.now().astimezone().strftime("%Y-%m-%d-%H:%M")
 
     def add_profiling_options(self) -> None:
         """"""

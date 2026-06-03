@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 parser = SimulationCLI(
     profiling_option=True, place_all_outputs_under="outputs", sim_name="single_spin_up"
 )
-PARAMS = parser.parse_args(logger, default_params=default_params)
+PARAMS = parser.parse_args_and_get_params(logger, default_params=default_params)
 
 # Additional Parameters - not likely to change between runs
 radius = 1

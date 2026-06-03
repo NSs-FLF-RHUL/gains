@@ -141,7 +141,7 @@ def test_simulation_cli_parsing(
     pass_parameter_file: bool,
 ) -> None:
     """
-    Check `params` returned by `SimulationCLI.parse_args()` is consistent.
+    Check `params` returned by `SimulationCLI.parse_args_and_get_params()`.
 
     Note that we trust `argparse.ArgumentParser.parse_args()` to read from the command-
     line correctly, so we are only testing our additional post-parsing logic with this
@@ -155,7 +155,9 @@ def test_simulation_cli_parsing(
 
     if isinstance(expected_output, Exception | SystemExit):
         with raises_context(expected_output):
-            parser.parse_args(logger_for_tests, cli_args, default_params=default_params)
+            parser.parse_args_and_get_params(
+                logger_for_tests, cli_args, default_params=default_params
+            )
     else:
         # Add defaults to the output dict if they were not explicitly set in the input,
         # which should confirm that the default values are used in the param comparison
@@ -170,7 +172,7 @@ def test_simulation_cli_parsing(
         )
         expected_output.setdefault("profile", None)
 
-        params = parser.parse_args(
+        params = parser.parse_args_and_get_params(
             logger_for_tests, cli_args, default_params=default_params
         )
 

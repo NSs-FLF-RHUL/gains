@@ -33,7 +33,7 @@ parser = SimulationCLI(
     place_all_outputs_under="outputs",
     sim_name="two_fluid_spin_up",
 )
-PARAMS = parser.parse_args(logger, default_params=default_params)
+PARAMS = parser.parse_args_and_get_params(logger, default_params=default_params)
 
 timestepper = d3.SBDF2
 cfl_safety = 0.2

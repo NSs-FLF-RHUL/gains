@@ -29,7 +29,8 @@ class SimulationCLI(argparse.ArgumentParser):
         **kwargs,
     ) -> None:
         """Assemble CLI for the simulation."""
-        super().__init__(*args, description=description, **kwargs)
+        kwargs["description"] = description
+        super().__init__(*args, **kwargs)
 
         self.log_path = None
         self.place_all_outputs_under = Path(place_all_outputs_under)
@@ -99,7 +100,7 @@ class SimulationCLI(argparse.ArgumentParser):
         else:
             self.is_profiling = False
 
-    def parse_args(
+    def parse_args_and_get_params(
         self,
         logger: Logger,
         *args,
@@ -117,28 +118,28 @@ class SimulationCLI(argparse.ArgumentParser):
             no `--parameter_file` was provided.
         :returns params: Parameter values loaded into a dictionary.
         """
-        args = vars(super().parse_args(*args, **kwargs))
+        parsed_args: dict[str, Any] = vars(self.parse_args(*args, **kwargs))
 
-        if args["parameter_file"] is not None:
-            with Path.open(args["parameter_file"]) as param_file:
+        if parsed_args["parameter_file"] is not None:
+            with Path.open(parsed_args["parameter_file"]) as param_file:
                 params = json.load(param_file)
         elif default_params:
             params = dict(default_params)
         else:
             params = {}
 
-        params["use_checkpoint"] = args["use_checkpoint"]
-        params["checkpoint_path"] = args["checkpoint_path"]
-        params["profile"] = args.get("profile", None)
+        params["use_checkpoint"] = parsed_args["use_checkpoint"]
+        params["checkpoint_path"] = parsed_args["checkpoint_path"]
+        params["profile"] = parsed_args.get("profile")
 
         params["output_dir"] = self.place_all_outputs_under / (
-            args["output_dir"]
-            if args["output_dir"] is not None
+            parsed_args["output_dir"]
+            if parsed_args["output_dir"] is not None
             else self._default_output_dir
         )
 
-        if args.get("logfile"):
-            self.log_path = params["output_dir"] / f"{args['logfile']}.txt"
+        if parsed_args.get("logfile"):
+            self.log_path = params["output_dir"] / f"{parsed_args['logfile']}.txt"
             self.log_path.parent.mkdir(exist_ok=True, parents=True)
             logger.addHandler(FileHandler(self.log_path))
 

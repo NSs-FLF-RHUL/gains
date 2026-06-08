@@ -12,12 +12,10 @@ import numpy as np
 from gains.analysis.analyse_spin_up import (
     LabeledCoordinate,
     get_angular_coords,
-    plot_against_time,
-    plot_angular_velocity_sequence,
-    plot_angular_velocity_split,
 )
 
-from gains.plotting.polar import plot_stream
+from gains.plotting.polar import plot_stream, plot_angular_velocity_sequence, plot_angular_velocity_split
+from gains.plotting.cartesian import plot_against_time
 
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.utils.parsers import create_parser_analysis

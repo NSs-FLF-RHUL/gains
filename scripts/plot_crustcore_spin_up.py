@@ -36,6 +36,8 @@ if __name__ == "__main__":
 
     args["output_dir"] = Path(args["output_dir"])
     args["frame_dir"] = Path(args["frame_dir"])
+    targets_core = [t for t in args["targets"] if t<=0.8]
+    targets_crust = [t for t in args["targets"] if t>=0.8]
 
     logger = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ if __name__ == "__main__":
     plt.savefig("{}/angular_speed_sequence_NF.png".format(args["fig_dir"]))
     plt.close()
 
-    path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
+    path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
     data = h5py.File(path_plot, mode="r")
     time = np.array(data["scales/sim_time"])
     fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
@@ -75,24 +77,31 @@ if __name__ == "__main__":
     )
 
     plt.savefig(f"{args['fig_dir']}/meridional_streamlines_core.png")
-
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
-    r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_b_n_phi")
+    r_check_core, theta_check_core = get_angular_coords(
+        path + "/AZ_avg_equator_s1.h5", "u_b_n_phi"
+    )
+    r_check_crust, theta_check_crust = get_angular_coords(
+        path + "/AZ_avg_equator_s1.h5", "u_s_n_phi"
+    )
+    r_core = LabeledCoordinate(r_check_core, "r")
+    theta_core = LabeledCoordinate(theta_check_core, "theta")
 
-    r = LabeledCoordinate(r_check, "r")
-    theta = LabeledCoordinate(theta_check, "theta")
+    r_crust = LabeledCoordinate(r_check_crust, "r")
+    theta_crust = LabeledCoordinate(theta_check_crust, "theta")
 
     err_msg = "Coordinate varied must be r or theta."
 
     if args["coordinate"] == "r":
         path_list, fig = plot_against_time(
-            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"], "u_b_n_phi"
+            r_core, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], targets_core, "u_b_n_phi"
         )
+        ax = fig.gca()
+        plot_against_time(r_crust, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], targets_crust, "u_s_n_phi",ax=ax,colour="#9b111e")
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
-
     elif args["coordinate"] == "theta":
         path_list, fig = plot_against_time(
-            theta,
+            theta_core,
             "theta",
             path,
             PARAMS["Ek"],

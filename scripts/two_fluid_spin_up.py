@@ -189,7 +189,7 @@ AZ_avg.add_task(az_avg(Dot(ephi, u_s)), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
-    sim_dt=PARAMS["snapshots_dt"],
+    sim_dt=PARAMS["snapshot_dt"],
     max_writes=100,
 )
 
@@ -221,7 +221,7 @@ flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 
 
 # Main loop
-@profile(args["profile"], PARAMS)
+@profile(args["profile"], args["output_dir"])
 def main_loop() -> None:
     """Decorate main loop."""
     return track_vorticity(logger, flow, solver, CFL)

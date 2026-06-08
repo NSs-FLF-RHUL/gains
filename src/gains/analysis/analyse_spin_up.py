@@ -8,7 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
 
-from gains.utils.misc import extract_numerical_suffix, get_arg_of_nearest, select_time
+from gains.utils.misc import (
+    _get_ax_and_fig,
+    extract_numerical_suffix,
+    get_arg_of_nearest,
+    select_time,
+)
 
 
 class LabeledCoordinate:
@@ -153,7 +158,13 @@ def calculate_angular_speed(
 
 
 def calculate_angular_speed_single(
-    path: str | Path, r_arg: int, theta_arg: int, u_phis: np.ndarray, target_field: str
+    path: str | Path,
+    r_arg: int,
+    theta_arg: int,
+    u_phis: np.ndarray,
+    target_field: str,
+    *,
+    rotating: bool
 ) -> float:
     """
     Calculate angular speed for a specific radius and longitude.
@@ -169,6 +180,9 @@ def calculate_angular_speed_single(
     """
     r, theta = get_angular_coords_single(path, r_arg, theta_arg, target_field)
     u_phi = u_phis[theta_arg][r_arg]
+    if not rotating:
+        u_bg = r*np.sin(theta)
+        u_phi = u_phi - u_bg
     return u_phi / (r * np.sin(theta))
 
 
@@ -440,13 +454,9 @@ def plot_against_time(
     )
 
     alphas = np.linspace(0.40, 1.0, len(targets))
-    if ax is None:
-        fig = plt.figure()
-        ax = fig.gca()
-    else:
-        fig = ax.get_figure()
-        
-    colour = kwargs["colour"] if "colour" in kwargs else "#024cf7"
+    fig, ax = _get_ax_and_fig(ax)
+
+    colour = kwargs.get("colour", "#024cf7")
     for i in range(len(targets)):
         target = targets[i]
         omega_r, times = get_angular_speed_vs_time(

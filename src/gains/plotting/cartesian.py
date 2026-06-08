@@ -40,7 +40,7 @@ def plot_against_time(
     )
 
     alphas = np.linspace(0.40, 1.0, len(targets))
-    fig, ax = _get_ax_and_fig(ax)
+    fig, ax = _get_ax_and_fig(ax, polar=False)
 
     colour = kwargs.get("colour", "#024cf7")
     for i in range(len(targets)):

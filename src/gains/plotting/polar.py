@@ -15,7 +15,7 @@ def plot_stream(
     vtheta_n: np.ndarray,
     density: float | tuple[float],
     time: float,
-    ax: plt.projections.polar.PolarAxes | None = None,
+    ax: plt.Axes | None = None,
     **kwargs,
 ) -> plt.Figure:
     """
@@ -28,7 +28,7 @@ def plot_stream(
     :param density: density of streamplot.
     :param ax: Polar axis to render plots on.
     """
-    fig, ax = _get_ax_and_fig(ax)
+    fig, ax = _get_ax_and_fig(ax, polar=True)
     rad = np.linspace(r[-1], r[0], len(r))
     theta = np.linspace(0, np.pi, len(theta))
 
@@ -61,7 +61,7 @@ def plot_stream(
     return fig
 
 def plot_angular(
-    ax: plt.projections.polar.PolarAxes,
+    ax: plt.Axes,
     r: np.ndarray,
     theta: np.ndarray,
     omega_values: np.ndarray,
@@ -99,7 +99,7 @@ def plot_angular(
 def plot_angular_velocity(
     path: str | Path,
     t: int,
-    ax: plt.projections.polar.PolarAxes,
+    ax: plt.Axes,
     target_field: str,
     *,
     rotating: bool,
@@ -128,7 +128,7 @@ def plot_angular_velocity(
 def plot_angular_velocity_split(
     path: Path,
     t: int,
-    ax: plt.projections.polar.PolarAxes,
+    ax: plt.Axes,
     core_field: str,
     crust_field: str,
     *,
@@ -172,7 +172,7 @@ def plot_angular_velocity_split(
 
 def plot_angular_velocity_sequence(
     target_times: list[float],
-    ax: list[plt.projections.polar.PolarAxes] | plt.projections.polar.PolarAxes,
+    ax: list[plt.Axes] | plt.Axes,
     output_dir: Path,
     target_field: str,
     **kwargs,

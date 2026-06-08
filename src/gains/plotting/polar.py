@@ -15,9 +15,9 @@ def plot_stream(
     vtheta_n: np.ndarray,
     density: float | tuple[float],
     time: float,
-    ax: plt.projections.polar.PolarAxes,
+    ax: plt.projections.polar.PolarAxes | None = None,
     **kwargs,
-) -> None:
+) -> plt.Figure:
     """
     Create streamline plots of the meridional flow.
 
@@ -28,6 +28,7 @@ def plot_stream(
     :param density: density of streamplot.
     :param ax: Polar axis to render plots on.
     """
+    fig, ax = _get_ax_and_fig(ax)
     rad = np.linspace(r[-1], r[0], len(r))
     theta = np.linspace(0, np.pi, len(theta))
 
@@ -57,6 +58,7 @@ def plot_stream(
         broken_streamlines=True,
         linewidth=1,
     )
+    return fig
 
 def plot_angular(
     ax: plt.projections.polar.PolarAxes,

@@ -15,8 +15,10 @@ from gains.analysis.analyse_spin_up import (
     plot_against_time,
     plot_angular_velocity_sequence,
     plot_angular_velocity_split,
-    plot_stream,
 )
+
+from gains.plotting.polar import plot_stream
+
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.utils.parsers import create_parser_analysis
 
@@ -74,7 +76,7 @@ if __name__ == "__main__":
         r_s[::-1], theta_s, ur_s[30], utheta_s[30], 1.0, time[30], ax, colour="#404969"
     )
 
-    plt.savefig(f"{args['fig_dir']}/meridional_streamlines_core.png")
+    fig.savefig(f"{args['fig_dir']}/meridional_streamlines_core.png")
 
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
     r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_b_phi")

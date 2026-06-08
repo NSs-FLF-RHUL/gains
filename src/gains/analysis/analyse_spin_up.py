@@ -453,6 +453,7 @@ def plot_against_time(
     :param target_field: The group name of the target velocity field in the
     output file.
     :returns path_list: A list of only .h5 files in the specified path.
+    :returns fig: Figure on which the plot was drawn.
     """
     path = Path(path)
 

@@ -1,11 +1,13 @@
 """Holds functions that plot curves on cartesian axes."""
 
-import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
 
-from gains.utils.misc import extract_numerical_suffix, _get_ax_and_fig
+import matplotlib.pyplot as plt
+import numpy as np
+
 from gains.analysis.analyse_spin_up import LabeledCoordinate, get_angular_speed_vs_time
+from gains.utils.misc import _get_ax_and_fig, extract_numerical_suffix
+
 
 def plot_against_time(
     coord: LabeledCoordinate,

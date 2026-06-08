@@ -3,16 +3,11 @@
 from pathlib import Path
 
 import h5py
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as inp
 
 from gains.utils.misc import (
-    _get_ax_and_fig,
-    extract_numerical_suffix,
     get_arg_of_nearest,
-    select_time,
 )
 
 
@@ -164,6 +159,7 @@ def read_angular_velocity(
     du_n_phi = u_phi - u_background
     omega = calculate_angular_speed(r, theta, du_n_phi)
     return r, theta, omega
+
 
 def get_angular_speed_vs_time(
     coord: LabeledCoordinate,

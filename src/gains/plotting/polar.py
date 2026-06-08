@@ -1,12 +1,14 @@
 """Holds functions that plot onto polar slices of the star."""
 
-import numpy as np
-import matplotlib.pyplot as plt
-import h5py
 from pathlib import Path
+
+import h5py
+import matplotlib.pyplot as plt
+import numpy as np
 
 from gains.analysis.analyse_spin_up import _my_interp2d, read_angular_velocity
 from gains.utils.misc import _get_ax_and_fig, select_time
+
 
 def plot_stream(
     r: np.ndarray,
@@ -59,6 +61,7 @@ def plot_stream(
         linewidth=1,
     )
     return fig
+
 
 def plot_angular(
     ax: plt.Axes,

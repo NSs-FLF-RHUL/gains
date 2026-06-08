@@ -164,7 +164,7 @@ def calculate_angular_speed_single(
     u_phis: np.ndarray,
     target_field: str,
     *,
-    rotating: bool
+    rotating: bool,
 ) -> float:
     """
     Calculate angular speed for a specific radius and longitude.
@@ -181,7 +181,7 @@ def calculate_angular_speed_single(
     r, theta = get_angular_coords_single(path, r_arg, theta_arg, target_field)
     u_phi = u_phis[theta_arg][r_arg]
     if not rotating:
-        u_bg = r*np.sin(theta)
+        u_bg = r * np.sin(theta)
         u_phi = u_phi - u_bg
     return u_phi / (r * np.sin(theta))
 
@@ -378,6 +378,8 @@ def get_angular_speed_vs_time(
     n_writes: int,
     path_list: list[Path],
     ntheta: int,
+    *,
+    rotating: bool,
 ) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
@@ -407,11 +409,16 @@ def get_angular_speed_vs_time(
             u_phi = data["tasks"][target_field][j, -1, :, :]
             if coord.label == "r":
                 omega_r = calculate_angular_speed_single(
-                    path, c_get, int(theta_resolution / 2), u_phi, target_field
+                    path,
+                    c_get,
+                    int(theta_resolution / 2),
+                    u_phi,
+                    target_field,
+                    rotating=rotating,
                 )  # theta arg esnures the equator is selected.
             elif coord.label == "theta":
                 omega_r = calculate_angular_speed_single(
-                    path, -1, c_get, u_phi, target_field
+                    path, -1, c_get, u_phi, target_field, rotating=rotating
                 )  # r arg ensures the surface is selected.
             else:
                 raise NotImplementedError(err_msg)
@@ -460,7 +467,13 @@ def plot_against_time(
     for i in range(len(targets)):
         target = targets[i]
         omega_r, times = get_angular_speed_vs_time(
-            coord, target, target_field, 100, path_list, ntheta=ntheta
+            coord,
+            target,
+            target_field,
+            100,
+            path_list,
+            ntheta=ntheta,
+            rotating=kwargs["rotating"],
         )
         ax.plot(
             times,

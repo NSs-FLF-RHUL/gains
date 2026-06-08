@@ -86,7 +86,14 @@ if __name__ == "__main__":
 
     if args["coordinate"] == "r":
         path_list, fig = plot_against_time(
-            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"], "u_b_phi"
+            r,
+            "r",
+            path,
+            PARAMS["Ek"],
+            PARAMS["Ntheta"],
+            args["targets"],
+            "u_b_phi",
+            rotating=True,
         )
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
@@ -99,6 +106,7 @@ if __name__ == "__main__":
             PARAMS["Ntheta"],
             args["targets"],
             "u_b_phi",
+            rotating=True,
         )
         fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
 

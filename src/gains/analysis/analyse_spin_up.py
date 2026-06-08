@@ -30,7 +30,7 @@ class LabeledCoordinate:
         self.label = label
 
 
-def my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
+def _my_interp2d(f: np.ndarray, rad: np.ndarray, radnew: np.ndarray) -> np.ndarray:
     """
     Create a 2D interpolation of a function f.
 
@@ -76,8 +76,8 @@ def plot_stream(
     un = vr_n[:, ::-1]
     vn = vtheta_n[:, ::-1] / rr[:, ::-1]
 
-    un = my_interp2d(un, r[::-1], rad)
-    vn = my_interp2d(vn, r[::-1], rad)
+    un = _my_interp2d(un, r[::-1], rad)
+    vn = _my_interp2d(vn, r[::-1], rad)
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     ax.set_rorigin(0)

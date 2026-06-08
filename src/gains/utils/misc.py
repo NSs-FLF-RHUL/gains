@@ -3,9 +3,22 @@
 import re
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.exceptions import MeshError
+
+
+def _get_ax_and_fig(ax: plt.Axes | None, *, polar: bool) -> tuple[plt.Figure, plt.Axes]:
+    """Handle optional axes arguments in plotting functions."""
+    if ax is None:
+        if polar:
+            fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+        else:
+            fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+    return fig, ax
 
 
 def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:

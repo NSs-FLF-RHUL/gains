@@ -13,11 +13,13 @@ from gains.analysis.analyse_spin_up import (
     LabeledCoordinate,
     get_angular_coords,
     plot_against_time,
+)
+from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.plotting.polar import (
     plot_angular_velocity,
     plot_angular_velocity_sequence,
     plot_stream,
 )
-from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.utils.parsers import create_parser_analysis
 
 warnings.filterwarnings("ignore")
@@ -51,12 +53,9 @@ if __name__ == "__main__":
     plot_angular_velocity_sequence(
         args["times_plot"], ax, args["output_dir"], "u_n_phi", **PARAMS
     )
-    plt.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
-    plt.close()
+    fig.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
 
-    plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
-
-    plt.close()
+    fig.close()
 
     path_stream = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
     data = h5py.File(path_stream, mode="r")
@@ -68,7 +67,7 @@ if __name__ == "__main__":
     r = uphi.dims[3][0][:].ravel()
     fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
     plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0, time[-1], ax, colour="#bada55")
-    plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
+    fig.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
 
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
     r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_n_phi")
@@ -120,7 +119,7 @@ if __name__ == "__main__":
                     delta_omega=PARAMS["Delta_Omega"],
                 )
                 save_path = args["frame_dir"] / f"frame_spin_up_{count:04d}.png"
-                plt.savefig(save_path)
+                fig.savefig(save_path)
                 count = count + 1
                 if count % 20 == 0:
                     logger.info(f"saved frame {count:04d}.png")

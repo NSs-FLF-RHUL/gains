@@ -12,12 +12,14 @@ import numpy as np
 from gains.analysis.analyse_spin_up import (
     LabeledCoordinate,
     get_angular_coords,
-    plot_against_time,
+)
+from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.plotting.cartesian import plot_against_time
+from gains.plotting.polar import (
     plot_angular_velocity_sequence,
     plot_angular_velocity_split,
     plot_stream,
 )
-from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.utils.parsers import create_parser_analysis
 
 warnings.filterwarnings("ignore")
@@ -76,7 +78,8 @@ if __name__ == "__main__":
         r_s[::-1], theta_s, ur_s[30], utheta_s[30], 1.0, time[30], ax, colour="#404969"
     )
 
-    plt.savefig(f"{args['fig_dir']}/meridional_streamlines_core.png")
+    fig.savefig(f"{args['fig_dir']}/meridional_streamlines_core.png")
+
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
     r_check_core, theta_check_core = get_angular_coords(
         path + "/AZ_avg_equator_s1.h5", "u_b_n_phi"
@@ -94,7 +97,14 @@ if __name__ == "__main__":
 
     if args["coordinate"] == "r":
         path_list, fig = plot_against_time(
-            r_core, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], targets_core, "u_b_n_phi"
+            r_crust,
+            "r",
+            path,
+            PARAMS["Ek"],
+            PARAMS["Ntheta"],
+            args["targets"],
+            "u_b_phi",
+            rotating=True,
         )
         ax = fig.gca()
         plot_against_time(r_crust, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], targets_crust, "u_s_n_phi",ax=ax,colour="#9b111e")
@@ -107,7 +117,8 @@ if __name__ == "__main__":
             PARAMS["Ek"],
             PARAMS["Ntheta"],
             args["targets"],
-            "u_b_n_phi",
+            "u_b_phi",
+            rotating=True,
         )
         fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
 

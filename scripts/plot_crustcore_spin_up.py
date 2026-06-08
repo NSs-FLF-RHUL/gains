@@ -51,8 +51,8 @@ if __name__ == "__main__":
     plot_angular_velocity_sequence(
         args["times_plot"], ax, args["output_dir"], ("u_b_phi", "u_s_phi"), **PARAMS
     )
-    plt.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
-    plt.close()
+    fig.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
+    fig.close()
 
     path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
     data = h5py.File(path_plot, mode="r")

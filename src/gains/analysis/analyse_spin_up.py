@@ -416,6 +416,8 @@ def plot_against_time(
     ntheta: int,
     targets: np.ndarray | list,
     target_field: str,
+    ax: plt.Axes | None = None,
+    **kwargs,
 ) -> tuple[list[Path], mpl.figure]:
     """
     Plot a range of coordinate values against time.
@@ -438,10 +440,13 @@ def plot_against_time(
     )
 
     alphas = np.linspace(0.40, 1.0, len(targets))
-
-    fig = plt.figure()
-    ax = fig.gca()
-
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.gca()
+    else:
+        fig = ax.get_figure()
+        
+    colour = kwargs["colour"] if "colour" in kwargs else "#024cf7"
     for i in range(len(targets)):
         target = targets[i]
         omega_r, times = get_angular_speed_vs_time(
@@ -450,7 +455,7 @@ def plot_against_time(
         ax.plot(
             times,
             omega_r,
-            color="#024cf7",
+            color=colour,
             alpha=alphas[i],
             label=str(label + " = " + str(round(target, 2))),
         )

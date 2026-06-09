@@ -113,3 +113,8 @@ def select_time(
     file_index = target_index % nwrites
     path = output_dir / f"su_equator/AZ_avg_equator/AZ_avg_equator_s{file_suffix}.h5"
     return path, file_index
+
+
+def _resolve_rotating(rotating: bool | None) -> bool:  # noqa: FBT001 (All non helper functions do follow this rule)
+    """Set default behaivour of functions accepting the rotating argument."""
+    return True if rotating is None else rotating

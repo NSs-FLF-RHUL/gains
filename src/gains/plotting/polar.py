@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.analysis.analyse_spin_up import _my_interp2d, read_angular_velocity
-from gains.utils.misc import _get_ax_and_fig, select_time
+from gains.utils.misc import _get_ax_and_fig, _resolve_rotating, select_time
 
 
 def plot_stream(
@@ -105,7 +105,7 @@ def plot_angular_velocity(
     ax: plt.Axes,
     target_field: str,
     *,
-    rotating: bool,
+    rotating: bool | None = None,
     delta_omega: float,
 ) -> plt.pcolormesh:
     """
@@ -119,6 +119,7 @@ def plot_angular_velocity(
     rotating reference frame.
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
+    rotating = _resolve_rotating(rotating)
     data = h5py.File(path, mode="r")
     r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
     time = np.array(data["scales/sim_time"])
@@ -135,7 +136,7 @@ def plot_angular_velocity_split(
     core_field: str,
     crust_field: str,
     *,
-    rotating: bool,
+    rotating: bool | None = None,
     delta_omega: float,
     crustcore_boundary: float,
 ) -> list:
@@ -157,6 +158,7 @@ def plot_angular_velocity_split(
     data = h5py.File(path, mode="r")
     meshes = []
     time = np.array(data["scales/sim_time"])
+    rotating = _resolve_rotating(rotating)
 
     for field in [core_field, crust_field]:
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
@@ -199,7 +201,7 @@ def plot_angular_velocity_sequence(
                 path,
                 file_index,
                 ax[i],
-                rotating=True,
+                rotating=kwargs.get("rotating"),
                 delta_omega=kwargs["Delta_Omega"],
                 target_field=target_field,
             )
@@ -210,7 +212,7 @@ def plot_angular_velocity_sequence(
                 ax[i],
                 target_field[0],
                 target_field[1],
-                rotating=True,
+                rotating=kwargs.get("rotating"),
                 delta_omega=kwargs["Delta_Omega"],
                 crustcore_boundary=kwargs["Ri"],
             )

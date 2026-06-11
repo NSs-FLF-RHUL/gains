@@ -5,9 +5,20 @@ from pathlib import Path
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import colormaps
+from matplotlib.colors import Colormap, LinearSegmentedColormap
 
 from gains.analysis.analyse_spin_up import _my_interp2d, read_angular_velocity
 from gains.utils.misc import _get_ax_and_fig, _resolve_rotating, select_time
+
+
+def _make_cmap(cols: list | None = None) -> Colormap:
+    """Create custom matplotlib colormap, and return RdBu_r by default."""
+    if cols is not None:
+        cmap = LinearSegmentedColormap.from_list("custom_cmap", cols, N=256)
+    else:
+        cmap = colormaps["RdBu_r"]
+    return cmap
 
 
 def plot_stream(
@@ -68,6 +79,7 @@ def plot_angular(
     r: np.ndarray,
     theta: np.ndarray,
     omega_values: np.ndarray,
+    colors: list | None = None,
     **kwargs,
 ) -> plt.pcolormesh:
     """
@@ -79,13 +91,14 @@ def plot_angular(
     :param omega_values: Angular speeds.
     :returns mesh: pcolormesh corresponding to the created plot.
     """
+    cmap = _make_cmap(colors)
     r_m, theta_m = np.meshgrid(r, theta)
     mesh = ax.pcolormesh(
         theta_m,
         r_m,
         omega_values,
         clim=(0, kwargs["Delta_Omega"]),
-        cmap="RdBu_r",
+        cmap=cmap,
         edgecolors="face",
     )
     ax.set_theta_zero_location("N")

@@ -198,7 +198,7 @@ flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 
 
 # Main loop
-@profile(PARAMS["profile"], PARAMS)
+@profile(PARAMS["profile"], PARAMS["output_dir"])
 def main_loop() -> None:
     """Decorate main loop."""
     return track_vorticity(logger, flow, solver, CFL)

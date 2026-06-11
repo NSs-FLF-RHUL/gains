@@ -214,7 +214,7 @@ flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_s @ u_s) * PARAMS["Ek"], name="Re_n")
 
 
-@profile(PARAMS["profile"])
+@profile(PARAMS["profile"], PARAMS["output_dir"])
 def main() -> Callable:
     """Create main loop with profiling."""
     return track_reynolds_n(logger, flow, solver, CFL)

@@ -56,7 +56,8 @@ def get_angular_coords(path: str | Path, target_field: str) -> np.ndarray:
     u_phi = data["tasks"][target_field]
     r = u_phi.dims[3][0][:].ravel()
     theta = u_phi.dims[2][0][:].ravel()
-    return r, theta
+    phi = u_phi.dims[1][0][:].ravel()
+    return r, theta, phi
 
 
 def get_angular_coords_single(
@@ -93,7 +94,7 @@ def calculate_angular_speed(
     :param u_phi: The azimuthal speed.
     :returns omega: The angular velocity.
     """
-    omega = np.zeros((len(thetas), len(rs)))
+    omega = np.zeros_like(u_phi)
     for i in range(len(rs)):
         omega[:, i] = u_phi[:, i] / (rs[i] * np.sin(thetas)[:])
     return omega
@@ -152,8 +153,8 @@ def read_angular_velocity(
     rotating = _resolve_rotating(rotating)
 
     data = h5py.File(path, mode="r")
-    u_phi = data["tasks"][target_field][t, -1, :, :]
-    r, theta = get_angular_coords(path, target_field)
+    u_phi = data["tasks"][target_field][t]
+    r, theta, phi = get_angular_coords(path, target_field)
     if not rotating:
         u_background = 1.0 * np.outer(np.sin(theta), r)
     else:
@@ -202,6 +203,7 @@ def get_angular_speed_vs_time(
         time = np.array(data["scales/sim_time"])
         for j in range(n_writes):
             u_phi = data["tasks"][target_field][j, -1, :, :]
+            breakpoint()
             if coord.label == "r":
                 omega_r = calculate_angular_speed_single(
                     path,

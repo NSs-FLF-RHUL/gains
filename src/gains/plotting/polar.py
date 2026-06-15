@@ -120,6 +120,7 @@ def plot_angular_velocity(
     *,
     rotating: bool | None = None,
     delta_omega: float,
+    cols = None
 ) -> plt.pcolormesh:
     """
     Take an output of single_spin_up_rotating_frame.py and plots the angular velocity.
@@ -136,7 +137,7 @@ def plot_angular_velocity(
     data = h5py.File(path, mode="r")
     r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
     time = np.array(data["scales/sim_time"])
-    mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
+    mesh = plot_angular(ax, r, theta, omega[0], Delta_Omega=delta_omega, colors=cols)
     ax.set_ylim(r.min(), r.max())
     ax.set_title(r"$t =$" + str(time[t])[:4])
     return mesh
@@ -152,6 +153,7 @@ def plot_angular_velocity_split(
     rotating: bool | None = None,
     delta_omega: float,
     crustcore_boundary: float,
+    cols = None
 ) -> list:
     """
     Plot angular velocities for coupled crust/core systems.
@@ -175,7 +177,7 @@ def plot_angular_velocity_split(
 
     for field in [core_field, crust_field]:
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
-        mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
+        mesh = plot_angular(ax, r, theta, omega[0], Delta_Omega=delta_omega, colors=cols)
 
         meshes.append(mesh)
 
@@ -217,6 +219,7 @@ def plot_angular_velocity_sequence(
                 rotating=kwargs.get("rotating"),
                 delta_omega=kwargs["Delta_Omega"],
                 target_field=target_field,
+                cols=kwargs['colors']
             )
         else:
             mesh = plot_angular_velocity_split(
@@ -228,5 +231,6 @@ def plot_angular_velocity_sequence(
                 rotating=kwargs.get("rotating"),
                 delta_omega=kwargs["Delta_Omega"],
                 crustcore_boundary=kwargs["Ri"],
+                cols=kwargs['colors']
             )
     return mesh

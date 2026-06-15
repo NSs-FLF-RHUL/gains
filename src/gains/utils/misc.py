@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 import numpy as np
+import h5py
 
 from gains.exceptions import MeshError
 

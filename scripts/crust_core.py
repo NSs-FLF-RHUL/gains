@@ -75,7 +75,7 @@ ncpu = MPI.COMM_WORLD.size
 Ek_shell = PARAMS["Ek"] * (PARAMS["Ro"] - PARAMS["Ri"]) ** 2
 Ek_ball = PARAMS["Ek"] * PARAMS["Ri"] ** 2
 B = PARAMS["B"]
-Bprime = 0  # PARAMS["B"]/2
+Bprime = PARAMS["B"] / 2
 Ri = PARAMS["Ri"]
 Ro = PARAMS["Ro"]
 radius = Ro
@@ -322,26 +322,26 @@ u_s_s_phi = Dot(u_s_s, ephi)
 save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
 save_path.mkdir(parents=True, exist_ok=True)
 
-AZ_avg = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+u_fields = solver.evaluator.add_file_handler(
+    "outputs/{}/velocities".format(PARAMS["output_dir"]),
     sim_dt=PARAMS["snapshot_dt"],
     max_writes=100,
 )
-AZ_avg.add_task(az_avg(u_b_n_r), name="u_b_n_r")
-AZ_avg.add_task(az_avg(u_b_n_theta), name="u_b_n_theta")
-AZ_avg.add_task(az_avg(u_b_n_phi), name="u_b_n_phi")
+u_fields.add_task(u_b_n_r["g"].astype(np.float32), name="u_b_n_r")
+u_fields.add_task(u_b_n_theta, name="u_b_n_theta")
+u_fields.add_task(u_b_n_phi, name="u_b_n_phi")
 
-AZ_avg.add_task(az_avg(u_s_n_r), name="u_s_n_r")
-AZ_avg.add_task(az_avg(u_s_n_theta), name="u_s_n_theta")
-AZ_avg.add_task(az_avg(u_s_n_phi), name="u_s_n_phi")
+u_fields.add_task(u_s_n_r, name="u_s_n_r")
+u_fields.add_task(u_s_n_theta, name="u_s_n_theta")
+u_fields.add_task(u_s_n_phi, name="u_s_n_phi")
 
-AZ_avg.add_task(az_avg(u_b_s_r), name="u_b_s_r")
-AZ_avg.add_task(az_avg(u_b_s_theta), name="u_b_s_theta")
-AZ_avg.add_task(az_avg(u_b_s_phi), name="u_b_s_phi")
+u_fields.add_task(u_b_s_r, name="u_b_s_r")
+u_fields.add_task(u_b_s_theta, name="u_b_s_theta")
+u_fields.add_task(u_b_s_phi, name="u_b_s_phi")
 
-AZ_avg.add_task(az_avg(u_s_s_r), name="u_s_s_r")
-AZ_avg.add_task(az_avg(u_s_s_theta), name="u_s_s_theta")
-AZ_avg.add_task(az_avg(u_s_s_phi), name="u_s_s_phi")
+u_fields.add_task(u_s_s_r, name="u_s_s_r")
+u_fields.add_task(u_s_s_theta, name="u_s_s_theta")
+u_fields.add_task(u_s_s_phi, name="u_s_s_phi")
 
 CFL = d3.CFL(
     solver, timestep, cadence=1, safety=0.5, threshold=0.1, max_dt=max_timestep

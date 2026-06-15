@@ -12,7 +12,7 @@ def make_input_h5(path: Path) -> None:
     """Helper to create sample data file for testing."""
     rng = np.random.default_rng()
     data = rng.random((4, 3), dtype=np.float64)
-    
+
     with h5py.File(path, "w") as f:
         g = f.create_group("tasks")
 

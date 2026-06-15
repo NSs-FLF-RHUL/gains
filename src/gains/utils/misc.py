@@ -1,6 +1,5 @@
 """Stores useful functions, applicable throughout the package."""
 
-import os
 import re
 from pathlib import Path
 
@@ -121,6 +120,24 @@ def _resolve_rotating(rotating: bool | None) -> bool:  # noqa: FBT001 (All non h
     """Set default behaivour of functions accepting the rotating argument."""
     return True if rotating is None else rotating
 
+def _rewrite_h5(fin, fout) -> None:
+    fout.create_group("tasks")
+
+    for name, ds in fin["tasks"].items():
+        # Create new dataset with SAME layout but float32 dtype
+        out = fout.create_dataset(
+            f"tasks/{name}",
+            shape=ds.shape,
+            dtype=np.float32,
+            chunks=ds.chunks,
+            compression=ds.compression,
+            compression_opts=ds.compression_opts,
+            shuffle=ds.shuffle,
+            fletcher32=ds.fletcher32,
+        )
+
+        for i in range(ds.shape[0]):
+            out[i] = ds[i].astype(np.float32)
 
 def _downscale_data(src: str | Path, tmp: str | Path) -> None:
     """
@@ -129,22 +146,6 @@ def _downscale_data(src: str | Path, tmp: str | Path) -> None:
     Note that the original precision data is destroyed.
     """
     with h5py.File(src, "r") as fin, h5py.File(tmp, "w") as fout:
-        fout.create_group("tasks")
+        _downscale_data(fin, fout)
 
-        for name, ds in fin["tasks"].items():
-            # Create new dataset with SAME layout but float32 dtype
-            out = fout.create_dataset(
-                f"tasks/{name}",
-                shape=ds.shape,
-                dtype=np.float32,
-                chunks=ds.chunks,
-                compression=ds.compression,
-                compression_opts=ds.compression_opts,
-                shuffle=ds.shuffle,
-                fletcher32=ds.fletcher32,
-            )
-
-            for i in range(ds.shape[0]):
-                out[i] = ds[i].astype(np.float32)
-
-    os.replace(tmp, src)
+    tmp.replace(src)

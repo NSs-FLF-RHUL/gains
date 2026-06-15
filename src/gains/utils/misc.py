@@ -3,8 +3,8 @@
 import re
 from pathlib import Path
 
-import numpy as np
 import h5py
+import numpy as np
 
 from gains.exceptions import MeshError
 
@@ -81,7 +81,9 @@ def mesh_cpus(ncpu: int) -> list[int] | None:
         return [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
     raise MeshError
 
-def _rewrite_h5(fin, fout) -> None:
+
+def _rewrite_h5(fin: h5py.File, fout: h5py.File) -> None:
+    """Create a new h5 file with same data as input, but at float32 precision."""
     fout.create_group("tasks")
 
     for name, ds in fin["tasks"].items():
@@ -100,6 +102,7 @@ def _rewrite_h5(fin, fout) -> None:
         for i in range(ds.shape[0]):
             out[i] = ds[i].astype(np.float32)
 
+
 def _downscale_data(src: str | Path, tmp: str | Path) -> None:
     """
     Convert output data to float32 format.
@@ -109,4 +112,4 @@ def _downscale_data(src: str | Path, tmp: str | Path) -> None:
     with h5py.File(src, "r") as fin, h5py.File(tmp, "w") as fout:
         _rewrite_h5(fin, fout)
 
-    tmp.replace(src)
+    Path(tmp).replace(Path(src))

@@ -137,7 +137,7 @@ def plot_angular_velocity(
     data = h5py.File(path, mode="r")
     r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
     time = np.array(data["scales/sim_time"])
-    mesh = plot_angular(ax, r, theta, omega[0], Delta_Omega=delta_omega, colors=cols)
+    mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega, colors=cols)
     ax.set_ylim(r.min(), r.max())
     ax.set_title(r"$t =$" + str(time[t])[:4])
     return mesh
@@ -177,7 +177,7 @@ def plot_angular_velocity_split(
 
     for field in [core_field, crust_field]:
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
-        mesh = plot_angular(ax, r, theta, omega[0], Delta_Omega=delta_omega, colors=cols)
+        mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega, colors=cols)
 
         meshes.append(mesh)
 

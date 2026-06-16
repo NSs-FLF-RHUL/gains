@@ -153,7 +153,7 @@ def read_angular_velocity(
     rotating = _resolve_rotating(rotating)
 
     data = h5py.File(path, mode="r")
-    u_phi = data["tasks"][target_field][t]
+    u_phi = data["tasks"][target_field][t, -1, :, :]
     r, theta, phi = get_angular_coords(path, target_field)
     if not rotating:
         u_background = 1.0 * np.outer(np.sin(theta), r)

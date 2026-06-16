@@ -120,6 +120,7 @@ def _resolve_rotating(rotating: bool | None) -> bool:  # noqa: FBT001 (All non h
     """Set default behaivour of functions accepting the rotating argument."""
     return True if rotating is None else rotating
 
+
 def _rewrite_h5(fin, fout) -> None:
     fout.create_group("tasks")
 
@@ -138,6 +139,7 @@ def _rewrite_h5(fin, fout) -> None:
 
         for i in range(ds.shape[0]):
             out[i] = ds[i].astype(np.float32)
+
 
 def _downscale_data(src: str | Path, tmp: str | Path) -> None:
     """

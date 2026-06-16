@@ -40,7 +40,6 @@ if __name__ == "__main__":
     args["frame_dir"] = Path(args["frame_dir"])
     targets_core = [t for t in args["targets"] if t <= 0.8]
     targets_crust = [t for t in args["targets"] if t >= 0.8]
-    cols = ["#7b6d5c","#97ff82","#dd49e8"]
     logger = logging.getLogger(__name__)
 
     Path.mkdir(Path(args["fig_dir"]), parents=True, exist_ok=True)
@@ -51,7 +50,7 @@ if __name__ == "__main__":
         1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"}
     )
     plot_angular_velocity_sequence(
-        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"), **PARAMS, colors=cols
+        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"), **PARAMS
     )
     plt.savefig("{}/angular_speed_sequence_NF.png".format(args["fig_dir"]))
     plt.close()

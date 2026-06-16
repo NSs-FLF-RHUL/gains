@@ -203,7 +203,6 @@ def get_angular_speed_vs_time(
         time = np.array(data["scales/sim_time"])
         for j in range(n_writes):
             u_phi = data["tasks"][target_field][j, -1, :, :]
-            breakpoint()
             if coord.label == "r":
                 omega_r = calculate_angular_speed_single(
                     path,

@@ -219,7 +219,7 @@ def plot_angular_velocity_sequence(
                 rotating=kwargs.get("rotating"),
                 delta_omega=kwargs["Delta_Omega"],
                 target_field=target_field,
-                cols=kwargs['colors']
+                cols=kwargs.get('colors', None)
             )
         else:
             mesh = plot_angular_velocity_split(
@@ -231,6 +231,6 @@ def plot_angular_velocity_sequence(
                 rotating=kwargs.get("rotating"),
                 delta_omega=kwargs["Delta_Omega"],
                 crustcore_boundary=kwargs["Ri"],
-                cols=kwargs['colors']
+                cols=kwargs.get('colors', None)
             )
     return mesh

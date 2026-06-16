@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     if args["coordinate"] == "r":
         path_list, fig = plot_against_time(
-            r_crust,
+            r_core,
             "r",
             path,
             PARAMS["Ek"],

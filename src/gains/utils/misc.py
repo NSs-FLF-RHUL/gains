@@ -3,8 +3,8 @@
 import re
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.exceptions import MeshError
@@ -119,6 +119,8 @@ def select_time(
 def _resolve_rotating(rotating: bool | None) -> bool:  # noqa: FBT001 (All non helper functions do follow this rule)
     """Set default behaivour of functions accepting the rotating argument."""
     return True if rotating is None else rotating
+
+
 def _rewrite_h5(fin: h5py.File, fout: h5py.File) -> None:
     """Create a new h5 file with same data as input, but at float32 precision."""
     fout.create_group("tasks")

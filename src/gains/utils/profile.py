@@ -1,6 +1,5 @@
 """Wrappers and decorators for profiling runs."""
 
-import argparse
 import cProfile
 from collections.abc import Callable
 from pathlib import Path
@@ -8,7 +7,7 @@ from pathlib import Path
 from mpi4py import MPI
 
 
-def profile(dirname: str | None, run_output_dir: str) -> Callable:
+def profile(dirname: str | None, run_output_dir: Path | str) -> Callable:
     """
     Provide a decorator to use cProfile to profile an function running in parallel.
 
@@ -32,7 +31,7 @@ def profile(dirname: str | None, run_output_dir: str) -> Callable:
             result = f(*args, **kwargs)
             pr.disable()
 
-            output_dir = Path("outputs") / run_output_dir / dirname
+            output_dir = Path(run_output_dir) / dirname
             # Only rank 0 creates directory to avoid race conditions
             if comm.rank == 0:
                 output_dir.mkdir(parents=True, exist_ok=True)
@@ -47,13 +46,3 @@ def profile(dirname: str | None, run_output_dir: str) -> Callable:
         return wrap_f
 
     return prof_decorator
-
-
-def add_profiling_options(parser: argparse.ArgumentParser) -> None:
-    """Add profiling options to existing ArgumentParser instances."""
-    parser.add_argument(
-        "--profile",
-        default=None,
-        type=str,
-        help="Output directory for profiling results.",
-    )

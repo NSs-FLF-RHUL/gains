@@ -216,7 +216,7 @@ def create_parser_analysis() -> argparse.ArgumentParser:
         type=float,
         nargs="*",
         default=[0.5, 4, 20],
-        help="Three values of time to plot angular velocity at.",
+        help="Two or more values of time to plot angular velocity at.",
     )
 
     return parser

@@ -171,7 +171,6 @@ def plot_angular_velocity_split(
     meshes = []
     time = np.array(data["scales/sim_time"])
 
-
     for field in [core_field, crust_field]:
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
         mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)

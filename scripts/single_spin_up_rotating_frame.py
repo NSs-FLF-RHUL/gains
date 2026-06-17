@@ -1,7 +1,5 @@
 """Simulates the spin up of a full basis.sphere containing a viscous newtonian fluid."""
 
-import datetime
-import json
 import logging
 from pathlib import Path
 
@@ -15,32 +13,15 @@ from gains.initial_conditions.single_component_spin_up import window_equator
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
-from gains.utils.parsers import create_parser_simulation
-from gains.utils.profile import add_profiling_options, profile
+from gains.utils.parsers import SimulationCLI
+from gains.utils.profile import profile
 
 logger = logging.getLogger(__name__)
 
-parser = create_parser_simulation()
-add_profiling_options(parser)
-
-args = vars(parser.parse_args())
-
-if args["parameter_file"] is not None:
-    with Path.open(args["parameter_file"]) as param_file:
-        PARAMS = json.load(param_file)
-
-else:
-    PARAMS = default_params
-
-PARAMS["use_checkpoint"] = args["use_checkpoint"]
-PARAMS["checkpoint_path"] = args["checkpoint_path"]
-PARAMS["output_dir"] = (
-    args["output_dir"]
-    if args["output_dir"] is not None
-    else "single_spin_up_"
-    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
+parser = SimulationCLI(
+    profiling_option=True, place_all_outputs_under="outputs", sim_name="single_spin_up"
 )
-PARAMS["profile"] = args["profile"]
+PARAMS = parser.parse_args_and_get_params(logger, default_params=default_params)
 
 # Additional Parameters - not likely to change between runs
 radius = 1
@@ -160,11 +141,11 @@ u_n_r = dot(u_n, er)
 u_n_theta = dot(u_n, etheta)
 u_n_phi = dot(u_n, ephi)
 
-save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path: Path = PARAMS["output_dir"] / "su_equator"
 save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    str(save_path / "AZ_avg_equator"),
     sim_dt=0.05,
     max_writes=100,
 )
@@ -174,7 +155,7 @@ AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
 
 
 slices = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
+    str(save_path / "slices"),
     sim_dt=0.025,
     max_writes=100,
 )
@@ -185,7 +166,7 @@ slices.add_task(
 
 # Checkpoint
 checkpoint = solver.evaluator.add_file_handler(
-    f"outputs/{PARAMS['output_dir']}/su_equator/checkpoint",
+    str(save_path / "checkpoint"),
     sim_dt=50,
     max_writes=1,
     parallel="gather",

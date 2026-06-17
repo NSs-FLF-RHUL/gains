@@ -6,7 +6,7 @@ import h5py
 import numpy as np
 import scipy.interpolate as inp
 
-from gains.utils.misc import _resolve_rotating, get_arg_of_nearest
+from gains.utils.misc import get_arg_of_nearest
 
 
 class LabeledCoordinate:
@@ -106,7 +106,7 @@ def calculate_angular_speed_single(
     u_phis: np.ndarray,
     target_field: str,
     *,
-    rotating: bool | None = None,
+    rotating: bool = True,
 ) -> float:
     """
     Calculate angular speed for a specific radius and longitude.
@@ -121,8 +121,6 @@ def calculate_angular_speed_single(
     :param rotating: Sets if simulation was done in the rotating frame. True by default
     :returns: The angular speed at the specified r and theta.
     """
-    rotating = _resolve_rotating(rotating)
-
     r, theta = get_angular_coords_single(path, r_arg, theta_arg, target_field)
     u_phi = u_phis[theta_arg][r_arg]
     if not rotating:
@@ -136,7 +134,7 @@ def read_angular_velocity(
     t: int,
     target_field: str,
     *,
-    rotating: bool | None = None,
+    rotating: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Caluclate the angular speed from a target velocity field.
@@ -149,8 +147,6 @@ def read_angular_velocity(
     :returns theta: Array of polar angles from snapshot.
     :returns omega: Array of calculated angular speeds.
     """
-    rotating = _resolve_rotating(rotating)
-
     data = h5py.File(path, mode="r")
     u_phi = data["tasks"][target_field][t, -1, :, :]
     r, theta = get_angular_coords(path, target_field)
@@ -172,7 +168,7 @@ def get_angular_speed_vs_time(
     path_list: list[Path],
     ntheta: int,
     *,
-    rotating: bool | None = None,
+    rotating: bool = True,
 ) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
@@ -189,7 +185,6 @@ def get_angular_speed_vs_time(
     :returns times: List of times data is saved at.
     """
     err_msg = "coordinate must be r or theta."
-    rotating = _resolve_rotating(rotating)
 
     out_size = len(path_list) * n_writes
     omega_rs = np.zeros((out_size,))

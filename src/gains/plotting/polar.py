@@ -214,7 +214,7 @@ def plot_angular_velocity_sequence(
                 path,
                 file_index,
                 ax[i],
-                rotating=kwargs.get("rotating"),
+                rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
                 target_field=target_field,
             )
@@ -225,7 +225,7 @@ def plot_angular_velocity_sequence(
                 ax[i],
                 target_field[0],
                 target_field[1],
-                rotating=kwargs.get("rotating"),
+                rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
                 crustcore_boundary=kwargs["Ri"],
             )

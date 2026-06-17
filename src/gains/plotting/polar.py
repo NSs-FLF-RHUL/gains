@@ -9,7 +9,7 @@ from matplotlib import colormaps
 from matplotlib.colors import Colormap, LinearSegmentedColormap
 
 from gains.analysis.analyse_spin_up import _my_interp2d, read_angular_velocity
-from gains.utils.misc import _get_ax_and_fig, _resolve_rotating, select_time
+from gains.utils.misc import _get_ax_and_fig, select_time
 
 
 def _make_cmap(cols: list | None = None) -> Colormap:
@@ -118,7 +118,7 @@ def plot_angular_velocity(
     ax: plt.Axes,
     target_field: str,
     *,
-    rotating: bool | None = None,
+    rotating: bool = True,
     delta_omega: float,
 ) -> plt.pcolormesh:
     """
@@ -132,7 +132,6 @@ def plot_angular_velocity(
     rotating reference frame.
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
-    rotating = _resolve_rotating(rotating)
     data = h5py.File(path, mode="r")
     r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
     time = np.array(data["scales/sim_time"])
@@ -149,7 +148,7 @@ def plot_angular_velocity_split(
     core_field: str,
     crust_field: str,
     *,
-    rotating: bool | None = None,
+    rotating: bool = True,
     delta_omega: float,
     crustcore_boundary: float,
 ) -> list:
@@ -171,7 +170,7 @@ def plot_angular_velocity_split(
     data = h5py.File(path, mode="r")
     meshes = []
     time = np.array(data["scales/sim_time"])
-    rotating = _resolve_rotating(rotating)
+
 
     for field in [core_field, crust_field]:
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)

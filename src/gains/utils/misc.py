@@ -4,9 +4,22 @@ import re
 from pathlib import Path
 
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.exceptions import MeshError
+
+
+def _get_ax_and_fig(ax: plt.Axes | None, *, polar: bool) -> tuple[plt.Figure, plt.Axes]:
+    """Handle optional axes arguments in plotting functions."""
+    if ax is None:
+        if polar:
+            fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+        else:
+            fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+    return fig, ax
 
 
 def get_arg_of_nearest(target: float, arr: np.ndarray) -> tuple[int, float]:
@@ -80,6 +93,27 @@ def mesh_cpus(ncpu: int) -> list[int] | None:
     if log2 == int(log2):
         return [int(2 ** np.ceil(log2 / 2)), int(2 ** np.floor(log2 / 2))]
     raise MeshError
+
+
+def select_time(
+    nwrites: int, target_time: float, output_dir: Path, **params
+) -> tuple[Path, int]:
+    """
+    Take a simulated time and locate its position in the output files.
+
+    :param nwrites: Number of data writes per file.
+    :param target_time: Simulated time to locate.
+    :param output_dir: Location of the simulation outputs.
+    :param params: Simulation parameters
+    :returns path: The path to the output file containing the requested time
+    :returns index: The index of the time within the correct file
+    """
+    saved_times = np.arange(0, params["stop_sim_time"], params["snapshot_dt"])
+    target_index = get_arg_of_nearest(target_time, saved_times)[0]
+    file_suffix = target_index // nwrites + 1
+    file_index = target_index % nwrites
+    path = output_dir / f"su_equator/AZ_avg_equator/AZ_avg_equator_s{file_suffix}.h5"
+    return path, file_index
 
 
 def _rewrite_h5(fin: h5py.File, fout: h5py.File) -> None:

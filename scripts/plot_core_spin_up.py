@@ -1,4 +1,4 @@
-"""Analysis and plotting of the results of the single fluid spin up."""
+"""Analysis and plotting of the results of simulations with only 1 basis."""
 
 import json
 import logging
@@ -13,10 +13,13 @@ from gains.analysis.analyse_spin_up import (
     LabeledCoordinate,
     get_angular_coords,
     plot_against_time,
-    plot_angular_velocity,
-    plot_stream,
 )
 from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.plotting.polar import (
+    plot_angular_velocity,
+    plot_angular_velocity_sequence,
+    plot_stream,
+)
 from gains.utils.parsers import create_parser_analysis
 
 warnings.filterwarnings("ignore")
@@ -44,36 +47,30 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(1, 3, figsize=(16, 8), subplot_kw={"projection": "polar"})
 
-    path_1 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"
-    mesh = plot_angular_velocity(
-        path_1, 1, ax[0], rotating=True, delta_omega=PARAMS["Delta_Omega"]
+    fig, ax = plt.subplots(
+        1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"}
     )
-
-    path_2 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
-    mesh = plot_angular_velocity(
-        path_2, 40, ax[1], rotating=True, delta_omega=PARAMS["Delta_Omega"]
+    plot_angular_velocity_sequence(
+        args["times_plot"], ax, args["output_dir"], "u_n_phi", **PARAMS
     )
+    fig.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
 
-    path_3 = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s5.h5"
-    plot_angular_velocity(
-        path_3, 90, ax[2], rotating=True, delta_omega=PARAMS["Delta_Omega"]
-    )
+    fig.close()
 
-    plt.show()
-    plt.savefig("{}/Equator_spin_up_5e-2.png".format(args["fig_dir"]))
-    plt.close()
-
-    data = h5py.File(path_2, mode="r")
+    path_stream = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
+    data = h5py.File(path_stream, mode="r")
+    time = np.array(data["scales/sim_time"])
     ur = data["tasks"]["u_n_r"][:, -1, :, :]
     utheta = data["tasks"]["u_n_theta"][:, -1, :, :]
     uphi = data["tasks"]["u_s_phi"]
     theta = uphi.dims[2][0][:].ravel()
     r = uphi.dims[3][0][:].ravel()
+    fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
+    plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0, time[-1], ax, colour="#bada55")
+    fig.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
 
-    fig = plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0)
-    plt.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
-    r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5")
+    r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_n_phi")
 
     r = LabeledCoordinate(r_check, "r")
     theta = LabeledCoordinate(theta_check, "theta")
@@ -82,7 +79,13 @@ if __name__ == "__main__":
 
     if args["coordinate"] == "r":
         path_list, fig = plot_against_time(
-            r, "r", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"]
+            r,
+            "r",
+            path,
+            PARAMS["Ek"],
+            PARAMS["Ntheta"],
+            args["targets"],
+            target_field="u_n_phi",
         )
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
@@ -108,10 +111,15 @@ if __name__ == "__main__":
                     1, 1, figsize=(16, 8), subplot_kw={"projection": "polar"}
                 )
                 plot_angular_velocity(
-                    path, j, ax, rotating=True, delta_omega=PARAMS["Delta_Omega"]
+                    path,
+                    j,
+                    ax,
+                    "u_n_phi",
+                    rotating=True,
+                    delta_omega=PARAMS["Delta_Omega"],
                 )
                 save_path = args["frame_dir"] / f"frame_spin_up_{count:04d}.png"
-                plt.savefig(save_path)
+                fig.savefig(save_path)
                 count = count + 1
                 if count % 20 == 0:
                     logger.info(f"saved frame {count:04d}.png")

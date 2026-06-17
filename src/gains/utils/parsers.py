@@ -211,4 +211,12 @@ def create_parser_analysis() -> argparse.ArgumentParser:
         " Takes r by default, pass theta to vary the meridional coordinate instead.",
     )
 
+    parser.add_argument(
+        "--times_plot",
+        type=float,
+        nargs="*",
+        default=[0.5, 4, 20],
+        help="Two or more values of time to plot angular velocity at.",
+    )
+
     return parser

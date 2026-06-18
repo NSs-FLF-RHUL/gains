@@ -30,7 +30,7 @@ def thetas_full_fix() -> np.ndarray:
         pytest.param(
             np.array([0.0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi]),
             1.0,
-            np.pi/2,
+            np.pi / 2,
             np.array(
                 [
                     5.00243291e-10,
@@ -45,7 +45,7 @@ def thetas_full_fix() -> np.ndarray:
         pytest.param(
             thetas_full(),
             10,
-            np.pi/2,
+            np.pi / 2,
             np.ones_like(thetas_full()),
             id="width is greater than pi",
         ),

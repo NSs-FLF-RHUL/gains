@@ -105,7 +105,7 @@ problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation(
     "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
     "-2*cross(ez,u_n) "
-    "+100*(mask_equator*mask_radial*(u_n_target - u_n))"  # Boundary forcing to enforce glitch
+    "+100*(mask_equator*mask_radial*(u_n_target - u_n))"  # Boundary forcing
 )
 
 problem.add_equation("radial(u_n(r=radius)) = 0")  # impenetrable bc

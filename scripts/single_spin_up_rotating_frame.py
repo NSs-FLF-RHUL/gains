@@ -9,7 +9,7 @@ import numpy as np
 from mpi4py import MPI
 
 # Parameters - load in from parameter file
-from gains.initial_conditions.single_component_spin_up import mask_r, mask_theta
+from gains.initial_conditions.single_component_spin_up import mask_angular, mask_r
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
@@ -76,7 +76,7 @@ mask_equator = basis.dist.Field(name="mask_equator", bases=basis.ball)
 mask_radial = basis.dist.Field(name="mask_radial", bases=basis.ball)
 
 sintheta["g"] = np.sin(theta)
-mask_equator["g"] = mask_theta(theta, 0.3, 3.0)
+mask_equator["g"] = mask_angular(theta, 0.3, 2.0)
 mask_radial["g"] = mask_r(r, PARAMS["Nr"])
 u_n_target = basis.dist.VectorField(coords, name="u_n_target", bases=basis.ball)
 u_n_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)

@@ -12,9 +12,9 @@ import numpy as np
 from gains.analysis.analyse_spin_up import (
     LabeledCoordinate,
     get_angular_coords,
-    plot_against_time,
 )
 from gains.params.single_spin_up_rotating import parameters as default_params
+from gains.plotting.cartesian import plot_against_time
 from gains.plotting.polar import (
     plot_angular_velocity,
     plot_angular_velocity_sequence,
@@ -55,18 +55,16 @@ if __name__ == "__main__":
     )
     fig.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
 
-    fig.close()
-
-    path_stream = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s4.h5"
+    path_stream = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5"
     data = h5py.File(path_stream, mode="r")
     time = np.array(data["scales/sim_time"])
     ur = data["tasks"]["u_n_r"][:, -1, :, :]
     utheta = data["tasks"]["u_n_theta"][:, -1, :, :]
-    uphi = data["tasks"]["u_s_phi"]
+    uphi = data["tasks"]["u_n_phi"]
     theta = uphi.dims[2][0][:].ravel()
     r = uphi.dims[3][0][:].ravel()
     fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
-    plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0, time[-1], ax, colour="#bada55")
+    plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0, time[-1], ax, colour="orange")
     fig.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
 
     path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])

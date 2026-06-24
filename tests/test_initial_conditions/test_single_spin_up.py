@@ -3,7 +3,7 @@ import pytest
 
 from gains.initial_conditions.single_component_spin_up import (
     ExpectPositiveError,
-    window_equator,
+    mask_angular,
 )
 
 
@@ -25,12 +25,12 @@ def thetas_full_fix() -> np.ndarray:
 
 
 @pytest.mark.parametrize(
-    ("coords", "width", "dtype", "expected_output"),
+    ("coords", "width", "center", "expected_output"),
     [
         pytest.param(
             np.array([0.0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi]),
             1.0,
-            np.float64,
+            np.pi / 2,
             np.array(
                 [
                     5.00243291e-10,
@@ -45,17 +45,17 @@ def thetas_full_fix() -> np.ndarray:
         pytest.param(
             thetas_full(),
             10,
-            np.float64,
+            np.pi / 2,
             np.ones_like(thetas_full()),
             id="width is greater than pi",
         ),
     ],
 )
 def test_window(
-    coords: np.ndarray, width: float, dtype: type, expected_output: np.ndarray
+    coords: np.ndarray, width: float, center: float, expected_output: np.ndarray
 ) -> np.ndarray:
     """Runs unit tests for window."""
-    computed_output = window_equator(coords, width, dtype)
+    computed_output = mask_angular(coords, width, center)
     num_negative = (computed_output < 0).sum()
 
     assert np.allclose(computed_output, expected_output)
@@ -72,4 +72,4 @@ def test_window(
 def test_error(coords: np.ndarray, width: float, dtype: type) -> None:
     """Confirms correct error is raised if width not configured correctly."""
     with pytest.raises(ExpectPositiveError):
-        window_equator(coords, width, dtype)
+        mask_angular(coords, width, dtype)

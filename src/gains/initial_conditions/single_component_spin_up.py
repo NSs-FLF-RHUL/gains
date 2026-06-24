@@ -11,17 +11,17 @@ import numpy as np
 from gains.exceptions import ExpectPositiveError
 
 
-def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
+def mask_angular(coord: np.ndarray, width: float, center: float) -> np.ndarray:
     """
     Create window function to enforce boundary conditions on only parts of the sphere.
 
     The returned function is close to 1 within the specified width, and close to 0
     everywhere else.
 
-    :param theta: Longitudinal coordinate on which to create the window,
+    :param coord: angular coordinate on which to create the window,
     should range from 0 to pi.
     :param width: Width of the window function.
-    :param dtype: Data type of theta
+    :param center: The coord value to center the mask round
     :returns mask: A smooth function equal to 1 in the window, and 0 everywhere else.
     """
     check = "width"
@@ -29,11 +29,23 @@ def window_equator(theta: np.ndarray, width: float, dtype: type) -> np.ndarray:
         raise ExpectPositiveError(check)
 
     a = width / 2
-    shift = np.pi / 2 * np.ones_like(theta)
-    theta = theta - shift
-    mask = np.tanh((theta + a) / 0.1) - np.tanh((theta - a) / 0.1)
-    precision = np.finfo(dtype).eps
-    mask[mask < 1e3 * precision] = (
-        0  # about 3 orders of magnitude above dtype precision limit
-    )
+    shift = center * np.ones_like(coord)
+    coord = coord - shift
+    mask = np.tanh((coord + a) / 0.1) - np.tanh((coord - a) / 0.1)
     return 0.5 * mask
+
+
+def mask_r(rs: np.ndarray, width: float) -> np.ndarray:
+    """
+    Create radial window to enforce spin up torque on radial portions of the sphere.
+
+    :param rs: Radial coordinates.
+    :param width: The width to select (taken as 2 standard deviations).
+    :returns mask: Gaussian window that selects a radial portion.
+    """
+    check = "width"
+    if width <= 0:
+        raise ExpectPositiveError(check)
+
+    delta_r = width / 2
+    return np.exp(-(((rs - 1.0) / delta_r) ** 2))

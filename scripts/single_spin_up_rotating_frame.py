@@ -1,7 +1,5 @@
 """Simulates the spin up of a full basis.sphere containing a viscous newtonian fluid."""
 
-import datetime
-import json
 import logging
 from pathlib import Path
 
@@ -11,36 +9,19 @@ import numpy as np
 from mpi4py import MPI
 
 # Parameters - load in from parameter file
-from gains.initial_conditions.single_component_spin_up import window_equator
+from gains.initial_conditions.single_component_spin_up import mask_angular, mask_r
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
-from gains.utils.parsers import create_parser_simulation
-from gains.utils.profile import add_profiling_options, profile
+from gains.utils.parsers import SimulationCLI
+from gains.utils.profile import profile
 
 logger = logging.getLogger(__name__)
 
-parser = create_parser_simulation()
-add_profiling_options(parser)
-
-args = vars(parser.parse_args())
-
-if args["parameter_file"] is not None:
-    with Path.open(args["parameter_file"]) as param_file:
-        PARAMS = json.load(param_file)
-
-else:
-    PARAMS = default_params
-
-PARAMS["use_checkpoint"] = args["use_checkpoint"]
-PARAMS["checkpoint_path"] = args["checkpoint_path"]
-PARAMS["output_dir"] = (
-    args["output_dir"]
-    if args["output_dir"] is not None
-    else "single_spin_up_"
-    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
+parser = SimulationCLI(
+    profiling_option=True, place_all_outputs_under="outputs", sim_name="single_spin_up"
 )
-PARAMS["profile"] = args["profile"]
+PARAMS = parser.parse_args_and_get_params(logger, default_params=default_params)
 
 # Additional Parameters - not likely to change between runs
 radius = 1
@@ -52,7 +33,9 @@ comm = MPI.COMM_WORLD
 ncpu = comm.size
 
 mesh = mesh_cpus(ncpu)
-basis = SphericalBasis(mesh, dtype, **PARAMS)
+coords = d3.SphericalCoordinates("phi", "theta", "r")
+dist = d3.Distributor(coords, dtype=dtype, mesh=mesh)
+basis = SphericalBasis(coords, dist, dtype, radius, **PARAMS)
 
 logger.info(f"running on processor mesh={mesh}")
 
@@ -89,11 +72,17 @@ ez["g"][2] = np.cos(theta)  # unit vector in z direction
 
 # This field is for the Boundary Conditions
 sintheta = basis.dist.Field(name="sintheta", bases=basis.ball)
-mask = basis.dist.Field(name="mask", bases=basis.sphere)
+mask_equator = basis.dist.Field(name="mask_equator", bases=basis.ball)
+mask_radial = basis.dist.Field(name="mask_radial", bases=basis.ball)
 
 sintheta["g"] = np.sin(theta)
-mask["g"] = window_equator(theta, 0.5, np.float64)
+mask_equator["g"] = mask_angular(theta, 0.3, 2.0)
+mask_radial["g"] = mask_r(r, PARAMS["Nr"])
+u_n_target = basis.dist.VectorField(coords, name="u_n_target", bases=basis.ball)
+u_n_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)
 
+strain_rate = d3.grad(u_n) + d3.trans(d3.grad(u_n))
+shear_stress = d3.angular(d3.radial(strain_rate(r=1), index=1))
 
 uang_r1 = basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
 
@@ -115,13 +104,13 @@ problem = d3.IVP([p_n, u_n, tau_p_n, tau_u_n], namespace=locals())
 problem.add_equation("div(u_n) + tau_p_n = 0")
 problem.add_equation(
     "dt(u_n) + grad(p_n) - Ek*lap(u_n) + lift(tau_u_n)  = -u_n@grad(u_n) "
-    "-2*cross(ez,u_n)"
+    "-2*cross(ez,u_n) "
+    "+100*(mask_equator*mask_radial*(u_n_target - u_n))"  # Boundary forcing
 )
-problem.add_equation(
-    "angular(u_n(r=radius)) = mask*angular(uang_r1) + (1-mask)*angular(u_n(r=radius))"
-)  # spin up at outer boundary
+
 problem.add_equation("radial(u_n(r=radius)) = 0")  # impenetrable bc
 problem.add_equation("integ(p_n) = 0")  # Pressure gauge normal fluid
+problem.add_equation("shear_stress = 0")
 
 # Solver
 solver = problem.build_solver(timestepper)
@@ -160,11 +149,11 @@ u_n_r = dot(u_n, er)
 u_n_theta = dot(u_n, etheta)
 u_n_phi = dot(u_n, ephi)
 
-save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path: Path = PARAMS["output_dir"] / "su_equator"
 save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/AZ_avg_equator".format(PARAMS["output_dir"]),
+    str(save_path / "AZ_avg_equator"),
     sim_dt=0.05,
     max_writes=100,
 )
@@ -174,7 +163,7 @@ AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
 
 
 slices = solver.evaluator.add_file_handler(
-    "outputs/{}/su_equator/slices".format(PARAMS["output_dir"]),
+    str(save_path / "slices"),
     sim_dt=0.025,
     max_writes=100,
 )
@@ -185,7 +174,7 @@ slices.add_task(
 
 # Checkpoint
 checkpoint = solver.evaluator.add_file_handler(
-    f"outputs/{PARAMS['output_dir']}/su_equator/checkpoint",
+    str(save_path / "checkpoint"),
     sim_dt=50,
     max_writes=1,
     parallel="gather",

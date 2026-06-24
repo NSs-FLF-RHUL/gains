@@ -42,7 +42,7 @@ def plot_against_time(
     )
 
     alphas = np.linspace(0.40, 1.0, len(targets))
-    fig, ax_ = _get_ax_and_fig(ax, polar=False)
+    fig, ax = _get_ax_and_fig(ax, polar=False)
 
     colour = kwargs.get("colour", "#024cf7")
     for i in range(len(targets)):
@@ -54,20 +54,20 @@ def plot_against_time(
             100,
             path_list,
             ntheta=ntheta,
-            rotating=kwargs.get("rotating"),
+            rotating=kwargs.get("rotating", True),
         )
-        ax_.plot(
+        ax.plot(
             times,
             omega_r,
             color=colour,
             alpha=alphas[i],
             label=str(label + " = " + str(round(target, 2))),
         )
-    ax_.legend(frameon=False, loc="lower right")
+    ax.legend(frameon=False, loc="lower right")
     t_ek = 1 / np.sqrt(ek)
-    ax_.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
-    ax_.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
-    ax_.set_xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
-    ax_.set_ylabel(r"$\Delta \Omega$")
+    ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
+    ax.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
+    ax.set_xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
+    ax.set_ylabel(r"$\Delta \Omega$")
 
     return path_list, fig

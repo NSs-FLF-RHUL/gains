@@ -16,8 +16,6 @@ The mutual friction is in the same form as
 J. R. Fuentes and Vanessa Graber 2024 ApJ 974 300.
 """
 
-import datetime
-import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
@@ -33,38 +31,18 @@ from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import ShellBasis, SphericalBasis
 from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
-from gains.utils.parsers import create_parser_simulation
-from gains.utils.profile import add_profiling_options, profile
+from gains.utils.parsers import SimulationCLI
+from gains.utils.profile import profile
 
 # Setup
 logger = logging.getLogger(__name__)
 
-parser = create_parser_simulation()
-add_profiling_options(parser)
-args = vars(parser.parse_args())
-
-if args["logfile"] is not None:
-    logpath = Path(f"outputs/{args['output_dir']}/{args['logfile']}.txt")
-    logpath.parent.mkdir(exist_ok=True)
-    FileOutputHandler = logging.FileHandler(logpath)
-    logger.addHandler(FileOutputHandler)
-
-
-if args["parameter_file"] is not None:
-    with Path.open(args["parameter_file"]) as param_file:
-        PARAMS = json.load(param_file)
-
-else:
-    PARAMS = default_params
-
-PARAMS["use_checkpoint"] = args["use_checkpoint"]
-PARAMS["checkpoint_path"] = args["checkpoint_path"]
-PARAMS["output_dir"] = (
-    args["output_dir"]
-    if args["output_dir"] is not None
-    else "two_fluid_spin_up_"
-    + datetime.datetime.now().astimezone().strftime("%Y-%m-%m-%H:%M")
+parser = SimulationCLI(
+    profiling_option=True,
+    place_all_outputs_under="outputs",
+    sim_name="two_fluid_spin_up",
 )
+PARAMS = parser.parse_args_and_get_params(logger, default_params=default_params)
 
 timestepper = d3.SBDF2
 cfl_safety = 0.2
@@ -319,12 +297,12 @@ u_s_s_r = Dot(u_s_s, er)
 u_s_s_theta = Dot(u_s_s, etheta)
 u_s_s_phi = Dot(u_s_s, ephi)
 
-save_path = Path("outputs/{}/su_equator".format(PARAMS["output_dir"]))
+save_path: Path = PARAMS["output_dir"] / "su_equator"
 save_path.mkdir(parents=True, exist_ok=True)
 
 u_fields = solver.evaluator.add_file_handler(
-    "outputs/{}/velocities".format(PARAMS["output_dir"]),
-    sim_dt=PARAMS["snapshot_dt"],
+    str(save_path / "AZ_avg_equator"),
+    sim_dt=0.05,
     max_writes=100,
 )
 u_fields.add_task(u_b_n_r["g"].astype(np.float32), name="u_b_n_r")
@@ -356,7 +334,7 @@ flow.add_property(np.sqrt(u_s_n @ u_s_n) * PARAMS["Ek"], name="Re_n")
 flow.add_property(np.sqrt(omega_b_s @ omega_b_s), name="vorticity_mag")
 
 
-@profile(args["profile"], args["output_dir"])
+@profile(PARAMS["profile"], PARAMS["output_dir"])
 def main() -> Callable:
     """Create main loop with profiling."""
     return track_vorticity(logger, flow, solver, CFL)

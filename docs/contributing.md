@@ -81,11 +81,7 @@ The editor can be accessed by clicking the "resolve conflicts" box at the bottom
 The editor will open the files that contain the conflicts and highlight the relevant text:
 
 ```text
-<<<<<<< name-of-your-branch
-some-code...
-=======
 some-different-code...
->>>>>>> main
 ```
 
 Everything above the `======` is the changes that are on your branch.

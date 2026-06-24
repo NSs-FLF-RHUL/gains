@@ -116,12 +116,8 @@ def select_time(
     return path, file_index
 
 
-def _resolve_rotating(rotating: bool | None) -> bool:  # noqa: FBT001 (All non helper functions do follow this rule)
-    """Set default behaivour of functions accepting the rotating argument."""
-    return True if rotating is None else rotating
-
-
-def _rewrite_h5(fin, fout) -> None:
+def _rewrite_h5(fin: h5py.File, fout: h5py.File) -> None:
+    """Create a new h5 file with same data as input, but at float32 precision."""
     fout.create_group("tasks")
 
     for name, ds in fin["tasks"].items():
@@ -148,6 +144,6 @@ def _downscale_data(src: str | Path, tmp: str | Path) -> None:
     Note that the original precision data is destroyed.
     """
     with h5py.File(src, "r") as fin, h5py.File(tmp, "w") as fout:
-        _downscale_data(fin, fout)
+        _rewrite_h5(fin, fout)
 
-    tmp.replace(src)
+    Path(tmp).replace(Path(src))

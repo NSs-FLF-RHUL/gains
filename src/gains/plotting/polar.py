@@ -9,7 +9,7 @@ from matplotlib import colormaps
 from matplotlib.colors import Colormap, LinearSegmentedColormap
 
 from gains.analysis.analyse_spin_up import _my_interp2d, read_angular_velocity
-from gains.utils.misc import _get_ax_and_fig, _resolve_rotating, select_time
+from gains.utils.misc import _get_ax_and_fig, select_time
 
 
 def _make_cmap(cols: list | None = None) -> Colormap:
@@ -118,9 +118,8 @@ def plot_angular_velocity(
     ax: plt.Axes,
     target_field: str,
     *,
-    rotating: bool | None = None,
+    rotating: bool = True,
     delta_omega: float,
-    cols=None,
 ) -> plt.pcolormesh:
     """
     Take an output of single_spin_up_rotating_frame.py and plots the angular velocity.
@@ -133,11 +132,10 @@ def plot_angular_velocity(
     rotating reference frame.
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
-    rotating = _resolve_rotating(rotating)
     data = h5py.File(path, mode="r")
     r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
     time = np.array(data["scales/sim_time"])
-    mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega, colors=cols)
+    mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
     ax.set_ylim(r.min(), r.max())
     ax.set_title(r"$t =$" + str(time[t])[:4])
     return mesh
@@ -150,10 +148,9 @@ def plot_angular_velocity_split(
     core_field: str,
     crust_field: str,
     *,
-    rotating: bool | None = None,
+    rotating: bool = True,
     delta_omega: float,
     crustcore_boundary: float,
-    cols=None,
 ) -> list:
     """
     Plot angular velocities for coupled crust/core systems.
@@ -173,11 +170,10 @@ def plot_angular_velocity_split(
     data = h5py.File(path, mode="r")
     meshes = []
     time = np.array(data["scales/sim_time"])
-    rotating = _resolve_rotating(rotating)
 
     for field in [core_field, crust_field]:
         r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
-        mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega, colors=cols)
+        mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
 
         meshes.append(mesh)
 
@@ -216,10 +212,9 @@ def plot_angular_velocity_sequence(
                 path,
                 file_index,
                 ax[i],
-                rotating=kwargs.get("rotating"),
+                rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
                 target_field=target_field,
-                cols=kwargs.get("colors"),
             )
         else:
             mesh = plot_angular_velocity_split(
@@ -228,9 +223,8 @@ def plot_angular_velocity_sequence(
                 ax[i],
                 target_field[0],
                 target_field[1],
-                rotating=kwargs.get("rotating"),
+                rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
                 crustcore_boundary=kwargs["Ri"],
-                cols=kwargs.get("colors"),
             )
     return mesh

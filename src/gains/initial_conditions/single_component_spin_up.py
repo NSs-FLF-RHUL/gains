@@ -35,13 +35,17 @@ def mask_angular(coord: np.ndarray, width: float, center: float) -> np.ndarray:
     return 0.5 * mask
 
 
-def mask_r(rs: np.ndarray, nr: float) -> np.ndarray:
+def mask_r(rs: np.ndarray, width: float) -> np.ndarray:
     """
     Create radial window to enforce spin up torque on radial portions of the sphere.
 
     :param rs: Radial coordinates.
-    :param nr: The radial resolution.
+    :param width: The width to select (taken as 2 standard deviations).
     :returns mask: Gaussian window that selects a radial portion.
     """
-    delta_r = 1.0 / (nr * 2.0)
+    check = "width"
+    if width <= 0:
+        raise ExpectPositiveError(check)
+
+    delta_r = width / 2
     return np.exp(-(((rs - 1.0) / delta_r) ** 2))

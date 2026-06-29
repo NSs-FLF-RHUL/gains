@@ -33,7 +33,8 @@ from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import SimulationCLI
 from gains.utils.profile import profile
-
+from gains.initial_conditions.single_component_spin_up import mask_angular, mask_r
+import matplotlib.pyplot as plt
 # Setup
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ Ro = PARAMS["Ro"]
 radius = Ro
 x_b_n = 0.05  # Proton fraction - core
 x_b_s = 0.95  # Neutron fraction - core
-x_s_n = 0.05  # Proton fraction - crust
+x_s_n = 0.05  # Electron fraction - crust
 x_s_s = 0.95  # Neutron fraction - crust
 
 mesh = mesh_cpus(ncpu)
@@ -101,6 +102,10 @@ tau_p_s_s = dist.Field(name="tau_p_s_s")
 tau_u_s_s_1 = dist.VectorField(coords, name="tau_u_s_s_1", bases=basis_crust.surface)
 tau_u_s_s_2 = dist.VectorField(coords, name="tau_u_s_s_2", bases=basis_crust.surface)
 
+mask_radial = dist.Field(name="mask_radial", bases=basis_crust.shell)
+mask_theta = dist.Field(name="mask_theta", bases=basis_crust.shell)
+mask_phi = dist.Field(name="mask_phi", bases=basis_crust.shell)
+
 # Substitutions - general
 er = dist.VectorField(coords)
 etheta = dist.VectorField(coords)
@@ -117,6 +122,13 @@ phi_s, theta_s, r_s = dist.local_grids(basis_crust.shell)
 ez_s = dist.VectorField(coords, bases=basis_crust.shell)
 ez_s["g"][1] = -np.sin(theta_s)
 ez_s["g"][2] = np.cos(theta_s)
+
+u_target = dist.VectorField(coords, name="u_target", bases=basis_crust.shell)
+u_target["g"][0] = PARAMS["Delta_Omega"] * r_s * np.sin(theta_s)
+
+mask_theta["g"] = mask_angular(theta_s, PARAMS["width_theta"], PARAMS["center_theta"])
+mask_phi["g"] = mask_angular(phi_s, PARAMS["width_phi"], PARAMS["center_phi"])
+mask_radial["g"] = mask_r(r_s, PARAMS["width_r"])
 
 rvec_s = dist.VectorField(coords, bases=basis_crust.shell.radial_basis)
 rvec_s["g"][2] = r_s
@@ -159,6 +171,8 @@ ez_b["g"][2] = np.cos(theta_b)
 
 
 strain_b_s = d3.grad(u_b_s) + d3.trans(d3.grad(u_b_s))
+strain_b_n = d3.grad(u_b_n) + d3.trans(d3.grad(u_b_n))
+
 shear_stress_b_s_interface = d3.angular(d3.radial(strain_b_s(r=PARAMS["Ri"]), index=1))
 
 omega_b_s = dist.VectorField(
@@ -211,7 +225,7 @@ problem.add_equation(
     "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
 )
 problem.add_equation(
-    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s"
+    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 10*mask_radial*mask_theta*mask_phi*(u_target - u_s_s)"
 )
 
 # Core momentum equations
@@ -224,7 +238,7 @@ problem.add_equation(
 
 # Surface boundary conditions
 problem.add_equation("radial(u_s_n(r=Ro)) = 0")  # No penetration, normal fluid
-problem.add_equation("angular(u_s_n(r=Ro)) = angular(uang_s)")  # Spin up, normal fluid
+problem.add_equation("shear_stress_s_n_surface = 0")  # Stress free, normal fluid
 
 problem.add_equation("radial(u_s_s(r=Ro)) = 0")  # No penetration, superfluid
 problem.add_equation("shear_stress_s_s_surface = 0")  # Stress free, superfluid
@@ -305,7 +319,7 @@ u_fields = solver.evaluator.add_file_handler(
     sim_dt=0.05,
     max_writes=100,
 )
-u_fields.add_task(u_b_n_r["g"].astype(np.float32), name="u_b_n_r")
+u_fields.add_task(u_b_n_r, name="u_b_n_r")
 u_fields.add_task(u_b_n_theta, name="u_b_n_theta")
 u_fields.add_task(u_b_n_phi, name="u_b_n_phi")
 
@@ -338,6 +352,5 @@ flow.add_property(np.sqrt(omega_b_s @ omega_b_s), name="vorticity_mag")
 def main() -> Callable:
     """Create main loop with profiling."""
     return track_vorticity(logger, flow, solver, CFL)
-
 
 main()

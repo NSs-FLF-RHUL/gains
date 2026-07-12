@@ -33,7 +33,7 @@ from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import SimulationCLI
 from gains.utils.profile import profile
-from gains.initial_conditions.single_component_spin_up import mask_angular, mask_r
+from gains.initial_conditions.single_component_spin_up import mask_angular, mask_r, circle_on_sphere
 import matplotlib.pyplot as plt
 # Setup
 logger = logging.getLogger(__name__)
@@ -105,6 +105,7 @@ tau_u_s_s_2 = dist.VectorField(coords, name="tau_u_s_s_2", bases=basis_crust.sur
 mask_radial = dist.Field(name="mask_radial", bases=basis_crust.shell)
 mask_theta = dist.Field(name="mask_theta", bases=basis_crust.shell)
 mask_phi = dist.Field(name="mask_phi", bases=basis_crust.shell)
+mask_circ = dist.Field(name="mask_circ", bases=basis_crust.shell)
 
 # Substitutions - general
 er = dist.VectorField(coords)
@@ -129,7 +130,7 @@ u_target["g"][0] = PARAMS["Delta_Omega"] * r_s * np.sin(theta_s)
 mask_theta["g"] = mask_angular(theta_s, PARAMS["width_theta"], PARAMS["center_theta"])
 mask_phi["g"] = mask_angular(phi_s, PARAMS["width_phi"], PARAMS["center_phi"])
 mask_radial["g"] = mask_r(r_s, PARAMS["width_r"])
-
+mask_circ["g"] = circle_on_sphere(theta_s, phi_s, 1.0, (PARAMS["center_theta"], PARAMS["center_phi"]), 0.5)
 rvec_s = dist.VectorField(coords, bases=basis_crust.shell.radial_basis)
 rvec_s["g"][2] = r_s
 
@@ -225,7 +226,7 @@ problem.add_equation(
     "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
 )
 problem.add_equation(
-    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 10*mask_radial*mask_theta*mask_phi*(u_target - u_s_s)"
+    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + mask_radial*mask_circ*(u_target - u_s_s)"
 )
 
 # Core momentum equations
@@ -316,7 +317,7 @@ save_path.mkdir(parents=True, exist_ok=True)
 
 u_fields = solver.evaluator.add_file_handler(
     str(save_path / "AZ_avg_equator"),
-    sim_dt=0.05,
+    sim_dt=PARAMS["snapshot_dt"],
     max_writes=100,
 )
 u_fields.add_task(u_b_n_r, name="u_b_n_r")

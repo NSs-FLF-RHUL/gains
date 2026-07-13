@@ -110,9 +110,9 @@ def select_time(
     """
     saved_times = np.arange(0, params["stop_sim_time"], params["snapshot_dt"])
     target_index = get_arg_of_nearest(target_time, saved_times)[0]
-    file_suffix = target_index // nwrites + 1
-    file_index = target_index % nwrites
-    path = output_dir / f"su_equator/AZ_avg_equator/AZ_avg_equator_s{file_suffix}.h5"
+    file_suffix = int(target_index // nwrites + 1)
+    file_index = int(target_index % nwrites)
+    path = output_dir / f"AZ_avg_equator_s{file_suffix}.h5"
     return path, file_index
 
 
@@ -147,3 +147,65 @@ def _downscale_data(src: str | Path, tmp: str | Path) -> None:
         _rewrite_h5(fin, fout)
 
     Path(tmp).replace(Path(src))
+
+def downsample_h5_file(source_path, target_path, step=20):
+    """
+    Clones an HDF5 structure and populates it with every Nth (default 20th) 
+    datapoint along the first axis of every dataset.
+    """
+    with h5py.File(source_path, 'r') as src, h5py.File(target_path, 'w') as dst:
+        
+        def visitor(name, obj):
+
+            if name.startswith("tasks/"):
+                downsample = True
+            elif name in {
+                "scales/sim_time",
+                "scales/iteration",
+                "scales/write_number",
+                "scales/timestep",
+            }:
+                downsample = True
+            else:
+                downsample = False
+            if isinstance(obj, h5py.Group):
+                dst.create_group(name)
+                
+            elif isinstance(obj, h5py.Dataset):
+                # Handle empty or scalar (0-dimensional) datasets
+                if obj.shape == ():
+                    dst.create_dataset(name, dtype=obj.dtype, data=obj[()])
+                else:
+                    # Calculate new shape assuming simulation time is on Axis 0
+                    old_shape = obj.shape
+                    new_axis_0 = int(np.ceil(old_shape[0] / step))
+                    if downsample:
+                        new_shape = (new_axis_0,) + old_shape[1:]
+                    else:
+                        new_shape = old_shape
+                    
+                    # Create the new dataset with same metadata options
+                    dst_dset = dst.create_dataset(
+                                                name,
+                                                shape=new_shape,
+                                                dtype=obj.dtype,
+                                                chunks=obj.chunks,
+                                                compression=obj.compression,
+                                                compression_opts=obj.compression_opts,
+                                                shuffle=obj.shuffle,
+                                                fletcher32=obj.fletcher32,
+                                            )
+                    
+                    # Slice every 20th point along Axis 0 and stream it to the new file
+                    # Using [::step] prevents loading the entire dataset into RAM at once
+                    if downsample:
+                        dst_dset[...] = obj[::step, ...]
+                    else:
+                        dst_dset[...] = obj
+            
+            # Copy over metadata/attributes (e.g., simulation units, timestamps)
+            for attr_name, attr_value in obj.attrs.items():
+                dst[name].attrs[attr_name] = attr_value
+
+        # Execute the recursive copy and slice
+        src.visititems(visitor)  

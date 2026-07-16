@@ -30,11 +30,11 @@ from mpi4py import MPI
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import ShellBasis, SphericalBasis
 from gains.utils.loggers import track_vorticity
-from gains.utils.misc import mesh_cpus
+from gains.utils.misc import mesh_cpus, save_simulation_params
 from gains.utils.parsers import SimulationCLI
 from gains.utils.profile import profile
 from gains.initial_conditions.single_component_spin_up import mask_angular, mask_r, circle_on_sphere
-import matplotlib.pyplot as plt
+
 # Setup
 logger = logging.getLogger(__name__)
 
@@ -51,8 +51,8 @@ max_timestep = 1e-2
 dtype = np.float64
 ncpu = MPI.COMM_WORLD.size
 
-Ek_shell = PARAMS["Ek"] * (PARAMS["Ro"] - PARAMS["Ri"]) ** 2
-Ek_ball = PARAMS["Ek"] * PARAMS["Ri"] ** 2
+Ek_shell = PARAMS["Ek_crust"]
+Ek_ball = PARAMS["Ek_core"]
 B = PARAMS["B"]
 Bprime = PARAMS["B"] / 2
 Ri = PARAMS["Ri"]
@@ -62,6 +62,11 @@ x_b_n = 0.05  # Proton fraction - core
 x_b_s = 0.95  # Neutron fraction - core
 x_s_n = 0.05  # Electron fraction - crust
 x_s_s = 0.95  # Neutron fraction - crust
+
+PARAMS["x_b_n"] = 0.05 #Added to params for saving purposes
+PARAMS["x_b_s"] = 0.95
+PARAMS["x_s_n"] = 0.05
+PARAMS["x_s_s"] = 0.95
 
 mesh = mesh_cpus(ncpu)
 
@@ -345,13 +350,13 @@ CFL.add_velocity(u_b_s)
 CFL.add_velocity(u_s_s)
 
 flow = d3.GlobalFlowProperty(solver, cadence=10)
-flow.add_property(np.sqrt(u_s_n @ u_s_n) * PARAMS["Ek"], name="Re_n")
+flow.add_property(np.sqrt(u_s_n @ u_s_n) * PARAMS["Ek_crust"], name="Re_n")
 flow.add_property(np.sqrt(omega_b_s @ omega_b_s), name="vorticity_mag")
 
 
 @profile(PARAMS["profile"], PARAMS["output_dir"])
 def main() -> Callable:
     """Create main loop with profiling."""
-    return track_vorticity(logger, flow, solver, CFL)
+    return track_vorticity(logger, flow, solver, CFL, PARAMS)
 
 main()

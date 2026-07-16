@@ -4,6 +4,7 @@ from logging import Logger
 
 import dedalus
 import dedalus.public as d3
+from gains.utils.misc import save_simulation_params
 
 
 def track_vorticity(
@@ -11,6 +12,7 @@ def track_vorticity(
     flow: d3.GlobalFlowProperty,
     solver: dedalus.core.solvers.InitialValueSolver,
     cfl: d3.CFL,
+    params: dict
 ) -> None:
     """
     Create main loop that tracks and logs the maximum superfluid vorticity.
@@ -37,6 +39,7 @@ def track_vorticity(
         logger.exception("Exception raised, triggering end of main loop.")
         raise
     finally:
+        save_simulation_params(params["output_dir"], params)
         solver.log_stats()
 
 
@@ -45,6 +48,7 @@ def track_reynolds_n(
     flow: d3.GlobalFlowProperty,
     solver: dedalus.core.solvers.InitialValueSolver,
     cfl: d3.CFL,
+    params: dict
 ) -> None:
     """
     Create main loop that tracks and logs the maximum reynolds number.
@@ -72,4 +76,5 @@ def track_reynolds_n(
         logger.exception("Exception raised, triggering end of main loop.")
         raise
     finally:
+        save_simulation_params(params["output_dir"], params)
         solver.log_stats()

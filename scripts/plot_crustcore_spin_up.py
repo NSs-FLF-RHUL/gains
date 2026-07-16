@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     args["output_dir"] = Path(args["output_dir"])
     args["frame_dir"] = Path(args["frame_dir"])
-    targets_core = [t for t in args["targets"] if t < 0.8]
+    targets_core = [t for t in args["targets"] if t <= 0.8]
     targets_crust = [t for t in args["targets"] if t >= 0.8]
     logger = logging.getLogger(__name__)
 
@@ -50,12 +50,12 @@ if __name__ == "__main__":
         1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"}
     )
     plot_angular_velocity_sequence(
-        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"), **PARAMS
+        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"),**PARAMS
     )
     plt.savefig("{}/angular_speed_sequence_NF.png".format(args["fig_dir"]))
     plt.close()
 
-    path_plot = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s2.h5"
+    path_plot = args["output_dir"] / "AZ_avg_equator_s2.h5"
     data = h5py.File(path_plot, mode="r")
     time = np.array(data["scales/sim_time"])
     fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     fig.savefig(f"{args['fig_dir']}/meridional_streamlines_core.png")
 
-    path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
+    path = "{}".format(args["output_dir"])
     r_check_core, theta_check_core, phi_check_core = get_angular_coords(
         path + "/AZ_avg_equator_s1.h5", "u_b_n_phi"
     )
@@ -99,7 +99,6 @@ if __name__ == "__main__":
             r_core,
             "r",
             path,
-            PARAMS["Ek"],
             PARAMS["Ntheta"],
             targets_core,
             "u_b_n_phi",
@@ -107,9 +106,8 @@ if __name__ == "__main__":
         ax = fig.gca()
         plot_against_time(
             r_crust,
-            "r",
+           "r",
             path,
-            PARAMS["Ek"],
             PARAMS["Ntheta"],
             targets_crust,
             "u_s_n_phi",

@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.exceptions import MeshError
-
+from mpi4py import MPI
+import json
 
 def _get_ax_and_fig(ax: plt.Axes | None, *, polar: bool) -> tuple[plt.Figure, plt.Axes]:
     """Handle optional axes arguments in plotting functions."""
@@ -96,7 +97,7 @@ def mesh_cpus(ncpu: int) -> list[int] | None:
 
 
 def select_time(
-    nwrites: int, target_time: float, output_dir: Path, **params
+    target_time: float, output_dir: Path, **params
 ) -> tuple[Path, int]:
     """
     Take a simulated time and locate its position in the output files.
@@ -110,8 +111,8 @@ def select_time(
     """
     saved_times = np.arange(0, params["stop_sim_time"], params["snapshot_dt"])
     target_index = get_arg_of_nearest(target_time, saved_times)[0]
-    file_suffix = int(target_index // nwrites + 1)
-    file_index = int(target_index % nwrites)
+    file_suffix = int(target_index // params["nwrites"] + 1)
+    file_index = int(target_index % params["nwrites"])
     path = output_dir / f"AZ_avg_equator_s{file_suffix}.h5"
     return path, file_index
 
@@ -209,3 +210,11 @@ def downsample_h5_file(source_path, target_path, step=20):
 
         # Execute the recursive copy and slice
         src.visititems(visitor)  
+
+
+def save_simulation_params(output_dir, params) -> None:
+    comm = MPI.COMM_WORLD
+    if comm.rank == 0:
+        with open(output_dir / "simulation_params", "w") as f:
+            json.dump(params, f, indent=4, default=str)
+    comm.barrier()

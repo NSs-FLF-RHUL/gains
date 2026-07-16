@@ -201,13 +201,13 @@ def plot_angular_velocity_sequence(
     :param output_dir: Location of simulation outputs.
     :param target_field: The group name of the target velocity field in the
     output file.
+    :param nwrites: The number of snapshots per output file.
     :param kwargs: Simulation parameters.
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     for i in range(len(target_times)):
         time = target_times[i]
-        path, file_index = select_time(5.0, time, output_dir, **kwargs)
-        print(path)
+        path, file_index = select_time(time, output_dir, **kwargs)
         if isinstance(target_field, str):
             mesh = plot_angular_velocity(
                 path,

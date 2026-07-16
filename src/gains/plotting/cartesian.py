@@ -13,11 +13,11 @@ def plot_against_time(
     coord: LabeledCoordinate,
     label: str,
     path: Path,
-    ek: float,
     ntheta: int,
     targets: np.ndarray | list,
     target_field: str,
     ax: plt.Axes | None = None,
+    ek: float = None,
     **kwargs,
 ) -> tuple[list[Path], plt.Figure]:
     """
@@ -64,9 +64,10 @@ def plot_against_time(
             label=str(label + " = " + str(round(target, 2))),
         )
     ax.legend(frameon=False, loc="lower right")
-    t_ek = 1 / np.sqrt(ek)
-    ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
-    ax.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
+    if ek is not None:
+        t_ek = 1 / np.sqrt(ek)
+        ax.axvline(x=t_ek, linestyle="dashed", color="black", lw=0.5)
+        ax.text(t_ek + 0.5, 0.0001, r"$\tau_{Ek}$", size="large")
     ax.set_xlabel(r"Time since glitch ($\Omega_{0}^{-1}$)")
     ax.set_ylabel(r"$\Delta \Omega$")
 

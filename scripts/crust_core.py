@@ -316,10 +316,13 @@ u_s_s_phi = Dot(u_s_s, ephi)
 save_path: Path = PARAMS["output_dir"] / "su_equator"
 save_path.mkdir(parents=True, exist_ok=True)
 
+#Save velocity fields
+
 u_fields = solver.evaluator.add_file_handler(
     str(save_path / "AZ_avg_equator"),
     sim_dt=PARAMS["snapshot_dt"],
     max_writes=100,
+    mode='append'
 )
 u_fields.add_task(u_b_n_r, name="u_b_n_r")
 u_fields.add_task(u_b_n_theta, name="u_b_n_theta")

@@ -337,6 +337,12 @@ u_fields.add_task(u_s_s_r, name="u_s_s_r")
 u_fields.add_task(u_s_s_theta, name="u_s_s_theta")
 u_fields.add_task(u_s_s_phi, name="u_s_s_phi")
 
+#Checkpoint
+
+checkpoint = solver.evaluator.add_file_handler(PARAMS["output_dir"] / "checkpoint", wall_dt=PARAMS["checkpoint_cadence"], max_writes=1, parallel='gather')
+checkpoint.add_tasks(solver.state, layout='g')
+
+
 CFL = d3.CFL(
     solver, timestep, cadence=1, safety=0.5, threshold=0.1, max_dt=max_timestep
 )

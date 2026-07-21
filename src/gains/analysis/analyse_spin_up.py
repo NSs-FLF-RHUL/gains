@@ -196,30 +196,25 @@ def get_angular_speed_vs_time(
     for path in path_list:
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
-        
-        for j in range(n_writes):
-            try:
-                u_phi = data["tasks"][target_field][j, -1, :, :]
-                if coord.label == "r":
-                    omega_r = calculate_angular_speed_single(
-                        path,
-                        c_get,
-                        int(theta_resolution / 2),
-                        u_phi,
-                        target_field,
-                        rotating=rotating,
-                    )  # theta arg esnures the equator is selected.
-                elif coord.label == "theta":
-                    omega_r = calculate_angular_speed_single(
-                        path, -1, c_get, u_phi, target_field, rotating=rotating
-                    )  # r arg ensures the surface is selected.
-                else:
-                    raise NotImplementedError(err_msg)
-                omega_rs[count] = omega_r
-                times[count] = time[j]
-                count += 1
-            except Exception:
-                breakpoint()
-                raise
+        for j in range(len(time)):
+            u_phi = data["tasks"][target_field][j, -1, :, :]
+            if coord.label == "r":
+                omega_r = calculate_angular_speed_single(
+                    path,
+                    c_get,
+                    int(theta_resolution / 2),
+                    u_phi,
+                    target_field,
+                    rotating=rotating,
+                )  # theta arg esnures the equator is selected.
+            elif coord.label == "theta":
+                omega_r = calculate_angular_speed_single(
+                    path, -1, c_get, u_phi, target_field, rotating=rotating
+                )  # r arg ensures the surface is selected.
+            else:
+                raise NotImplementedError(err_msg)
+            omega_rs[count] = omega_r
+            times[count] = time[j]
+            count += 1
 
-    return omega_rs, times
+    return omega_rs[:count], times[:count]

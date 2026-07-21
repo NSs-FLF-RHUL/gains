@@ -195,7 +195,7 @@ def get_angular_speed_vs_time(
     for path in path_list:
         data = h5py.File(path, mode="r")
         time = np.array(data["scales/sim_time"])
-        for j in range(n_writes):
+        for j in range(len(time)):
             u_phi = data["tasks"][target_field][j, -1, :, :]
             if coord.label == "r":
                 omega_r = calculate_angular_speed_single(
@@ -216,4 +216,4 @@ def get_angular_speed_vs_time(
             times[count] = time[j]
             count += 1
 
-    return omega_rs, times
+    return omega_rs[:count], times[:count]

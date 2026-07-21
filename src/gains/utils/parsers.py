@@ -98,7 +98,7 @@ class SimulationCLI(argparse.ArgumentParser):
             "--checkpoint_cadence",
             type=int,
             default=3600,
-            help="Time in seconds between checkpoint saves."
+            help="Time in seconds between checkpoint saves.",
         )
 
     def _default_dir_name(self) -> str:
@@ -153,7 +153,7 @@ class SimulationCLI(argparse.ArgumentParser):
         params["use_checkpoint"] = parsed_args["use_checkpoint"]
         params["checkpoint_path"] = parsed_args["checkpoint_path"]
         params["profile"] = parsed_args.get("profile")
-        params["checkpoint_cadence"]=parsed_args["checkpoint_cadence"]
+        params["checkpoint_cadence"] = parsed_args["checkpoint_cadence"]
 
         params["output_dir"] = self.place_all_outputs_under / (
             parsed_args["output_dir"]

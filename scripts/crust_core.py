@@ -131,7 +131,7 @@ u_target = dist.VectorField(coords, name="u_target", bases=basis_crust.shell)
 u_target["g"][0] = PARAMS["Delta_Omega"] * r_s * np.sin(theta_s)
 
 mask_radial["g"] = mask_r(r_s, PARAMS["width_r"])
-mask_circ["g"] = circle_on_sphere(theta_s, phi_s, PARAMS["radius"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.5)
+mask_circ["g"] = circle_on_sphere(theta_s, phi_s, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.5)
 rvec_s = dist.VectorField(coords, bases=basis_crust.shell.radial_basis)
 rvec_s["g"][2] = r_s
 

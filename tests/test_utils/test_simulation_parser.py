@@ -171,6 +171,7 @@ def test_simulation_cli_parsing(
             "output_dir", parser.place_all_outputs_under / parser._default_output_dir
         )
         expected_output.setdefault("profile", None)
+        expected_output.setdefault("checkpoint_cadence", 3600)
 
         params = parser.parse_args_and_get_params(
             logger_for_tests, cli_args, default_params=default_params

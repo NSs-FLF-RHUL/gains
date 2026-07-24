@@ -55,7 +55,7 @@ if __name__ == "__main__":
     plt.savefig("{}/angular_speed_sequence_NF.png".format(args["fig_dir"]))
     plt.close()
 
-    path_plot = args["output_dir"] / "AZ_avg_equator_s2.h5"
+    path_plot = args["output_dir"] / "AZ_avg_equator_s1.h5"
     data = h5py.File(path_plot, mode="r")
     time = np.array(data["scales/sim_time"])
     fig, ax = plt.subplots(1, 1, figsize=(6, 6), subplot_kw={"projection": "polar"})

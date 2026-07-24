@@ -37,6 +37,7 @@ def track_vorticity(
                 )
     except:
         logger.exception("Exception raised, triggering end of main loop.")
+        save_simulation_params(params["output_dir"], params)
         raise
     finally:
         save_simulation_params(params["output_dir"], params)

@@ -140,6 +140,9 @@ def read_angular_velocity(
     """
     Caluclate the angular speed from a target velocity field.
 
+    For non-axisymmetric glitches it is assumed that the phi coordinate
+    of the glitch centre is 0.
+
     :param path: Path to output file.
     :param t: Index of snapshot within file.
     :param target_field: Title of target velocity components hdf5 group.
@@ -149,7 +152,7 @@ def read_angular_velocity(
     :returns omega: Array of calculated angular speeds.
     """
     data = h5py.File(path, mode="r")
-    u_phi = data["tasks"][target_field][t, 64, :, :]
+    u_phi = data["tasks"][target_field][t, 0, :, :] #Assumes phi coordinate of glitch centre is 0
     r, theta, phi = get_angular_coords(path, target_field)
     if not rotating:
         u_background = 1.0 * np.outer(np.sin(theta), r)

@@ -100,12 +100,12 @@ u_s_s = dist.VectorField(coords, name="u_s_s", bases=basis_crust.shell)
 p_s_s = dist.Field(name="p_s_s", bases=basis_crust.shell)
 
 tau_p_s_n = dist.Field(name="tau_p_s_n")
-tau_u_s_n_1 = dist.VectorField(coords, name="tau_u_s_n_1", bases=basis_crust.surface)
-tau_u_s_n_2 = dist.VectorField(coords, name="tau_u_s_n_2", bases=basis_crust.surface)
+tau_u_s_n_1 = dist.VectorField(coords, name="tau_u_s_n_1", bases=basis_crust.shell.inner_surface)
+tau_u_s_n_2 = dist.VectorField(coords, name="tau_u_s_n_2", bases=basis_crust.shell.outer_surface)
 
 tau_p_s_s = dist.Field(name="tau_p_s_s")
-tau_u_s_s_1 = dist.VectorField(coords, name="tau_u_s_s_1", bases=basis_crust.surface)
-tau_u_s_s_2 = dist.VectorField(coords, name="tau_u_s_s_2", bases=basis_crust.surface)
+tau_u_s_s_1 = dist.VectorField(coords, name="tau_u_s_s_1", bases=basis_crust.shell.inner_surface)
+tau_u_s_s_2 = dist.VectorField(coords, name="tau_u_s_s_2", bases=basis_crust.shell.outer_surface)
 
 mask_radial = dist.Field(name="mask_radial", bases=basis_crust.shell)
 mask_circ = dist.Field(name="mask_circ", bases=basis_crust.shell)

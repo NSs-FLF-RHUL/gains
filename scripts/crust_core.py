@@ -63,6 +63,8 @@ x_b_s = 0.95  # Neutron fraction - core
 x_s_n = 0.05  # Electron fraction - crust
 x_s_s = 0.95  # Neutron fraction - crust
 
+eps = 1e-12
+
 PARAMS["x_b_n"] = 0.05 #Added to params for saving purposes
 PARAMS["x_b_s"] = 0.95
 PARAMS["x_s_n"] = 0.05
@@ -152,13 +154,10 @@ shear_stress_s_n_interface = d3.angular(d3.radial(strain_s_n(r=PARAMS["Ri"]), in
 shear_stress_s_s_interface = d3.angular(d3.radial(strain_s_s(r=PARAMS["Ri"]), index=1))
 shear_stress_s_s_surface = d3.angular(d3.radial(strain_s_s(r=PARAMS["Ro"]), index=1))
 
-omega_s_s = dist.VectorField(
-    coords, name="omega_s_s", bases=basis_core.ball
-)  # Superfluid vorticity
-
 u_s_ns = u_s_n - u_s_s
 omega_s_s = Curl(u_s_s) + 2 * ez_s
-omega_unit_s = omega_s_s / 2  # Numerically unstable if fully normalised
+mag2_omega_s = omega_s_s @ omega_s_s
+omega_unit_s = omega_s_s / np.sqrt(mag2_omega_s+eps)
 F_mf_s = B * (Cross(omega_unit_s, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
@@ -177,13 +176,11 @@ strain_b_n = d3.grad(u_b_n) + d3.trans(d3.grad(u_b_n))
 
 shear_stress_b_s_interface = d3.angular(d3.radial(strain_b_s(r=PARAMS["Ri"]), index=1))
 
-omega_b_s = dist.VectorField(
-    coords, name="omega_b_s", bases=basis_core.ball
-)  # Superfluid vorticity
 
 u_b_ns = u_b_n - u_b_s
 omega_b_s = Curl(u_b_s) + 2 * ez_b
-omega_unit_b = omega_b_s / 2
+mag2_omega_b = omega_b_s @ omega_b_s
+omega_unit_b = omega_b_s / np.sqrt(mag2_omega_b+eps)
 F_mf_b = B * (Cross(omega_unit_b, Cross(omega_b_s, u_b_ns))) + Bprime * Cross(
     omega_b_s, u_b_ns
 )

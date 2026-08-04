@@ -62,7 +62,7 @@ x_b_n = 0.05  # Proton fraction - core
 x_b_s = 0.95  # Neutron fraction - core
 x_s_n = 0.05  # Electron fraction - crust
 x_s_s = 0.95  # Neutron fraction - crust
-
+nu_hyper = 1e-9
 eps = 1e-12
 
 PARAMS["x_b_n"] = 0.05 #Added to params for saving purposes
@@ -157,10 +157,9 @@ shear_stress_s_s_surface = d3.angular(d3.radial(strain_s_s(r=PARAMS["Ro"]), inde
 u_s_ns = u_s_n - u_s_s
 omega_s_s = Curl(u_s_s) + 2 * ez_s
 mag2_omega_s = omega_s_s @ omega_s_s
-omega_unit_s = omega_s_s / np.sqrt(mag2_omega_s+eps)
-F_mf_s = B * (Cross(omega_unit_s, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
-    omega_s_s, u_s_ns
-)
+omega_cross_w = Cross(omega_s_s, u_s_ns)
+F_mf_s = B * Cross(omega_s_s, omega_cross_w) / np.sqrt(mag2_omega_s+eps)
+F_mf_s += Bprime * omega_cross_w
 
 # Subsititutions for Core
 lift_b = lambda a: d3.Lift(a, basis_core.ball, -1)
@@ -180,10 +179,9 @@ shear_stress_b_s_interface = d3.angular(d3.radial(strain_b_s(r=PARAMS["Ri"]), in
 u_b_ns = u_b_n - u_b_s
 omega_b_s = Curl(u_b_s) + 2 * ez_b
 mag2_omega_b = omega_b_s @ omega_b_s
-omega_unit_b = omega_b_s / np.sqrt(mag2_omega_b+eps)
-F_mf_b = B * (Cross(omega_unit_b, Cross(omega_b_s, u_b_ns))) + Bprime * Cross(
-    omega_b_s, u_b_ns
-)
+omega_cross_w = Cross(omega_b_s, u_b_ns)
+F_mf_b = B * Cross(omega_b_s, omega_cross_w) / np.sqrt(mag2_omega_b+eps)
+F_mf_b += Bprime * omega_cross_w
 
 # Problem
 problem = d3.IVP(
@@ -224,7 +222,7 @@ problem.add_equation(
     "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
 )
 problem.add_equation(
-    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + mask_radial*mask_circ*(u_target - u_s_s)"
+    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) - nu_hyper*div(grad_u_s_s) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + mask_radial*mask_circ*(u_target - u_s_s)"
 )
 
 # Core momentum equations
@@ -232,7 +230,7 @@ problem.add_equation(
     "dt(u_b_n) - Ek_ball*lap(u_b_n) + grad(p_b_n) + lift_b(tau_u_b_n_2) = -u_b_n@grad(u_b_n) - 2*cross(ez_b, u_b_n) + x_b_s/x_b_n * F_mf_b"
 )
 problem.add_equation(
-    "dt(u_b_s) + grad(p_b_s) + lift_b(tau_u_b_s_2) = - u_b_s@grad(u_b_s) - 2*cross(ez_b, u_b_s) - F_mf_b"
+    "dt(u_b_s) + grad(p_b_s) + lift_b(tau_u_b_s_2) - nu_hyper*lap(u_b_s) = - u_b_s@grad(u_b_s) - 2*cross(ez_b, u_b_s) - F_mf_b"
 )
 
 # Surface boundary conditions
@@ -255,8 +253,8 @@ problem.add_equation(
     "angular(u_b_n(r=Ri)) = angular(u_s_n(r=Ri))"
 )  # Tangential velocity conservation, normal fluid
 
-problem.add_equation("radial(u_b_s(r=Ri)) = 0")  # No penetration, superfluid
-problem.add_equation("shear_stress_b_s_interface = 0")  # Stress free, superfluid
+problem.add_equation("radial(u_b_s(r=Ri)) = radial(u_s_s(r=Ri))")  # No penetration, superfluid
+problem.add_equation("shear_stress_b_s_interface = 0")  # Tangential velocity conservation, superfluid
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
@@ -353,7 +351,7 @@ CFL.add_velocity(u_s_s)
 
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_s_n @ u_s_n) * PARAMS["Ek_crust"], name="Re_n")
-flow.add_property(np.sqrt(omega_b_s @ omega_b_s), name="vorticity_mag")
+flow.add_property(np.sqrt(omega_s_s @ omega_s_s), name="vorticity_mag")
 
 
 @profile(PARAMS["profile"], PARAMS["output_dir"])

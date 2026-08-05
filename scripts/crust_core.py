@@ -227,7 +227,7 @@ problem.add_equation(
     "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
 )
 problem.add_equation(
-    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + mask_radial*mask_circ*(u_target - u_s_s)"
+    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 100*mask_radial*mask_circ*(u_target - u_s_s)"
 )
 
 # Core momentum equations

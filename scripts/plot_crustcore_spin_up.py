@@ -50,7 +50,7 @@ if __name__ == "__main__":
         1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"}
     )
     plot_angular_velocity_sequence(
-        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"),**PARAMS
+        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"), full_slice=False, **PARAMS
     )
     plt.savefig("{}/angular_speed_sequence_NF.png".format(args["fig_dir"]))
     plt.close()
@@ -163,6 +163,8 @@ if __name__ == "__main__":
                     crust_field="u_b_n_phi",
                     delta_omega=PARAMS["Delta_Omega"],
                     crustcore_boundary=PARAMS["Ri"],
+                    full_slice=True,
+                    **PARAMS
                 )
                 save_path_angular = (
                     args["frame_dir"] / f"frame_spin_up_angular_{count:04d}.png"

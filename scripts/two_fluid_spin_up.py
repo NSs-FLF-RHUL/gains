@@ -21,6 +21,7 @@ from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import SimulationCLI
 from gains.utils.profile import profile
+from gains.initial_conditions.single_component_spin_up import mask_r, circle_on_sphere
 
 # Setup
 logger = logging.getLogger(__name__)
@@ -62,6 +63,9 @@ tau_p_s = basis.dist.Field(name="tau_p_s")
 tau_u_n = basis.dist.VectorField(basis.coords, name="tau_u_n", bases=basis.sphere)
 tau_u_s = basis.dist.VectorField(basis.coords, name="tau_u_s", bases=basis.sphere)
 
+mask_radial = dist.Field(name="mask_radial", bases=basis.ball)
+mask_circ = dist.Field(name="mask_circ", bases=basis.ball)
+
 # Substitutions
 lift = lambda a: d3.Lift(a, basis.ball, -1)
 
@@ -89,8 +93,19 @@ sintheta = basis.dist.Field(name="sintheta", bases=basis.ball)
 sintheta["g"] = np.sin(theta)
 uang = basis.dist.VectorField(basis.coords, bases=basis.ball)(r=radius).evaluate()
 uang["g"][0, :] = (PARAMS["Delta_Omega"] * sintheta)(r=radius).evaluate()["g"]
-strain_rate = d3.grad(u_s) + d3.trans(d3.grad(u_s))
-shear_stress = d3.angular(d3.radial(strain_rate(r=1), index=1))
+
+strain_rate_s = d3.grad(u_s) + d3.trans(d3.grad(u_s))
+shear_stress_s = d3.angular(d3.radial(strain_rate_s(r=1), index=1))
+
+strain_rate_n = d3.grad(u_n) + d3.trans(d3.grad(u_n))
+shear_stress_n = d3.angular(d3.radial(strain_rate_n(r=1), index=1))
+
+mask_radial["g"] = mask_r(r, PARAMS["width_r"])
+mask_circ["g"] = circle_on_sphere(theta, phi, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.5)
+
+u_target = dist.VectorField(coords, name="u_target", bases=basis.ball)
+u_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)
+
 # problem - HVBK equations spin up in basis.sphere
 problem = d3.IVP(
     [u_n, u_s, p_n, p_s, tau_p_n, tau_p_s, tau_u_n, tau_u_s], namespace=locals()
@@ -106,13 +121,13 @@ problem.add_equation(
     "- 2*cross(ez,u_n)"
 )
 problem.add_equation(
-    "dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)"
+    "dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s) + 100*mask_circ*mask_radial*(u_target - u_s)"
 )
 
 problem.add_equation("radial(u_n(r=radius)) = 0")
 problem.add_equation("radial(u_s(r=radius)) = 0")
-problem.add_equation("angular(u_n(r=radius)) = angular(uang)")
-problem.add_equation("shear_stress = 0")
+problem.add_equation("shear_stress_n = 0")
+problem.add_equation("shear_stress_s = 0")
 
 solver = problem.build_solver(timestepper)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
@@ -161,8 +176,8 @@ AZ_avg = solver.evaluator.add_file_handler(
 )
 AZ_avg.add_task(Dot(er, u_n), name="u_n_r")
 AZ_avg.add_task(Dot(etheta, u_n), name="u_n_theta")
-AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
-AZ_avg.add_task(az_avg(Dot(ephi, u_s)), name="u_s_phi")
+AZ_avg.add_task(u_n_phi, name="u_n_phi")
+AZ_avg.add_task(Dot(ephi, u_s), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     str(save_path / "slices"),
@@ -201,7 +216,7 @@ flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 @profile(PARAMS["profile"], PARAMS["output_dir"])
 def main_loop() -> None:
     """Decorate main loop."""
-    return track_vorticity(logger, flow, solver, CFL)
+    return track_vorticity(logger, flow, solver, CFL, PARAMS)
 
 
 main_loop()

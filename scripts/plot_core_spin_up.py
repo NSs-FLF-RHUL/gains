@@ -55,7 +55,7 @@ if __name__ == "__main__":
     )
     fig.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
 
-    path_stream = args["output_dir"] / "su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5"
+    path_stream = args["output_dir"] / "AZ_avg_equator_s3.h5"
     data = h5py.File(path_stream, mode="r")
     time = np.array(data["scales/sim_time"])
     ur = data["tasks"]["u_n_r"][:, -1, :, :]
@@ -67,8 +67,8 @@ if __name__ == "__main__":
     plot_stream(r[::-1], theta, ur[-1], utheta[-1], 2.0, time[-1], ax, colour="orange")
     fig.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
 
-    path = "{}/su_equator/AZ_avg_equator".format(args["output_dir"])
-    r_check, theta_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_n_phi")
+    path = "{}".format(args["output_dir"])
+    r_check, theta_check, phi_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_n_phi")
 
     r = LabeledCoordinate(r_check, "r")
     theta = LabeledCoordinate(theta_check, "theta")
@@ -80,10 +80,9 @@ if __name__ == "__main__":
             r,
             "r",
             path,
-            PARAMS["Ek"],
             PARAMS["Ntheta"],
             args["targets"],
-            target_field="u_n_phi",
+            "u_n_phi",
         )
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 

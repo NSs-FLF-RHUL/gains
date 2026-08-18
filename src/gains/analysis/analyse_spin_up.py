@@ -154,14 +154,17 @@ def read_angular_velocity(
     data = h5py.File(path, mode="r")
     u_phi = data["tasks"][target_field][t, 0, :, :] #Assumes phi coordinate of glitch centre is 0
     r, theta, phi = get_angular_coords(path, target_field)
+    u_phi_back = data["tasks"][target_field][t, int(len(phi)/2), :, :]
     if not rotating:
         u_background = 1.0 * np.outer(np.sin(theta), r)
     else:
         u_background = np.zeros_like(u_phi)
 
     du_n_phi = u_phi - u_background
+    du_n_phi_back = u_phi_back - u_background
     omega = calculate_angular_speed(r, theta, du_n_phi)
-    return r, theta, omega
+    omega_back = calculate_angular_speed(r, theta, du_n_phi_back)
+    return r, theta, omega, omega_back
 
 
 def get_angular_speed_vs_time(

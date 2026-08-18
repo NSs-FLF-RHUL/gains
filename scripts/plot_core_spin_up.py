@@ -51,7 +51,7 @@ if __name__ == "__main__":
         1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"}
     )
     plot_angular_velocity_sequence(
-        args["times_plot"], ax, args["output_dir"], "u_n_phi", **PARAMS
+        args["times_plot"], ax, args["output_dir"], "u_n_phi", True, **PARAMS
     )
     fig.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
 
@@ -112,6 +112,7 @@ if __name__ == "__main__":
                     j,
                     ax,
                     "u_n_phi",
+                    True,
                     rotating=True,
                     delta_omega=PARAMS["Delta_Omega"],
                 )

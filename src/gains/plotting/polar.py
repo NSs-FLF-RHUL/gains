@@ -79,6 +79,7 @@ def plot_angular(
     r: np.ndarray,
     theta: np.ndarray,
     omega_values: np.ndarray,
+    omega_back: np.ndarray | None,
     colors: list | None = None,
     **kwargs,
 ) -> plt.pcolormesh:
@@ -101,10 +102,20 @@ def plot_angular(
         cmap=cmap,
         edgecolors="face",
     )
+    if omega_back is not None:
+        ax.pcolormesh(
+            theta_m - np.pi,
+            r_m,
+            np.flip(omega_back, axis=0),
+            clim=(0, kwargs["Delta_Omega"]),
+            cmap=cmap,
+            edgecolors="face",
+        )
+
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     ax.set_rorigin(0)
-    ax.set_thetamin(0)
+    ax.set_thetamin(-180 if omega_back is not None else 0)
     ax.set_thetamax(180)
     ax.grid(visible=False)
     ax.set_xticks([])
@@ -117,6 +128,7 @@ def plot_angular_velocity(
     t: int,
     ax: plt.Axes,
     target_field: str,
+    full_sphere,
     *,
     rotating: bool = True,
     delta_omega: float,
@@ -133,9 +145,10 @@ def plot_angular_velocity(
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     data = h5py.File(path, mode="r")
-    r, theta, omega = read_angular_velocity(path, t, target_field, rotating=rotating)
+    r, theta, omega, omega_back = read_angular_velocity(path, t, target_field, rotating=rotating)
+    omega_back = None if not full_sphere else omega_back
     time = np.array(data["scales/sim_time"])
-    mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
+    mesh = plot_angular(ax, r, theta, omega, omega_back ,Delta_Omega=delta_omega)
     ax.set_ylim(r.min(), r.max())
     ax.set_title(r"$t =$" + str(time[t])[:4])
     return mesh
@@ -147,6 +160,7 @@ def plot_angular_velocity_split(
     ax: plt.Axes,
     core_field: str,
     crust_field: str,
+    full_sphere,
     *,
     rotating: bool = True,
     delta_omega: float,
@@ -172,9 +186,9 @@ def plot_angular_velocity_split(
     time = np.array(data["scales/sim_time"])
 
     for field in [core_field, crust_field]:
-        r, theta, omega = read_angular_velocity(path, t, field, rotating=rotating)
-        mesh = plot_angular(ax, r, theta, omega, Delta_Omega=delta_omega)
-
+        r, theta, omega, omega_back = read_angular_velocity(path, t, field, rotating=rotating)
+        omega_back = None if not full_sphere else omega_back
+        mesh = plot_angular(ax, r, theta, omega, omega_back, Delta_Omega=delta_omega)
         meshes.append(mesh)
 
     ax.set_ylim(0, 1.0)
@@ -191,6 +205,7 @@ def plot_angular_velocity_sequence(
     ax: list[plt.Axes] | plt.Axes,
     output_dir: Path,
     target_field: str,
+    full_sphere,
     **kwargs,
 ) -> plt.pcolormesh:
     """
@@ -213,9 +228,10 @@ def plot_angular_velocity_sequence(
                 path,
                 file_index,
                 ax[i],
+                target_field,
+                full_sphere,
                 rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
-                target_field=target_field,
             )
         else:
             mesh = plot_angular_velocity_split(
@@ -224,6 +240,7 @@ def plot_angular_velocity_sequence(
                 ax[i],
                 target_field[0],
                 target_field[1],
+                full_sphere,
                 rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
                 crustcore_boundary=kwargs["Ri"],

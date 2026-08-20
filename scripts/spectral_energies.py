@@ -34,7 +34,12 @@ u_phi_coeff = u_phi['c']
 energy_density = np.abs(u_r_coeff)**2 + np.abs(u_theta_coeff)**2 + np.abs(u_phi_coeff)**2
 energy_sum_r = np.sum(energy_density, axis=0)
 E_l = np.sum(energy_sum_r, axis=1)
+E_m = np.sum(energy_sum_r, axis=0)
 l_axis = np.arange(len(E_l))
+m_axis = np.arange(len(E_m))
 
 plt.loglog(l_axis[1:], E_l[1:], '.-')
-plt.savefig("L_spectrum")
+plt.savefig("L_spectrum.png")
+
+plt.loglog(m_axis[1:], E_l[1:], '.-')
+plt.savefig("m_spectrum.png")

@@ -82,5 +82,5 @@ def circle_on_sphere(theta: np.ndarray, phi: np.ndarray, radius: float, center: 
 
     f[inside] = 1.0
     f[transition] = np.cos(np.pi*x/2)**2
-
-    return f
+    g=np.exp(-gamma**2/(0.5))
+    return g

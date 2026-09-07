@@ -96,8 +96,8 @@ def calculate_angular_speed(
     """
     omega = np.zeros_like(u_phi)
     for i in range(len(rs)):
-        omega[:, i] = u_phi[:, i] / (rs[i] * np.sin(thetas)[:])
-    return omega
+        omega[:, i] = u_phi[:, i]/(rs[i] * np.sin(thetas)[:])
+    return u_phi
 
 
 def calculate_angular_speed_single(
@@ -152,8 +152,8 @@ def read_angular_velocity(
     :returns omega: Array of calculated angular speeds.
     """
     data = h5py.File(path, mode="r")
-    u_phi = data["tasks"][target_field][t, 0, :, :] #Assumes phi coordinate of glitch centre is 0
     r, theta, phi = get_angular_coords(path, target_field)
+    u_phi = data["tasks"][target_field][t, 0, :, :] #Assumes phi coordinate of glitch centre is 0
     u_phi_back = data["tasks"][target_field][t, int(len(phi)/2), :, :]
     if not rotating:
         u_background = 1.0 * np.outer(np.sin(theta), r)

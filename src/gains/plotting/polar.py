@@ -80,7 +80,7 @@ def plot_angular(
     theta: np.ndarray,
     omega_values: np.ndarray,
     omega_back: np.ndarray | None,
-    colors: list | None = None,
+    colors: list | None | Colormap = None,
     **kwargs,
 ) -> plt.pcolormesh:
     """
@@ -92,13 +92,17 @@ def plot_angular(
     :param omega_values: Angular speeds.
     :returns mesh: pcolormesh corresponding to the created plot.
     """
-    cmap = _make_cmap(colors)
+    if colors is None or isinstance(colors, list):
+        cmap = _make_cmap(colors)
+    else:
+        cmap = colors
+    
     r_m, theta_m = np.meshgrid(r, theta)
     mesh = ax.pcolormesh(
         theta_m,
         r_m,
         omega_values,
-        clim=(0, kwargs["Delta_Omega"]),
+        clim=(0,kwargs["Delta_Omega"]),
         cmap=cmap,
         edgecolors="face",
     )
@@ -129,6 +133,7 @@ def plot_angular_velocity(
     ax: plt.Axes,
     target_field: str,
     full_sphere,
+    colors: list | None | Colormap = None,
     *,
     rotating: bool = True,
     delta_omega: float,
@@ -148,7 +153,7 @@ def plot_angular_velocity(
     r, theta, omega, omega_back = read_angular_velocity(path, t, target_field, rotating=rotating)
     omega_back = None if not full_sphere else omega_back
     time = np.array(data["scales/sim_time"])
-    mesh = plot_angular(ax, r, theta, omega, omega_back ,Delta_Omega=delta_omega)
+    mesh = plot_angular(ax, r, theta, omega, omega_back, colors,Delta_Omega=delta_omega)
     ax.set_ylim(r.min(), r.max())
     ax.set_title(r"$t =$" + str(time[t])[:4])
     return mesh
@@ -161,6 +166,7 @@ def plot_angular_velocity_split(
     core_field: str,
     crust_field: str,
     full_sphere,
+    colors: list | None | Colormap = None,
     *,
     rotating: bool = True,
     delta_omega: float,
@@ -188,7 +194,7 @@ def plot_angular_velocity_split(
     for field in [core_field, crust_field]:
         r, theta, omega, omega_back = read_angular_velocity(path, t, field, rotating=rotating)
         omega_back = None if not full_sphere else omega_back
-        mesh = plot_angular(ax, r, theta, omega, omega_back, Delta_Omega=delta_omega)
+        mesh = plot_angular(ax, r, theta, omega, omega_back, colors, Delta_Omega=delta_omega)
         meshes.append(mesh)
 
     ax.set_ylim(0, 1.0)
@@ -206,6 +212,7 @@ def plot_angular_velocity_sequence(
     output_dir: Path,
     target_field: str,
     full_sphere,
+    colors: list | None | Colormap = None,
     **kwargs,
 ) -> plt.pcolormesh:
     """
@@ -230,9 +237,11 @@ def plot_angular_velocity_sequence(
                 ax[i],
                 target_field,
                 full_sphere,
+                colors,
                 rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
             )
+            fig=ax[i].get_figure()
         else:
             mesh = plot_angular_velocity_split(
                 path,
@@ -241,8 +250,18 @@ def plot_angular_velocity_sequence(
                 target_field[0],
                 target_field[1],
                 full_sphere,
+                colors,
                 rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
                 crustcore_boundary=kwargs["Ri"],
             )
+            fig=ax[i].get_figure()
+    fig.colorbar(
+        mesh[-1],
+        ax=ax,
+        location='top',
+        orientation='horizontal',
+        fraction=0.05,
+        pad=0.1
+    )
     return mesh

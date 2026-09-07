@@ -24,11 +24,12 @@ from gains.utils.parsers import create_parser_analysis
 
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)
+from matplotlib import colormaps
 
 if __name__ == "__main__":
     parser = create_parser_analysis()
     args = vars(parser.parse_args())
-
+    cmap = colormaps.get_cmap("bone_r")
     if args["parameter_file"] is not None:
         with Path.open(args["parameter_file"]) as param_file:
             PARAMS = json.load(param_file)
@@ -50,7 +51,7 @@ if __name__ == "__main__":
         1, len(args["times_plot"]), figsize=(16, 8), subplot_kw={"projection": "polar"}
     )
     plot_angular_velocity_sequence(
-        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"), True, **PARAMS
+        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"), True, cmap, **PARAMS
     )
     plt.savefig("{}/angular_speed_sequence_NF.png".format(args["fig_dir"]))
     plt.close()
@@ -114,6 +115,7 @@ if __name__ == "__main__":
             ax=ax,
             colour="#9b111e",
         )
+        ax.set_ylabel("$\Delta \Omega$")
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
     elif args["coordinate"] == "theta":
         path_list, fig = plot_against_time(

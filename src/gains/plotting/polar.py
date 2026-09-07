@@ -202,6 +202,9 @@ def plot_angular_velocity_split(
     ax.plot(
         theta, np.full_like(theta, crustcore_boundary), linestyle="--", color="black"
     )
+    ax.plot(
+        theta - np.pi, np.full_like(theta, crustcore_boundary), linestyle="--", color="black"
+    )
 
     return meshes
 
@@ -262,6 +265,6 @@ def plot_angular_velocity_sequence(
         location='top',
         orientation='horizontal',
         fraction=0.05,
-        pad=0.1
+        #pad=0.1
     )
     return mesh

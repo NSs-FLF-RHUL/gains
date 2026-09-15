@@ -5,7 +5,9 @@ import dedalus.public as d3
 from pastamarkers import markers
 from rich.progress import Progress, TextColumn, BarColumn
 
-paths = []
+paths = ["outputs/gaussian_circ_crust/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5",
+         "outputs/gaussian_circ_crust/su_equator/AZ_avg_equator/AZ_avg_equator_s2.h5",
+         "outputs/gaussian_circ_crust/su_equator/AZ_avg_equator/AZ_avg_equator_s3.h5"]
 
 #paths = ["outputs/spectral_filter/su_equator/AZ_avg_equator/AZ_avg_equator_s1.h5"]
 
@@ -42,6 +44,13 @@ with Progress(
                 u_theta['g'] = u_theta_series[increment]
                 u_phi['g'] = u_phi_series[increment]
                 time = int(time)
+                energy_grid = 0.5 * (u_r_series[increment]**2 +  u_theta_series[increment]**2 + u_phi_series[increment]**2)
+                energy = dist.Field(name="energy", bases=basis)
+                energy['g'] = energy_grid
+                energy_coeff = energy['c']
+                power_spec = np.abs(energy_coeff**2)
+
+                '''
                 u_r.change_scales(1)
                 u_theta.change_scales(1)
                 u_phi.change_scales(1)
@@ -53,11 +62,14 @@ with Progress(
                 energy_sum_r = np.sum(energy_density, axis=2)
                 E_l = np.sum(energy_sum_r, axis=0)
                 E_m = np.sum(energy_sum_r, axis=1)
+                '''
+
+                E_m = np.sum(power_spec, axis=(1,2))
+                E_l = np.sum(power_spec, axis=(0,2))
+                E_n = np.sum(power_spec, axis=(0,1))
+
                 l_axis = np.arange(len(E_l))
                 m_axis = np.arange(len(E_m))
-
-                #marker = markers.farfalle
-
                 plt.loglog(l_axis[1:], E_l[1:], 'x', markersize=3.0, c='black')
                 #plt.xscale('log')
                 #plt.yscale('log')
@@ -79,3 +91,5 @@ with Progress(
                 plt.close()
                 p.advance(task)
                 increment += 1
+                if increment == 198:
+                    breakpoint()

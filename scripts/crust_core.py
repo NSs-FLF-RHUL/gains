@@ -53,6 +53,8 @@ ncpu = MPI.COMM_WORLD.size
 
 Ek_shell = PARAMS["Ek_crust"]
 Ek_ball = PARAMS["Ek_core"]
+nu_art = 1e-8
+
 B = PARAMS["B"]
 Bprime = PARAMS["B"] / 2
 Ri = PARAMS["Ri"]
@@ -121,7 +123,7 @@ ephi["g"][0] = 1
 
 # Subsititutions for crust
 lift_basis_s = basis_crust.shell.derivative_basis(1)
-lift_s = lambda a: d3.Lift(a, lift_basis_s, -1)
+lift_s = lambda a, n: d3.Lift(a, lift_basis_s, n)
 phi_s, theta_s, r_s = dist.local_grids(basis_crust.shell)
 ez_s = dist.VectorField(coords, bases=basis_crust.shell)
 ez_s["g"][1] = -np.sin(theta_s)
@@ -131,12 +133,12 @@ u_target = dist.VectorField(coords, name="u_target", bases=basis_crust.shell)
 u_target["g"][0] = PARAMS["Delta_Omega"] * r_s * np.sin(theta_s)
 
 mask_radial["g"] = mask_r(r_s, PARAMS["width_r"])
-mask_circ["g"] = circle_on_sphere(theta_s, phi_s, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.5)
+mask_circ["g"] = circle_on_sphere(theta_s, phi_s, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.1)
 rvec_s = dist.VectorField(coords, bases=basis_crust.shell.radial_basis)
 rvec_s["g"][2] = r_s
 
-grad_u_s_n = d3.grad(u_s_n) + rvec_s * lift_s(tau_u_s_n_1)
-grad_u_s_s = d3.grad(u_s_s) + rvec_s * lift_s(tau_u_s_s_1)
+grad_u_s_n = d3.grad(u_s_n) + rvec_s * lift_s(tau_u_s_n_1, -1)
+grad_u_s_s = d3.grad(u_s_s) + rvec_s * lift_s(tau_u_s_s_1, -1)
 
 stheta_s = dist.Field(name="stheta", bases=basis_crust.shell)
 stheta_s["g"] = np.sin(theta_s)
@@ -224,10 +226,10 @@ problem.add_equation("integ(p_s_s) = 0")
 
 # Crust momentum equations equations
 problem.add_equation(
-    "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
+    "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2, -1) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
 )
 problem.add_equation(
-    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 100*mask_radial*mask_circ*(u_target - u_s_s)"
+    "dt(u_s_s) - nu_art*div(grad_u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2, -1) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 100*mask_radial*mask_circ*(u_target - u_s_s)"
 )
 
 # Core momentum equations
@@ -347,7 +349,7 @@ checkpoint.add_tasks(solver.state, layout='g')
 
 
 CFL = d3.CFL(
-    solver, timestep, cadence=1, safety=0.5, threshold=0.1, max_dt=max_timestep
+    solver, timestep, cadence=1, safety=0.2, threshold=0.1, max_dt=max_timestep
 )
 CFL.add_velocity(u_b_n)
 CFL.add_velocity(u_s_n)

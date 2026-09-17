@@ -53,7 +53,6 @@ ncpu = MPI.COMM_WORLD.size
 
 Ek_shell = PARAMS["Ek_crust"]
 Ek_ball = PARAMS["Ek_core"]
-nu_art = 1e-8
 
 B = PARAMS["B"]
 Bprime = PARAMS["B"] / 2
@@ -64,6 +63,8 @@ x_b_n = 0.05  # Proton fraction - core
 x_b_s = 0.95  # Neutron fraction - core
 x_s_n = 0.05  # Electron fraction - crust
 x_s_s = 0.95  # Neutron fraction - crust
+
+nu_hyper = 1e-6
 
 PARAMS["x_b_n"] = 0.05 #Added to params for saving purposes
 PARAMS["x_b_s"] = 0.95
@@ -160,7 +161,7 @@ omega_s_s = dist.VectorField(
 
 u_s_ns = u_s_n - u_s_s
 omega_s_s = Curl(u_s_s) + 2 * ez_s
-omega_unit_s = omega_s_s / 2  # Numerically unstable if fully normalised
+omega_unit_s = omega_s_s / np.sqrt(Dot(omega_s_s, omega_s_s)+1e-14) # Numerically unstable if fully normalised
 F_mf_s = B * (Cross(omega_unit_s, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
@@ -189,6 +190,12 @@ omega_unit_b = omega_b_s / 2
 F_mf_b = B * (Cross(omega_unit_b, Cross(omega_b_s, u_b_ns))) + Bprime * Cross(
     omega_b_s, u_b_ns
 )
+omega_unit_broken = omega_s_s / np.sqrt(Dot(omega_s_s, omega_s_s)+1e-14)
+F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
+    omega_s_s, u_s_ns
+)
+
+l = PARAMS["Nphi"]
 
 # Problem
 problem = d3.IVP(
@@ -212,7 +219,7 @@ problem = d3.IVP(
         tau_p_b_s,
         tau_u_b_s_2,
     ],
-    namespace=locals(),
+    namespace=locals()
 )
 
 problem.add_equation("trace(grad_u_s_n) + tau_p_s_n = 0")
@@ -229,7 +236,7 @@ problem.add_equation(
     "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2, -1) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
 )
 problem.add_equation(
-    "dt(u_s_s) - nu_art*div(grad_u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2, -1) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 100*mask_radial*mask_circ*(u_target - u_s_s)"
+    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2, -1) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 100*mask_radial*mask_circ*(u_target - u_s_s)"
 )
 
 # Core momentum equations
@@ -249,10 +256,13 @@ problem.add_equation("shear_stress_s_s_surface = 0")  # Stress free, superfluid
 
 # Iterface boundary conditions, crust side
 problem.add_equation("radial(u_s_n(r=Ri)) = 0")  # No penetration, normal fluid
-problem.add_equation("shear_stress_s_n_interface = 0")  # Stress free, normal fluid
+problem.add_equation("shear_stress_s_n_interface = 0", condition="nphi != 1")  # Stress free, normal fluid
 
 problem.add_equation("radial(u_s_s(r=Ri)) = 0")  # No penetration, superfluid
-problem.add_equation("shear_stress_s_s_interface = 0")  # Stress free, superfluid
+problem.add_equation("shear_stress_s_s_interface = 0", condition="nphi != 1")  # Stress free, superfluid
+
+problem.add_equation("angular(u_s_s(r=Ri)) = 0", condition = "nphi==1")
+problem.add_equation("angular(u_s_n(r=Ri)) = 0", condition= "nphi==1")
 
 # Interface boundary condition, core side
 problem.add_equation("radial(u_b_n(r=Ri)) = 0")  # No penetration, normal fluid
@@ -263,7 +273,7 @@ problem.add_equation(
 problem.add_equation("radial(u_b_s(r=Ri)) = 0")  # No penetration, superfluid
 problem.add_equation("shear_stress_b_s_interface = 0")  # Stress free, superfluid
 
-solver = problem.build_solver(timestepper)
+solver = problem.build_solver(timestepper, enforce_real_cadence=1)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
 
 if PARAMS["use_checkpoint"]:
@@ -358,7 +368,7 @@ CFL.add_velocity(u_s_s)
 
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property(np.sqrt(u_s_n @ u_s_n) * PARAMS["Ek_crust"], name="Re_n")
-flow.add_property(np.sqrt(omega_b_s @ omega_b_s), name="vorticity_mag")
+flow.add_property(np.sqrt(omega_s_s @ omega_s_s), name="vorticity_mag")
 
 
 @profile(PARAMS["profile"], PARAMS["output_dir"])

@@ -161,7 +161,7 @@ omega_s_s = dist.VectorField(
 
 u_s_ns = u_s_n - u_s_s
 omega_s_s = Curl(u_s_s) + 2 * ez_s
-omega_unit_s = omega_s_s / np.sqrt(Dot(omega_s_s, omega_s_s)+1e-14) # Numerically unstable if fully normalised
+omega_unit_s = omega_s_s / 2 # Numerically unstable if fully normalised
 F_mf_s = B * (Cross(omega_unit_s, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )

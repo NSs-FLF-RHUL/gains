@@ -374,6 +374,6 @@ flow.add_property(np.sqrt(omega_s_s @ omega_s_s), name="vorticity_mag")
 @profile(PARAMS["profile"], PARAMS["output_dir"])
 def main() -> Callable:
     """Create main loop with profiling."""
-    return track_vorticity(logger, flow, solver, CFL, PARAMS)
+    return track_vorticity(logger, flow, solver, CFL, PARAMS, u_fields)
 
 main()

@@ -14,7 +14,8 @@ def track_vorticity(
     flow: d3.GlobalFlowProperty,
     solver: dedalus.core.solvers.InitialValueSolver,
     cfl: d3.CFL,
-    params: dict
+    params: dict,
+    snapshot_handler
 ) -> None:
     """
     Create main loop that tracks and logs the maximum superfluid vorticity.
@@ -46,7 +47,12 @@ def track_vorticity(
                             "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f, min(omega_s)=%f"
                             % (solver.iteration, solver.sim_time, timestep, max_omega, min_omega)
                         )
-        solver.evaluate_handlers()
+        solver.evaluator.evaluate_handlers(
+            [snapshot_handler],
+            wall_time=solver.wall_time,
+            sim_time=solver.sim_time,
+            iteration=solver.iteration
+        )
         logger.exception("Exception raised, triggering end of main loop.")
         raise
     finally:

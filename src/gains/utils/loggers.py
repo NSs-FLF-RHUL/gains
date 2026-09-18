@@ -5,6 +5,8 @@ from logging import Logger
 import dedalus
 import dedalus.public as d3
 from gains.utils.misc import save_simulation_params
+import gc
+import numpy as np
 
 
 def track_vorticity(
@@ -31,11 +33,20 @@ def track_vorticity(
             solver.step(timestep)
             if (solver.iteration - 1) % 10 == 0:
                 max_omega = flow.max("vorticity_mag")
+                min_omega = flow.min("vorticity_mag")
                 logger.info(
-                    "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f"
-                    % (solver.iteration, solver.sim_time, timestep, max_omega)
+                    "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f, min(omega_s)=%f"
+                    % (solver.iteration, solver.sim_time, timestep, max_omega, min_omega)
                 )
+            if (solver.iteration) % 100 == 0:
+                n = gc.collect()
+                logger.info(f"collected: {n}")
     except:
+        logger.info(
+                            "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f, min(omega_s)=%f"
+                            % (solver.iteration, solver.sim_time, timestep, max_omega, min_omega)
+                        )
+        solver.evaluate_handlers()
         logger.exception("Exception raised, triggering end of main loop.")
         raise
     finally:

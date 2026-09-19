@@ -43,6 +43,7 @@ def track_vorticity(
                 n = gc.collect()
                 logger.info(f"collected: {n}")
     except:
+        logger.exception("Exception raised, saving snapshot and triggering end of main loop.")
         logger.info(
                             "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f, min(omega_s)=%f"
                             % (solver.iteration, solver.sim_time, timestep, max_omega, min_omega)
@@ -53,7 +54,6 @@ def track_vorticity(
             sim_time=solver.sim_time,
             iteration=solver.iteration
         )
-        logger.exception("Exception raised, triggering end of main loop.")
         raise
     finally:
         save_simulation_params(params["output_dir"], params)

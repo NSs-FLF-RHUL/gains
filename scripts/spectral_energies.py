@@ -42,14 +42,6 @@ with Progress(
                 u_theta['g'] = u_theta_series[increment]
                 u_phi['g'] = u_phi_series[increment]
                 time = int(time)
-                '''
-                energy_grid = 0.5 * (u_r_series[increment]**2 +  u_theta_series[increment]**2 + u_phi_series[increment]**2)
-                energy = dist.Field(name="energy", bases=basis)
-                energy['g'] = energy_grid
-                energy_coeff = energy['c']
-                power_spec = np.abs(energy_coeff**2)
-                '''
-                
                 
                 u_r.change_scales(1)
                 u_theta.change_scales(1)

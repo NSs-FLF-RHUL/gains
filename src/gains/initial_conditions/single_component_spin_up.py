@@ -74,13 +74,6 @@ def circle_on_sphere(theta: np.ndarray, phi: np.ndarray, radius: float, center: 
 
     cgamma = ctheta*ctheta_0 + stheta*stheta_0*cdiff
     gamma = np.arccos(np.clip(cgamma, -1, 1))
-
-    f = np.zeros_like(gamma)
-    inside = gamma <= radius
-    transition = np.logical_and(gamma > radius, gamma < radius + width)
-    x = (gamma[transition] - radius) / width
-
-    f[inside] = 1.0
-    f[transition] = np.cos(np.pi*x/2)**2
-    g=np.exp(-gamma**2/(0.5))
+    
+    g=np.exp(-gamma**2/(2*radius))
     return g

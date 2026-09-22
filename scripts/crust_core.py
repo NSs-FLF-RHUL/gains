@@ -165,7 +165,7 @@ omega_unit_s = omega_s_s / 2 # Numerically unstable if fully normalised
 F_mf_s = B * (Cross(omega_unit_s, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
-mask_hyper = 1 - mask_radial
+
 # Subsititutions for Core
 lift_b = lambda a: d3.Lift(a, basis_core.ball, -1)
 phi_b, theta_b, r_b = dist.local_grids(basis_core.ball)
@@ -195,7 +195,7 @@ F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime 
     omega_s_s, u_s_ns
 )
 
-nu_hyper = 1e-5
+
 
 # Problem
 problem = d3.IVP(
@@ -265,7 +265,7 @@ problem.add_equation("shear_stress_s_s_interface = 0")  # Stress free, superflui
 # Interface boundary condition, core side
 problem.add_equation("radial(u_b_n(r=Ri)) = 0")  # No penetration, normal fluid
 problem.add_equation(
-    "angular(u_b_n(r=Ri)) = angular(u_s_n(r=Ri))"
+    "angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0"
 )  # Tangential velocity conservation, normal fluid
 
 problem.add_equation("radial(u_b_s(r=Ri)) = 0")  # No penetration, superfluid

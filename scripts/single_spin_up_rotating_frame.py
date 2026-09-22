@@ -9,7 +9,7 @@ import numpy as np
 from mpi4py import MPI
 
 # Parameters - load in from parameter file
-from gains.initial_conditions.single_component_spin_up import mask_angular, mask_r
+from gains.initial_conditions.single_component_spin_up import circle_on_sphere, mask_r
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.misc import mesh_cpus
@@ -76,8 +76,8 @@ mask_equator = basis.dist.Field(name="mask_equator", bases=basis.ball)
 mask_radial = basis.dist.Field(name="mask_radial", bases=basis.ball)
 
 sintheta["g"] = np.sin(theta)
-mask_equator["g"] = mask_angular(theta, 0.3, 2.0)
-mask_radial["g"] = mask_r(r, PARAMS["Nr"])
+mask_equator["g"] = circle_on_sphere(theta, phi, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.1)
+mask_radial["g"] = mask_r(r, PARAMS["width_r"])
 u_n_target = basis.dist.VectorField(coords, name="u_n_target", bases=basis.ball)
 u_n_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)
 
@@ -159,7 +159,7 @@ AZ_avg = solver.evaluator.add_file_handler(
 )
 AZ_avg.add_task(dot(er, u_n), name="u_n_r")
 AZ_avg.add_task(dot(etheta, u_n), name="u_n_theta")
-AZ_avg.add_task(az_avg(u_n_phi), name="u_n_phi")
+AZ_avg.add_task(u_n_phi, name="u_n_phi")
 
 
 slices = solver.evaluator.add_file_handler(

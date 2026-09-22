@@ -42,6 +42,7 @@ ncpu = MPI.COMM_WORLD.size
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
 Bprime = B / 2
+nu_sf = Ek*10**-2
 
 mesh = mesh_cpus(ncpu)
 
@@ -82,6 +83,8 @@ etheta["g"][1] = 1
 ephi["g"][0] = 1
 
 ez = basis.dist.VectorField(basis.coords, bases=basis.ball)
+r_vec = dist.VectorField(coords, bases=basis.ball)
+r_vec["g"][2] = r
 ez["g"][1] = -np.sin(theta)
 ez["g"][2] = np.cos(theta)  # unit vector in z direction
 u_ns = u_n - u_s
@@ -101,10 +104,16 @@ strain_rate_n = d3.grad(u_n) + d3.trans(d3.grad(u_n))
 shear_stress_n = d3.angular(d3.radial(strain_rate_n(r=1), index=1))
 
 mask_radial["g"] = mask_r(r, PARAMS["width_r"])
-mask_circ["g"] = circle_on_sphere(theta, phi, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.5)
+mask_circ["g"] = circle_on_sphere(theta, phi, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.1)
+
+#mask_radial.low_pass_filter(scales=0.5)
+#mask_circ.low_pass_filter(scales=0.5)
+
+omega_target = dist.VectorField(coords, name="omega_target", bases=basis.ball)
+omega_target = PARAMS["Delta_Omega"]*ez
 
 u_target = dist.VectorField(coords, name="u_target", bases=basis.ball)
-u_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)
+u_target = d3.CrossProduct(omega_target, r_vec)
 
 # problem - HVBK equations spin up in basis.sphere
 problem = d3.IVP(
@@ -121,7 +130,7 @@ problem.add_equation(
     "- 2*cross(ez,u_n)"
 )
 problem.add_equation(
-    "dt(u_s) + grad(p_s) + lift(tau_u_s) = -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s) + 100*mask_circ*mask_radial*(u_target - u_s)"
+    "dt(u_s) + grad(p_s) + lift(tau_u_s) = 10*mask_circ*mask_radial*(u_target - u_s) -u_s@grad(u_s) - F_mf - 2*cross(ez, u_s)"
 )
 
 problem.add_equation("radial(u_n(r=radius)) = 0")
@@ -138,7 +147,7 @@ else:
     # Initial condition
     u_n.fill_random("g", seed=42, distribution="normal", scale=1e-10)  # Random noise
     u_n.low_pass_filter(scales=0.5)
-    u_s.fill_random("g", seed=42, distribution="normal", scale=1e-10)
+    u_s.fill_random("g", seed=43, distribution="normal", scale=1e-10)
     u_s.low_pass_filter(scales=0.5)
     timestep = max_timestep
 
@@ -171,7 +180,7 @@ save_path.mkdir(parents=True, exist_ok=True)
 
 AZ_avg = solver.evaluator.add_file_handler(
     str(save_path / "AZ_avg_equator"),
-    sim_dt=0.05,
+    sim_dt=PARAMS["snapshot_dt"],
     max_writes=100,
 )
 AZ_avg.add_task(Dot(er, u_n), name="u_n_r")
@@ -181,12 +190,34 @@ AZ_avg.add_task(Dot(ephi, u_s), name="u_s_phi")
 
 slices = solver.evaluator.add_file_handler(
     str(save_path / "slices"),
-    sim_dt=0.025,
+    sim_dt=PARAMS["snapshot_dt"],
     max_writes=100,
 )
 
 slices.add_task(
     u_n_phi(theta=np.pi / 2), scales=PARAMS["dealias"], name="u_n_phi(equator)"
+)
+
+forcing = solver.evaluator.add_file_handler(
+    str(save_path / "forcing"),
+    sim_dt = PARAMS["snapshot_dt"],
+    max_writes = 100
+)
+
+forcing.add_task(
+    Dot((mask_circ*mask_radial*(u_s - u_target)),(mask_circ*mask_radial*(u_s - u_target))), scales=PARAMS["dealias"], name="forcing_term"
+)
+
+forcing.add_task(
+    Dot(u_target, u_target), scales=PARAMS["dealias"], name="u_target"
+)
+
+forcing.add_task(
+    mask_circ, scales=PARAMS["dealias"], name="mask_circ"
+)
+
+forcing.add_task(
+    mask_radial, scales=PARAMS["dealias"], name = "mask_radial"
 )
 
 # Checkpoint

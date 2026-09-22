@@ -157,7 +157,7 @@ def downsample_h5_file(source_path: Path, target_path: Path, step: int = 20) -> 
     datapoint along the first axis of every dataset. The original file is not
     modified by calling this function.
 
-    :param source_path: Path to the file ypu want to downsample.
+    :param source_path: Path to the file you want to downsample.
     :param target_path: Path to save the downsampled file to.
     :param step: Step size for downsampling (the default 20 will take every
     20th value from the original file).

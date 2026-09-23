@@ -5,6 +5,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 import scipy.interpolate as inp
+import dedalus.public as d3
 
 from gains.utils.misc import get_arg_of_nearest
 
@@ -217,3 +218,16 @@ def get_angular_speed_vs_time(
             count += 1
 
     return omega_rs[:count], times[:count]
+
+def extract_spectra(u_r: d3.Field, u_t: d3.Field, u_p: d3.Field) -> tuple[np.ndarray]:
+    u_r_coeff = u_r['c']
+    u_theta_coeff = u_t['c']
+    u_phi_coeff = u_p['c']
+
+    energy_density = np.abs(u_r_coeff)**2 + np.abs(u_theta_coeff)**2 + np.abs(u_phi_coeff)**2
+
+    E_m = np.sum(energy_density, axis=(1,2))
+    E_l = np.sum(energy_density, axis=(0,2))
+    E_n = np.sum(energy_density, axis=(0,1))
+
+    return E_m, E_l, E_n

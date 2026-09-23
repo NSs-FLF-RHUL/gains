@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.exceptions import MeshError
+from collections.abc import Container, Callable
+import warnings
 
 
 def _get_ax_and_fig(ax: plt.Axes | None, *, polar: bool) -> tuple[plt.Figure, plt.Axes]:
@@ -148,70 +150,100 @@ def _downscale_data(src: str | Path, tmp: str | Path) -> None:
 
     Path(tmp).replace(Path(src))
 
+def downsampling_visitor(
+    destination_file: h5py.File,
+    downsample_step: int = 20,
+    *,
+    downsample_folders: Container[str] = (),
+    downsample_files: Container[str] = ()
+) -> Callable[[str, h5py.Group | h5py.Dataset], None]:
 
-def downsample_h5_file(source_path: Path, target_path: Path, step: int = 20) -> None:
-    """
-    Produce a downsampled clone of an existing h5 file.
+    def _inner(
+        name: str,
+        obj: h5py.Group | h5py.Dataset,
+    ) -> None:
 
-    Clones an HDF5 structure and populates it with every Nth (default 20th)
-    datapoint along the first axis of every dataset. The original file is not
-    modified by calling this function.
+        downsample = (
+            any(name.startswith(folder) for folder in downsample_folders)
+            or name in downsample_files
+        )
 
-    :param source_path: Path to the file you want to downsample.
-    :param target_path: Path to save the downsampled file to.
-    :param step: Step size for downsampling (the default 20 will take every
-    20th value from the original file).
-    """
-    with h5py.File(source_path, "r") as src, h5py.File(target_path, "w") as dst:
+        if isinstance(obj, h5py.Group):
+            destination_file.create_group(name)
 
-        def visitor(name: str, obj: h5py.Group | h5py.Dataset) -> None:
-            if name.startswith("tasks/") or name in {
-                "scales/sim_time",
-                "scales/iteration",
-                "scales/write_number",
-                "scales/timestep",
-            }:
-                downsample = True
+        elif isinstance(obj, h5py.Dataset):
+            # Handle empty or 0-dimensional datasets
+            if obj.shape == ():
+                destination_file.create_dataset(name, dtype=obj.dtype, data=obj[()])
             else:
-                downsample = False
-            if isinstance(obj, h5py.Group):
-                dst.create_group(name)
-
-            elif isinstance(obj, h5py.Dataset):
-                # Handle empty or 0-dimensional datasets
-                if obj.shape == ():
-                    dst.create_dataset(name, dtype=obj.dtype, data=obj[()])
+                # Calculate new shape assuming simulation time is on Axis 0
+                old_shape = obj.shape
+                new_axis_0 = int(np.ceil(old_shape[0] / downsample_step))
+                if downsample:
+                    new_shape = (new_axis_0, *old_shape[1:])
                 else:
-                    # Calculate new shape assuming simulation time is on Axis 0
-                    old_shape = obj.shape
-                    new_axis_0 = int(np.ceil(old_shape[0] / step))
-                    if downsample:
-                        new_shape = (new_axis_0, *old_shape[1:])
-                    else:
-                        new_shape = old_shape
+                    new_shape = old_shape
 
-                    # Create the new dataset with same metadata
-                    dst_dset = dst.create_dataset(
-                        name,
-                        shape=new_shape,
-                        dtype=obj.dtype,
-                        chunks=obj.chunks,
-                        compression=obj.compression,
-                        compression_opts=obj.compression_opts,
-                        shuffle=obj.shuffle,
-                        fletcher32=obj.fletcher32,
-                    )
+                # Create the new dataset with same metadata
+                dst_dset = destination_file.create_dataset(
+                    name,
+                    shape=new_shape,
+                    dtype=obj.dtype,
+                    chunks=obj.chunks,
+                    compression=obj.compression,
+                    compression_opts=obj.compression_opts,
+                    shuffle=obj.shuffle,
+                    fletcher32=obj.fletcher32,
+                )
 
-                    # Slice every 20th point along Axis 0 and stream it to the new file
-                    # Using [::step] prevents loading entire dataset into RAM at once
-                    if downsample:
-                        dst_dset[...] = obj[::step, ...]
-                    else:
-                        dst_dset[...] = obj
+                # Slice every 20th point along Axis 0 and stream it to the new file
+                # Using [::step] prevents loading entire dataset into RAM at once
+                if downsample:
+                    dst_dset[...] = obj[::downsample_step, ...]
+                else:
+                    dst_dset[...] = obj
 
-            # Copy over metadata/attributes (e.g., simulation units, timestamps)
-            for attr_name, attr_value in obj.attrs.items():
-                dst[name].attrs[attr_name] = attr_value
+        # Copy over metadata/attributes (e.g., simulation units, timestamps)
+        for attr_name, attr_value in obj.attrs.items():
+            destination_file[name].attrs[attr_name] = attr_value
 
-        # Execute the recursive copy and slice
-        src.visititems(visitor)
+    return _inner
+
+
+def downsample_h5_file(
+    source_path: Path,
+    target_path: Path,
+    downsample_step: int = 20,
+    *,
+    downsample_folders: Container[str] = (),
+    downsample_files: Container[str] = (),
+) -> None:
+
+    if downsample_step <= 0:
+        raise ValueError("Downsample step should be greater than zero")
+
+    if downsample_step == 1:
+        warnings.warn(
+            "downsample_step is 1, so selected datasets will be copied without "
+            "downsampling.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    if not (downsample_folders or downsample_files):
+        downsample_folders = {"tasks/"}
+        downsample_files = {"scales/sim_time",
+                            "scales/iteration",
+                            "scales/write_number",
+                            "scales/timestep",}
+    
+    with h5py.File(source_path, "r") as src, h5py.File(target_path, "w") as dst:
+        src.visititems(
+            downsampling_visitor(
+                dst,
+                downsample_step,
+                downsample_folders = downsample_folders,
+                downsample_files = downsample_files,
+            )
+        )
+

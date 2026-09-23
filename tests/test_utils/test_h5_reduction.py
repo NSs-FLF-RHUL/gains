@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 import pytest
 
-from gains.utils.misc import _downscale_data
+from gains.utils.misc import _downscale_data, downsample_h5_file
 
 
 def make_input_h5(path: Path) -> None:
@@ -91,7 +91,7 @@ def metadata() -> list[str]:
     ]
 
 
-def test_metadata(tmp_path: Path, metadata: list[str]) -> None:
+def test_downscale_metadata(tmp_path: Path, metadata: list[str]) -> None:
     """Confirm metadata is preserved after downscaling the data."""
     src = tmp_path / "input.h5"
     tmp = tmp_path / "temp.h5"
@@ -102,6 +102,32 @@ def test_metadata(tmp_path: Path, metadata: list[str]) -> None:
     _downscale_data(src, tmp)
 
     with h5py.File(ref, "r") as fref, h5py.File(src, "r") as ftest:
+        for field in metadata:
+            assert getattr(fref["tasks/a"], field) == getattr(ftest["tasks/a"], field)
+            assert getattr(fref["tasks/b"], field) == getattr(ftest["tasks/b"], field)
+
+def test_downample_warnings(tmp_path) -> None:
+    """Confirm correct warnings and errors are raised for step sizes"""
+    src = tmp_path / "input.h5"
+    tmp = tmp_path / "temp.h5"
+    make_input_h5(src)
+    with pytest.raises(ValueError):
+        downsample_h5_file(src, tmp, -4)
+        downsample_h5_file(src, tmp, 0)
+    with pytest.warns(UserWarning, match="downsample_step is 1"):
+        downsample_h5_file(src, tmp, 1)
+
+def test_downsample_metadata(tmp_path: Path, metadata: list[str]) -> None:
+    """Confirm metadata is preserved when downsampling"""
+    src = tmp_path / "input.h5"
+    tmp = tmp_path / "temp.h5"
+    ref = tmp_path / "reference.h5"
+    make_input_h5(src)
+    shutil.copy(src, ref)
+
+    downsample_h5_file(src, tmp, 2)
+
+    with h5py.File(ref, "r") as fref, h5py.File(tmp, "r") as ftest:
         for field in metadata:
             assert getattr(fref["tasks/a"], field) == getattr(ftest["tasks/a"], field)
             assert getattr(fref["tasks/b"], field) == getattr(ftest["tasks/b"], field)

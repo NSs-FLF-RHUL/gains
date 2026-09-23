@@ -31,6 +31,10 @@ def make_input_h5(path: Path) -> None:
             data=np.linspace(0,10,50, dtype=np.float64),
         )
 
+        h = f.create_group("unspecified")
+
+        h.create_dataset("a", data=data)
+
 
 def test_downscale_data_structure(tmp_path: Path) -> None:
     """Test new file has the same data structure as the input file."""
@@ -137,7 +141,7 @@ def test_downsample_metadata(tmp_path: Path, metadata: list[str]) -> None:
             assert getattr(fref["tasks/b"], field) == getattr(ftest["tasks/b"], field)
 
 
-def test_downsampling(tmp_path, step_sizes) -> None:
+def test_downsampled(tmp_path, step_sizes) -> None:
     src = tmp_path / "input.h5"
     tmp = tmp_path / "temp.h5"
 
@@ -155,3 +159,18 @@ def test_downsampling(tmp_path, step_sizes) -> None:
         with h5py.File(tmp, "r") as f:
                 np.testing.assert_allclose(f["tasks/a"][:], a_tgt)
                 np.testing.assert_allclose(f["tasks/b"][:], b_tgt)
+
+def test_unspecified(tmp_path, step_sizes) -> None:
+    src = tmp_path / "input.h5"
+    tmp = tmp_path / "temp.h5"
+
+    make_input_h5(src)
+
+    with h5py.File(src, "r") as f:
+        a_orig = f["unspecified/a"][:]
+
+    for size in step_sizes:
+        downsample_h5_file(src, tmp, size)
+
+        with h5py.File(tmp, "r") as f:
+            np.testing.assert_allclose(f["unspecified/a"][:], a_orig)

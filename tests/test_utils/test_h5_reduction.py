@@ -11,7 +11,7 @@ from gains.utils.misc import _downscale_data, downsample_h5_file
 def make_input_h5(path: Path) -> None:
     """Helper to create sample data file for testing."""
     rng = np.random.default_rng()
-    data = rng.random((4, 3), dtype=np.float64)
+    data = rng.random((40, 30), dtype=np.float64)
 
     with h5py.File(path, "w") as f:
         g = f.create_group("tasks")
@@ -28,7 +28,7 @@ def make_input_h5(path: Path) -> None:
 
         g.create_dataset(
             "b",
-            data=np.array([1.5, 2.5, 3.5], dtype=np.float64),
+            data=np.linspace(0,10,50, dtype=np.float64),
         )
 
 
@@ -90,6 +90,10 @@ def metadata() -> list[str]:
         "fillvalue",
     ]
 
+@pytest.fixture
+def step_sizes() -> list[int]:
+    """Step sizes to test downsampling"""
+    return [2,3,4,5]
 
 def test_downscale_metadata(tmp_path: Path, metadata: list[str]) -> None:
     """Confirm metadata is preserved after downscaling the data."""
@@ -131,3 +135,23 @@ def test_downsample_metadata(tmp_path: Path, metadata: list[str]) -> None:
         for field in metadata:
             assert getattr(fref["tasks/a"], field) == getattr(ftest["tasks/a"], field)
             assert getattr(fref["tasks/b"], field) == getattr(ftest["tasks/b"], field)
+
+
+def test_downsampling(tmp_path, step_sizes) -> None:
+    src = tmp_path / "input.h5"
+    tmp = tmp_path / "temp.h5"
+
+    make_input_h5(src)
+
+    with h5py.File(src, "r") as f:
+        a_orig = f["tasks/a"][:]
+        b_orig = f["tasks/b"][:]
+
+    for size in step_sizes:
+        a_tgt = a_orig[::size, ...]
+        b_tgt = b_orig[::size, ...]
+        downsample_h5_file(src, tmp, size)
+        
+        with h5py.File(tmp, "r") as f:
+                np.testing.assert_allclose(f["tasks/a"][:], a_tgt)
+                np.testing.assert_allclose(f["tasks/b"][:], b_tgt)

@@ -184,7 +184,7 @@ def downsample_h5_file(source_path: Path, target_path: Path, step: int = 20) -> 
                 else:
                     # Calculate new shape assuming simulation time is on Axis 0
                     old_shape = obj.shape
-                    new_axis_0 = int(np.ceil(old_shape[0] / step))
+                    new_axis_0 = np.ceil(old_shape[0] / step).astype(int)
                     if downsample:
                         new_shape = (new_axis_0, *old_shape[1:])
                     else:

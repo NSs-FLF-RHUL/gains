@@ -1,6 +1,8 @@
 """Stores useful functions, applicable throughout the package."""
 
 import re
+import warnings
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
 import h5py
@@ -8,8 +10,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gains.exceptions import MeshError
-from collections.abc import Container, Callable
-import warnings
 
 
 def _get_ax_and_fig(ax: plt.Axes | None, *, polar: bool) -> tuple[plt.Figure, plt.Axes]:
@@ -150,22 +150,43 @@ def _downscale_data(src: str | Path, tmp: str | Path) -> None:
 
     Path(tmp).replace(Path(src))
 
+
 def downsampling_visitor(
     destination_file: h5py.File,
     downsample_step: int = 20,
     *,
-    downsample_folders: Container[str] = (),
-    downsample_files: Container[str] = ()
+    downsample_groups: Iterable[str],
+    downsample_datasets: Iterable[str],
 ) -> Callable[[str, h5py.Group | h5py.Dataset], None]:
+    """
+    Visitor factory for downsampling hdf5 data.
+
+    The returned visitor copies the HDF5 group and dataset structure from the
+    source file to destination_file. Datasets selected by
+    downsample_groups or downsample_datasets are downsampled along
+    their first axis by taking every downsample_step-th value. Other
+    datasets are copied unchanged.
+
+    Dataset attributes and relevant dataset metadata, such as dtype, chunks,
+    compression, and shuffle settings, are preserved. Scalar (0-dimensional)
+    datasets are copied without downsampling.
+
+    :param source_path: Path to the file you want to downsample.
+    :param target_path: Path to save the downsampled file to.
+    :param downsample_step: Step size for downsampling (the default 20 will take every
+    20th value from the original file).
+    :param downsample_groups: A list of the h5 groups to be downsampled. All datasets
+    in the group will be downsampled.
+    :parame downsample_files: A list of specific datasets to be downsampled.
+    """
 
     def _inner(
         name: str,
         obj: h5py.Group | h5py.Dataset,
     ) -> None:
-
         downsample = (
-            any(name.startswith(folder) for folder in downsample_folders)
-            or name in downsample_files
+            any(name.startswith(folder) for folder in downsample_groups)
+            or name in downsample_datasets
         )
 
         if isinstance(obj, h5py.Group):
@@ -179,10 +200,7 @@ def downsampling_visitor(
                 # Calculate new shape assuming simulation time is on Axis 0
                 old_shape = obj.shape
                 new_axis_0 = int(np.ceil(old_shape[0] / downsample_step))
-                if downsample:
-                    new_shape = (new_axis_0, *old_shape[1:])
-                else:
-                    new_shape = old_shape
+                new_shape = (new_axis_0, *old_shape[1:]) if downsample else old_shape
 
                 # Create the new dataset with same metadata
                 dst_dset = destination_file.create_dataset(
@@ -215,12 +233,27 @@ def downsample_h5_file(
     target_path: Path,
     downsample_step: int = 20,
     *,
-    downsample_folders: Container[str] = (),
-    downsample_files: Container[str] = (),
+    downsample_groups: Iterable[str] = (),
+    downsample_datasets: Iterable[str] = (),
 ) -> None:
+    """
+    Produce a downsampled clone of an existing h5 file.
 
+    Clones an HDF5 structure and populates it with every Nth (default 20th)
+    datapoint along the first axis of every dataset. The original file is not
+    modified by calling this function.
+
+    :param source_path: Path to the file you want to downsample.
+    :param target_path: Path to save the downsampled file to.
+    :param downsample_step: Step size for downsampling (the default 20 will take every
+    20th value from the original file).
+    :param downsample_groups: A list of the h5 groups to be downsampled. All datasets
+    in the group will be downsampled.
+    :parame downsample_files: A list of specific datasets to be downsampled.
+    """
     if downsample_step <= 0:
-        raise ValueError("Downsample step should be greater than zero")
+        msg = "Downsample step should be greater than zero"
+        raise ValueError(msg)
 
     if downsample_step == 1:
         warnings.warn(
@@ -230,20 +263,21 @@ def downsample_h5_file(
             stacklevel=2,
         )
 
-    if not (downsample_folders or downsample_files):
-        downsample_folders = {"tasks/"}
-        downsample_files = {"scales/sim_time",
-                            "scales/iteration",
-                            "scales/write_number",
-                            "scales/timestep",}
-    
+    if not (downsample_groups or downsample_datasets):
+        downsample_groups = {"tasks/"}
+        downsample_datasets = {
+            "scales/sim_time",
+            "scales/iteration",
+            "scales/write_number",
+            "scales/timestep",
+        }
+
     with h5py.File(source_path, "r") as src, h5py.File(target_path, "w") as dst:
         src.visititems(
             downsampling_visitor(
                 dst,
                 downsample_step,
-                downsample_folders = downsample_folders,
-                downsample_files = downsample_files,
+                downsample_groups=downsample_groups,
+                downsample_datasets=downsample_datasets,
             )
         )
-

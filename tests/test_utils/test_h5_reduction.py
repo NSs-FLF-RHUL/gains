@@ -28,7 +28,7 @@ def make_input_h5(path: Path) -> None:
 
         g.create_dataset(
             "b",
-            data=np.linspace(0,10,50, dtype=np.float64),
+            data=np.linspace(0, 10, 50, dtype=np.float64),
         )
 
         h = f.create_group("unspecified")
@@ -94,10 +94,12 @@ def metadata() -> list[str]:
         "fillvalue",
     ]
 
+
 @pytest.fixture
 def step_sizes() -> list[int]:
-    """Step sizes to test downsampling"""
-    return [2,3,4,5]
+    """Step sizes to test downsampling."""
+    return [2, 3, 4, 5]
+
 
 def test_downscale_metadata(tmp_path: Path, metadata: list[str]) -> None:
     """Confirm metadata is preserved after downscaling the data."""
@@ -114,19 +116,22 @@ def test_downscale_metadata(tmp_path: Path, metadata: list[str]) -> None:
             assert getattr(fref["tasks/a"], field) == getattr(ftest["tasks/a"], field)
             assert getattr(fref["tasks/b"], field) == getattr(ftest["tasks/b"], field)
 
-def test_downample_warnings(tmp_path) -> None:
-    """Confirm correct warnings and errors are raised for step sizes"""
+
+def test_downample_warnings(tmp_path: Path) -> None:
+    """Confirm correct warnings and errors are raised for step sizes."""
     src = tmp_path / "input.h5"
     tmp = tmp_path / "temp.h5"
     make_input_h5(src)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Downsample step should be greater than zero"):
         downsample_h5_file(src, tmp, -4)
+    with pytest.raises(ValueError, match="Downsample step should be greater than zero"):
         downsample_h5_file(src, tmp, 0)
     with pytest.warns(UserWarning, match="downsample_step is 1"):
         downsample_h5_file(src, tmp, 1)
 
+
 def test_downsample_metadata(tmp_path: Path, metadata: list[str]) -> None:
-    """Confirm metadata is preserved when downsampling"""
+    """Confirm metadata is preserved when downsampling."""
     src = tmp_path / "input.h5"
     tmp = tmp_path / "temp.h5"
     ref = tmp_path / "reference.h5"
@@ -141,7 +146,8 @@ def test_downsample_metadata(tmp_path: Path, metadata: list[str]) -> None:
             assert getattr(fref["tasks/b"], field) == getattr(ftest["tasks/b"], field)
 
 
-def test_downsampled(tmp_path, step_sizes) -> None:
+def test_downsampled(tmp_path: Path, step_sizes: list[int]) -> None:
+    """Confirms downsampling is done correctly."""
     src = tmp_path / "input.h5"
     tmp = tmp_path / "temp.h5"
 
@@ -155,12 +161,14 @@ def test_downsampled(tmp_path, step_sizes) -> None:
         a_tgt = a_orig[::size, ...]
         b_tgt = b_orig[::size, ...]
         downsample_h5_file(src, tmp, size)
-        
-        with h5py.File(tmp, "r") as f:
-                np.testing.assert_allclose(f["tasks/a"][:], a_tgt)
-                np.testing.assert_allclose(f["tasks/b"][:], b_tgt)
 
-def test_unspecified(tmp_path, step_sizes) -> None:
+        with h5py.File(tmp, "r") as f:
+            np.testing.assert_allclose(f["tasks/a"][:], a_tgt)
+            np.testing.assert_allclose(f["tasks/b"][:], b_tgt)
+
+
+def test_unspecified(tmp_path: Path, step_sizes: list[int]) -> None:
+    """Confirms fields not set for downsampling are left alone."""
     src = tmp_path / "input.h5"
     tmp = tmp_path / "temp.h5"
 

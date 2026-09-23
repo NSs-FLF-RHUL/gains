@@ -156,7 +156,7 @@ shear_stress_s_s_interface = d3.angular(d3.radial(strain_s_s(r=PARAMS["Ri"]), in
 shear_stress_s_s_surface = d3.angular(d3.radial(strain_s_s(r=PARAMS["Ro"]), index=1))
 
 omega_s_s = dist.VectorField(
-    coords, name="omega_s_s", bases=basis_core.ball
+    coords, name="omega_s_s", bases=basis_crust.shell
 )  # Superfluid vorticity
 
 u_s_ns = u_s_n - u_s_s
@@ -252,14 +252,14 @@ problem.add_equation("radial(u_s_n(r=Ro)) = 0")  # No penetration, normal fluid
 problem.add_equation("shear_stress_s_n_surface = 0")  # Stress free, normal fluid
 
 problem.add_equation("radial(u_s_s(r=Ro)) = 0")  # No penetration, superfluid
-problem.add_equation("shear_stress_s_s_surface = 0")  # Stress free, superfluid
+problem.add_equation("angular(tau_u_s_s_2) = 0")  # Required for tau DOF
 
 # Iterface boundary conditions, crust side
 problem.add_equation("radial(u_s_n(r=Ri)) = 0")  # No penetration, normal fluid
 problem.add_equation("shear_stress_s_n_interface = 0")  # Stress free, normal fluid
 
 problem.add_equation("radial(u_s_s(r=Ri)) = 0")  # No penetration, superfluid
-problem.add_equation("shear_stress_s_s_interface = 0")  # Stress free, superfluid
+problem.add_equation("angular(tau_u_s_s_1) = 0")  # Fix additional tau DOF
 
 
 # Interface boundary condition, core side
@@ -269,7 +269,7 @@ problem.add_equation(
 )  # Tangential velocity conservation, normal fluid
 
 problem.add_equation("radial(u_b_s(r=Ri)) = 0")  # No penetration, superfluid
-problem.add_equation("shear_stress_b_s_interface = 0")  # Stress free, superfluid
+problem.add_equation("angular(tau_u_b_s_2) = 0")  # Fix tau DOF
 
 solver = problem.build_solver(timestepper, enforce_real_cadence=1)
 solver.stop_sim_time = PARAMS["stop_sim_time"]

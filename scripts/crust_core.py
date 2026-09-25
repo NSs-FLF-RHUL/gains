@@ -194,7 +194,7 @@ omega_unit_broken = omega_s_s / np.sqrt(Dot(omega_s_s, omega_s_s)+1e-14)
 F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
-
+delta_n = 0.1*x_b_n/x_b_s
 
 
 # Problem
@@ -254,15 +254,14 @@ problem.add_equation("shear_stress_s_n_surface = 0")  # Stress free, normal flui
 problem.add_equation("radial(u_s_s(r=Ro)) = 0")  # No penetration, superfluid
 problem.add_equation("angular(tau_u_s_s_2) = 0")  # Required for tau DOF
 
-# Iterface boundary conditions, crust side
+# Iterface boundary conditions
 problem.add_equation("radial(u_s_n(r=Ri)) = 0")  # No penetration, normal fluid
-problem.add_equation("shear_stress_s_n_interface = 0")  # Stress free, normal fluid
-
+problem.add_equation(
+    "Ek_ball*angular(radial(strain_b_n(r=Ri))) - delta_n*Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0"
+)
 problem.add_equation("radial(u_s_s(r=Ri)) = 0")  # No penetration, superfluid
 problem.add_equation("angular(tau_u_s_s_1) = 0")  # Fix additional tau DOF
 
-
-# Interface boundary condition, core side
 problem.add_equation("radial(u_b_n(r=Ri)) = 0")  # No penetration, normal fluid
 problem.add_equation(
     "angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0"

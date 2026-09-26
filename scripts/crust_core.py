@@ -252,7 +252,7 @@ problem.add_equation("radial(u_s_n(r=Ro)) = 0")  # No penetration, normal fluid
 problem.add_equation("shear_stress_s_n_surface = 0")  # Stress free, normal fluid
 
 problem.add_equation("radial(u_s_s(r=Ro)) = 0")  # No penetration, superfluid
-problem.add_equation("angular(tau_u_s_s_2) = 0")  # Required for tau DOF
+problem.add_equation("shear_stress_s_s_surface = 0")  # Required for tau DOF
 
 # Iterface boundary conditions
 problem.add_equation("radial(u_s_n(r=Ri)) = 0")  # No penetration, normal fluid
@@ -260,7 +260,7 @@ problem.add_equation(
     "Ek_ball*angular(radial(strain_b_n(r=Ri))) - delta_n*Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0"
 )
 problem.add_equation("radial(u_s_s(r=Ri)) = 0")  # No penetration, superfluid
-problem.add_equation("angular(tau_u_s_s_1) = 0")  # Fix additional tau DOF
+problem.add_equation("shear_stress_s_s_interface = 0")  # Fix additional tau DOF
 
 problem.add_equation("radial(u_b_n(r=Ri)) = 0")  # No penetration, normal fluid
 problem.add_equation(
@@ -268,7 +268,7 @@ problem.add_equation(
 )  # Tangential velocity conservation, normal fluid
 
 problem.add_equation("radial(u_b_s(r=Ri)) = 0")  # No penetration, superfluid
-problem.add_equation("angular(tau_u_b_s_2) = 0")  # Fix tau DOF
+problem.add_equation("shear_stress_b_s_interface = 0")  # Fix tau DOF
 
 solver = problem.build_solver(timestepper, enforce_real_cadence=1)
 solver.stop_sim_time = PARAMS["stop_sim_time"]

@@ -161,7 +161,7 @@ omega_s_s = dist.VectorField(
 
 u_s_ns = u_s_n - u_s_s
 omega_s_s = Curl(u_s_s) + 2 * ez_s
-omega_unit_s = omega_s_s / 2 # Numerically unstable if fully normalised
+omega_unit_s = ez_s # Numerically unstable if fully normalised
 F_mf_s = B * (Cross(omega_unit_s, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
@@ -186,7 +186,7 @@ omega_b_s = dist.VectorField(
 
 u_b_ns = u_b_n - u_b_s
 omega_b_s = Curl(u_b_s) + 2 * ez_b
-omega_unit_b = omega_b_s / 2
+omega_unit_b = ez_b
 F_mf_b = B * (Cross(omega_unit_b, Cross(omega_b_s, u_b_ns))) + Bprime * Cross(
     omega_b_s, u_b_ns
 )
@@ -194,7 +194,7 @@ omega_unit_broken = omega_s_s / np.sqrt(Dot(omega_s_s, omega_s_s)+1e-14)
 F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
-delta_n = 0.1*x_b_n/x_b_s
+delta = 0.5 # density_crust/density_core
 
 
 # Problem
@@ -248,27 +248,24 @@ problem.add_equation(
 )
 
 # Surface boundary conditions
-problem.add_equation("radial(u_s_n(r=Ro)) = 0")  # No penetration, normal fluid
-problem.add_equation("shear_stress_s_n_surface = 0")  # Stress free, normal fluid
+problem.add_equation("radial(u_s_n(r=Ro)) = 0")
+problem.add_equation("radial(u_s_s(r=Ro)) = 0")
 
-problem.add_equation("radial(u_s_s(r=Ro)) = 0")  # No penetration, superfluid
-problem.add_equation("shear_stress_s_s_surface = 0")  # Required for tau DOF
+problem.add_equation("shear_stress_s_n_surface = 0")
 
-# Iterface boundary conditions
-problem.add_equation("radial(u_s_n(r=Ri)) = 0")  # No penetration, normal fluid
-problem.add_equation(
-    "Ek_ball*angular(radial(strain_b_n(r=Ri))) - delta_n*Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0"
-)
-problem.add_equation("radial(u_s_s(r=Ri)) = 0")  # No penetration, superfluid
-problem.add_equation("shear_stress_s_s_interface = 0")  # Fix additional tau DOF
+#Interface boundary conditions
+problem.add_equation("radial(u_b_n(r=Ri)) = 0") 
+problem.add_equation("radial(u_b_s(r=Ri)) = 0")
+problem.add_equation("radial(u_s_n(r=Ri)) = 0")
+problem.add_equation("radial(u_s_s(r=Ri)) = 0")
 
-problem.add_equation("radial(u_b_n(r=Ri)) = 0")  # No penetration, normal fluid
-problem.add_equation(
-    "angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0"
-)  # Tangential velocity conservation, normal fluid
+problem.add_equation("angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0")
+problem.add_equation("Ek_ball*angular(radial(strain_b_n(r=Ri))) - delta*Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0")
 
-problem.add_equation("radial(u_b_s(r=Ri)) = 0")  # No penetration, superfluid
-problem.add_equation("shear_stress_b_s_interface = 0")  # Fix tau DOF
+# Deal with angular components of superfluid tau terms to make square system
+problem.add_equation("angular(tau_u_s_s_1) = 0")
+problem.add_equation("angular(tau_u_s_s_2) = 0")
+problem.add_equation("angular(tau_u_b_s_2) = 0")
 
 solver = problem.build_solver(timestepper, enforce_real_cadence=1)
 solver.stop_sim_time = PARAMS["stop_sim_time"]
@@ -348,6 +345,11 @@ u_fields.add_task(u_b_s_phi, name="u_b_s_phi")
 u_fields.add_task(u_s_s_r, name="u_s_s_r")
 u_fields.add_task(u_s_s_theta, name="u_s_s_theta")
 u_fields.add_task(u_s_s_phi, name="u_s_s_phi")
+
+u_fields.add_task(omega_s_s@ephi, name="omega_s_s_phi")
+u_fields.add_task(omega_s_s@etheta, name="omega_s_s_theta")
+u_fields.add_task(omega_s_s@er, name="omega_s_s_r")
+
 
 #Checkpoint
 

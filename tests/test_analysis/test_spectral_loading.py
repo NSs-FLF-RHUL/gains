@@ -1,21 +1,23 @@
-"""
-Test suite to ensure loading and converting data to coefficient space yields the same coefficients
-as direct internal operations
-"""
-import numpy as np
-import dedalus.public as d3
-import pytest
-from gains.params.spherical_shell import parameters_test as PARAMS
 from pathlib import Path
-import h5py
 from typing import Any
+
+import dedalus.public as d3
+import h5py
+import numpy as np
+import pytest
+
+from gains.params.spherical_shell import parameters_test as default_params
+
 
 @pytest.fixture
 def params() -> dict[str, Any]:
-    """Provides parameters as a fixture"""
-    return PARAMS
+    """Provides parameters as a fixture."""
+    return default_params
 
-def create_test_objects(params: dict[str, Any]) -> tuple[d3.Distributor, d3.ShellBasis, d3.Field]:
+
+def create_test_objects(
+    params: dict[str, Any],
+) -> tuple[d3.Distributor, d3.ShellBasis, d3.Field]:
     """
     Create the dedalus distributor, basis, and field needed for this test.
 
@@ -23,7 +25,8 @@ def create_test_objects(params: dict[str, Any]) -> tuple[d3.Distributor, d3.Shel
     """
     coords = d3.SphericalCoordinates("phi", "theta", "r")
     dist = d3.Distributor(coords, dtype=np.float64)
-    basis = d3.ShellBasis(coords,
+    basis = d3.ShellBasis(
+        coords,
         shape=(params["Nphi"], params["Ntheta"], params["Nr"]),
         radii=(params["Ri"], params["Ro"]),
         dtype=np.float64,
@@ -31,12 +34,12 @@ def create_test_objects(params: dict[str, Any]) -> tuple[d3.Distributor, d3.Shel
     )
 
     u_test = dist.Field(name="u_test", bases=basis)
-    random_grid_data = np.random.default_rng().random((params["Nphi"],
-                                                       params["Ntheta"],
-                                                       params["Nr"]),
-                                                       dtype=np.float64)
+    random_grid_data = np.random.default_rng().random(
+        (params["Nphi"], params["Ntheta"], params["Nr"]), dtype=np.float64
+    )
     u_test["g"] = random_grid_data
     return dist, basis, u_test
+
 
 def save_test_field(tmp_path: Path, test_field: d3.Field) -> None:
     """
@@ -59,12 +62,13 @@ def save_test_field(tmp_path: Path, test_field: d3.Field) -> None:
         [test_data],
         wall_time=solver.wall_time,
         sim_time=solver.sim_time,
-        iteration=solver.iteration
-        )
+        iteration=solver.iteration,
+    )
+
 
 def test_reduction_equivalence(tmp_path: Path, params: dict[str, Any]) -> None:
     """
-    Test if the coefficients of loaded data are the same as data created in scripts
+    Test if the coefficients of loaded data are the same as data created in scripts.
 
     :param tmp_path: Path to save field to. Also a pytest fixture for
     a temporary directory.
@@ -77,4 +81,4 @@ def test_reduction_equivalence(tmp_path: Path, params: dict[str, Any]) -> None:
         u_data_loaded = dist.Field(name="u_data_loaded", bases=basis)
         u_data_loaded["g"] = f["tasks/u_test"]
         coeffs_loaded = u_data_loaded["c"]
-        np.testing.assert_allclose(coeffs_defined, coeffs_loaded) 
+        np.testing.assert_allclose(coeffs_defined, coeffs_loaded)

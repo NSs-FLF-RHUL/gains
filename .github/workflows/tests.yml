@@ -45,6 +45,7 @@ jobs:
 
       - name: Install package and run tests
         run: tox run
+  
   dedalus-tests:
     runs-on: ubuntu-latest
     steps:
@@ -58,6 +59,17 @@ jobs:
         python-version: "3.11"
         channels: conda-forge
         miniforge-version: latest
+
+    - name: Disable threading
+      shell: bash -el {0}
+      run: |
+        echo "OMP_NUM_THREADS=1" >> "$GITHUB_ENV"
+        echo "NUMEXPR_MAX_THREADS=1" >> "$GITHUB_ENV"
+        echo "MKL_NUM_THREADS=1" >> "$GITHUB_ENV"
+        echo "OPENBLAS_NUM_THREADS=1" >> "$GITHUB_ENV"
+        echo "BLIS_NUM_THREADS=1" >> "$GITHUB_ENV"
+        echo "VECLIB_MAXIMUM_THREADS=1" >> "$GITHUB_ENV"
+        echo "NUMEXPR_NUM_THREADS=1" >> "$GITHUB_ENV"
 
     - name: Install Dedalus
       shell: bash -el {0}
@@ -73,4 +85,4 @@ jobs:
     - name: Run Dedalus tests
       shell: bash -el {0}
       run: |
-        pytest tests/test_analysis/test_spectral_loading.py
+        pytest -m dedalus

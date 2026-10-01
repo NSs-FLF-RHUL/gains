@@ -1,3 +1,12 @@
+"""
+Script for extracting the index wise spectral energies.
+
+The energy spectra are found and plotted for each snapshot and saved
+in a relevant directory specified as command line argument. The
+phi component of the velocity is also plotted against theta along a
+contour of constant radius.
+"""
+
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
@@ -13,7 +22,8 @@ import json
 parser = create_parser_analysis()
 args = vars(parser.parse_args())
 paths = sorted(
-        (p for p in Path(args["output_dir"]).iterdir() if p.suffix == ".h5"), key=extract_numerical_suffix
+        (p for p in Path(args["output_dir"]).iterdir() if p.suffix == ".h5"),
+        key=extract_numerical_suffix
     )
 
 if args["parameter_file"] is not None:
@@ -30,7 +40,8 @@ basis = d3.ShellBasis(coords,shape=(PARAMS["Nphi"], PARAMS["Ntheta"], PARAMS["Nr
                       dtype=np.float64,
                       dealias=1.5)
 
-num_data = PARAMS["stop_sim_time"] / PARAMS["snapshot_dt"] # Assumes simulation ran to completion
+#Assumes simulation ran to completion
+num_data = PARAMS["stop_sim_time"] / PARAMS["snapshot_dt"] 
 
 args["fig_dir"] = Path(args["fig_dir"])
 Path.mkdir(args["fig_dir"] / "l", exist_ok=True)
@@ -60,7 +71,6 @@ with Progress(
                 u_r['g'] = u_r_series[increment]
                 u_theta['g'] = u_theta_series[increment]
                 u_phi['g'] = u_phi_series[increment]
-                time = int(time)
                 
                 u_r.change_scales(1)
                 u_theta.change_scales(1)
@@ -70,23 +80,23 @@ with Progress(
                 l_axis = np.arange(len(E_l))
                 m_axis = np.arange(len(E_m))
                 plt.loglog(l_axis[1:], E_l[1:], 'x', markersize=3.0, c='black')
-                #plt.xscale('log')
-                #plt.yscale('log')
                 plt.xlabel("l")
                 plt.ylabel(r"$E_{l}$")
-                plt.savefig(Path(args["fig_dir"]) / f"l/t={time:04d}")
+                plt.savefig(Path(args["fig_dir"]) / f"l/t={time:05.1f}.png")
                 plt.close()
 
 
                 plt.loglog(m_axis[1:], E_m[1:], 'x', markersize=3.0, c='black')
                 plt.xlabel("m")
                 plt.ylabel(r"$E_{m}$")
-                plt.savefig(Path(args["fig_dir"]) / f"m/t={time:04d}")
+                plt.savefig(Path(args["fig_dir"]) / f"m/t={time:05.1f}.png")
                 plt.close()
 
-                uphi_circ = u_phi['g'][0, :, 32]
+                uphi_circ = u_phi['g'][0, :, int(PARAMS["Nr"]/2)]
                 plt.plot(theta, uphi_circ)
-                plt.savefig(Path(args["fig_dir"]) / f"uphi/t={time:04d}")
+                plt.xlabel(r"\theta")
+                plt.ylabel(r"$u_{\phi}$")
+                plt.savefig(Path(args["fig_dir"]) / f"uphi/t={time:05.1f}.png")
                 plt.close()
                 p.advance(task)
                 increment += 1

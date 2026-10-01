@@ -282,3 +282,10 @@ def downsample_h5_file(
                 downsample_datasets=downsample_datasets,
             )
         )
+
+def save_simulation_params(output_dir, params) -> None:
+    comm = MPI.COMM_WORLD
+    if comm.rank == 0:
+        with open(output_dir / "simulation_params", "w") as f:
+            json.dump(params, f, indent=4, default=str)
+    comm.barrier()

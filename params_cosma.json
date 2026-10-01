@@ -1,0 +1,21 @@
+{
+  "Nphi": 512,
+  "Ntheta": 256,
+  "Nr": 256,
+  "omega": 1,
+  "Delta_Omega": 1e-3,
+  "Ek_core": 5e-3,
+  "Ek_crust": 5e-6,
+  "dealias": 1.5,
+  "stop_sim_time": 200,
+  "width": 10.0,
+  "B": 0.1,
+  "Ri": 0.8,
+  "Ro": 1.0,
+  "snapshot_dt": 1.0,
+  "nwrites": 100,
+  "radius_glitch": 20,
+  "width_r": 5,
+  "center_theta": 1.5707963267948966,
+  "center_phi": 3.141592653589793
+}

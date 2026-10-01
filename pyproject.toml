@@ -50,6 +50,9 @@ show_error_codes = true
 [tool.pytest.ini_options]
 addopts = ["--color=yes", "--import-mode=importlib", "--verbose"]
 testpaths = ["tests"]
+markers = [
+  "dedalus: tests which require dedalus to be installed",
+]
 
 [tool.ruff]
 fix = true
@@ -89,6 +92,6 @@ commands = [["mkdocs", "build", "--strict", "--verbose"]]
 extras = ["docs"]
 
 [tool.tox.env_run_base]
-commands = [["pytest", "--cov", "--cov-report=xml", "tests/"]]
+commands = [["pytest", "--cov", "--cov-report=xml", "tests/", "--ignore=tests/test_analysis/test_spectral_loading.py"]]
 extras = ["test"]
 gh.python."3.11" = ["py311"]

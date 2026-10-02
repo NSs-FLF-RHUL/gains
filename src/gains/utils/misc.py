@@ -12,6 +12,10 @@ import numpy as np
 from gains.exceptions import MeshError
 
 
+def sum_list(the_list: list):
+    return sum(the_list)
+
+
 def _get_ax_and_fig(ax: plt.Axes | None, *, polar: bool) -> tuple[plt.Figure, plt.Axes]:
     """Handle optional axes arguments in plotting functions."""
     if ax is None:

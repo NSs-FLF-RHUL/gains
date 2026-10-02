@@ -13,6 +13,7 @@ from gains.exceptions import MeshError
 
 
 def sum_list(the_list: list[float]) -> float:
+    """Sum the elements of the given list."""
     return sum(the_list)
 
 

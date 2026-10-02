@@ -103,11 +103,11 @@ u_s_s = dist.VectorField(coords, name="u_s_s", bases=basis_crust.shell)
 p_s_s = dist.Field(name="p_s_s", bases=basis_crust.shell)
 
 tau_p_s_n = dist.Field(name="tau_p_s_n")
-tau_u_s_n_1 = dist.VectorField(coords, name="tau_u_s_n_1", bases=basis_crust.shell.inner_surface)
+tau_u_s_n_1 = dist.VectorField(coords, name="tau_u_s_n_1", bases=basis_crust.shell.outer_surface)
 tau_u_s_n_2 = dist.VectorField(coords, name="tau_u_s_n_2", bases=basis_crust.shell.outer_surface)
 
 tau_p_s_s = dist.Field(name="tau_p_s_s")
-tau_u_s_s_1 = dist.VectorField(coords, name="tau_u_s_s_1", bases=basis_crust.shell.inner_surface)
+tau_u_s_s_1 = dist.VectorField(coords, name="tau_u_s_s_1", bases=basis_crust.shell.outer_surface)
 tau_u_s_s_2 = dist.VectorField(coords, name="tau_u_s_s_2", bases=basis_crust.shell.outer_surface)
 
 mask_radial = dist.Field(name="mask_radial", bases=basis_crust.shell)
@@ -195,7 +195,7 @@ F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime 
     omega_s_s, u_s_ns
 )
 delta = 0.5 # density_crust/density_core
-
+nu_s = 1e-6 # Prevent kelvin helmholtz singularity on the interface
 
 # Problem
 problem = d3.IVP(
@@ -236,7 +236,7 @@ problem.add_equation(
     "dt(u_s_n) - Ek_shell*div(grad_u_s_n) + grad(p_s_n) + lift_s(tau_u_s_n_2, -1) = -u_s_n@grad(u_s_n) - 2*cross(ez_s, u_s_n) + x_s_s/x_s_n * F_mf_s"
 )
 problem.add_equation(
-    "dt(u_s_s) + grad(p_s_s) + lift_s(tau_u_s_s_2, -1) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 100*mask_radial*mask_circ*(u_target - u_s_s)"
+    "dt(u_s_s) - nu_s*div(grad_u_s_s)+ grad(p_s_s) + lift_s(tau_u_s_s_2, -1) = -u_s_s@grad(u_s_s) -2*cross(ez_s, u_s_s) - F_mf_s + 100*mask_radial*mask_circ*(u_target - u_s_s)"
 )
 
 # Core momentum equations
@@ -244,7 +244,7 @@ problem.add_equation(
     "dt(u_b_n) - Ek_ball*lap(u_b_n) + grad(p_b_n) + lift_b(tau_u_b_n_2) = -u_b_n@grad(u_b_n) - 2*cross(ez_b, u_b_n) + x_b_s/x_b_n * F_mf_b"
 )
 problem.add_equation(
-    "dt(u_b_s) + grad(p_b_s) + lift_b(tau_u_b_s_2) = - u_b_s@grad(u_b_s) - 2*cross(ez_b, u_b_s) - F_mf_b"
+    "dt(u_b_s) - nu_s*lap(u_b_s) + grad(p_b_s) + lift_b(tau_u_b_s_2) = - u_b_s@grad(u_b_s) - 2*cross(ez_b, u_b_s) - F_mf_b"
 )
 
 # Surface boundary conditions
@@ -252,6 +252,7 @@ problem.add_equation("radial(u_s_n(r=Ro)) = 0")
 problem.add_equation("radial(u_s_s(r=Ro)) = 0")
 
 problem.add_equation("shear_stress_s_n_surface = 0")
+problem.add_equation("shear_stress_s_s_surface = 0")
 
 #Interface boundary conditions
 problem.add_equation("radial(u_b_n(r=Ri)) = 0") 
@@ -262,10 +263,9 @@ problem.add_equation("radial(u_s_s(r=Ri)) = 0")
 problem.add_equation("angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0")
 problem.add_equation("Ek_ball*angular(radial(strain_b_n(r=Ri))) - delta*Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0")
 
-# Deal with angular components of superfluid tau terms to make square system
-problem.add_equation("angular(tau_u_s_s_1) = 0")
-problem.add_equation("angular(tau_u_s_s_2) = 0")
-problem.add_equation("angular(tau_u_b_s_2) = 0")
+problem.add_equation("angular(u_b_s(r=Ri)) - angular(u_s_s(r=Ri)) = 0")
+problem.add_equation("angular(radial(strain_b_s(r=Ri))) - delta*angular(radial(strain_s_s(r=Ri))) = 0")
+
 
 solver = problem.build_solver(timestepper, enforce_real_cadence=1)
 solver.stop_sim_time = PARAMS["stop_sim_time"]

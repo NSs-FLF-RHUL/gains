@@ -12,7 +12,7 @@ import numpy as np
 from gains.exceptions import MeshError
 
 
-def sum_list(the_list: list):
+def sum_list(the_list: list[float]) -> float:
     return sum(the_list)
 
 

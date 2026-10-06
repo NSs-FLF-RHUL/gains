@@ -8,8 +8,6 @@ import pytest
 
 from gains.params.spherical_shell import parameters_test as default_params
 
-pytestmark = pytest.mark.dedalus
-
 
 @pytest.fixture
 def params() -> dict[str, Any]:

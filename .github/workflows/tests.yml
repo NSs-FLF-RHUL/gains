@@ -12,42 +12,6 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # Test on multiple OSes if we want to?
-        # need to change runs-on above to be ${{ matrix.os }} too, if so
-        # os:
-        #   - ubuntu-latest
-        #   - macos-latest
-        python-version:
-          - "3.11"
-          # - "3.13" too? min version -> latest stable release?
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v6
-
-      - name: Cache tox
-        uses: actions/cache@v5
-        with:
-          path: .tox
-          key: tox-${{hashFiles('pyproject.toml') }}
-
-      - name: Set up python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-
-      - name: Install dependencies
-        run: python -m pip install tox tox-gh
-
-      - name: Install package and run tests
-        run: tox run
-
-  dedalus-tests:
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v6
@@ -56,7 +20,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: dedalus3
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           channels: conda-forge
           miniforge-version: latest
 
@@ -75,7 +39,6 @@ jobs:
         shell: bash -el {0}
         run: |
           conda install -c conda-forge dedalus
-          python -m dedalus test
 
       - name: Install gains
         shell: bash -el {0}
@@ -85,4 +48,4 @@ jobs:
       - name: Run Dedalus tests
         shell: bash -el {0}
         run: |
-          pytest -m dedalus
+          pytest

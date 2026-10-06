@@ -10,7 +10,7 @@ on:
       - "**.md"
 
 jobs:
-  test-s:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source

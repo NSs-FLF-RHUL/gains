@@ -50,9 +50,6 @@ show_error_codes = true
 [tool.pytest.ini_options]
 addopts = ["--color=yes", "--import-mode=importlib", "--verbose"]
 testpaths = ["tests"]
-markers = [
-  "dedalus: tests which require dedalus to be installed",
-]
 
 [tool.ruff]
 fix = true
@@ -83,15 +80,3 @@ lint.select = ["ALL"]
 lint.isort.known-first-party = ["gains"]
 lint.mccabe.max-complexity = 18
 lint.pep8-naming.classmethod-decorators = ["classmethod"]
-
-[tool.tox]
-env_list = ["py311"]
-
-[tool.tox.env.docs]
-commands = [["mkdocs", "build", "--strict", "--verbose"]]
-extras = ["docs"]
-
-[tool.tox.env_run_base]
-commands = [["pytest", "--cov", "--cov-report=xml", "tests/", "--ignore=tests/test_analysis/test_spectral_loading.py"]]
-extras = ["test"]
-gh.python."3.11" = ["py311"]

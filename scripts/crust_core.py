@@ -261,10 +261,10 @@ problem.add_equation("radial(u_s_n(r=Ri)) = 0")
 problem.add_equation("radial(u_s_s(r=Ri)) = 0")
 
 problem.add_equation("angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0")
-problem.add_equation("Ek_ball*angular(radial(strain_b_n(r=Ri))) - delta*Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0")
+problem.add_equation("Ek_ball*angular(radial(strain_b_n(r=Ri))) - Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0")
 
 problem.add_equation("angular(u_b_s(r=Ri)) - angular(u_s_s(r=Ri)) = 0")
-problem.add_equation("angular(radial(strain_b_s(r=Ri))) - delta*angular(radial(strain_s_s(r=Ri))) = 0")
+problem.add_equation("angular(radial(strain_b_s(r=Ri))) - angular(radial(strain_s_s(r=Ri))) = 0")
 
 
 solver = problem.build_solver(timestepper, enforce_real_cadence=1)

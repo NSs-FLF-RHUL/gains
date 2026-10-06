@@ -55,7 +55,7 @@ if __name__ == "__main__":
     )
     fig.savefig("{}/angular_speed_sequence.png".format(args["fig_dir"]))
 
-    path_stream = args["output_dir"] / "AZ_avg_equator_s3.h5"
+    path_stream = args["output_dir"] / "AZ_avg_equator_s1.h5"
     data = h5py.File(path_stream, mode="r")
     time = np.array(data["scales/sim_time"])
     ur = data["tasks"]["u_n_r"][:, -1, :, :]

@@ -259,8 +259,12 @@ def plot_angular_velocity_sequence(
                 crustcore_boundary=kwargs["Ri"],
             )
             fig=ax[i].get_figure()
+    if isinstance(mesh, list):
+        mesh_cbar = mesh[-1]
+    else:
+        mesh_cbar = mesh
     fig.colorbar(
-        mesh[-1],
+        mesh_cbar,
         ax=ax,
         location='top',
         orientation='horizontal',

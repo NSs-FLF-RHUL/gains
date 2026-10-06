@@ -42,7 +42,6 @@ ncpu = MPI.COMM_WORLD.size
 Ek = PARAMS["Ek"]
 B = PARAMS["B"]
 Bprime = B / 2
-nu_sf = Ek*10**-2
 
 mesh = mesh_cpus(ncpu)
 
@@ -109,6 +108,23 @@ mask_circ["g"] = circle_on_sphere(theta, phi, PARAMS["radius_glitch"], (PARAMS["
 #mask_radial.low_pass_filter(scales=0.5)
 #mask_circ.low_pass_filter(scales=0.5)
 
+def viscosity_profile(Ek_crust, Ek_core, k, R_cci, r):
+    profile = (Ek_crust + Ek_core)/(np.exp(k*(r - R_cci)) + 1) + min(Ek_crust, Ek_core)
+    deriv = (Ek_crust + Ek_core)*(-k*np.exp(k*(r - R_cci))) / ((np.exp(k*(r - R_cci)) + 1)**2)
+    return profile, deriv
+
+Ek_profile, Ek_deriv = viscosity_profile(PARAMS["Ek_crust"], PARAMS["Ek_core"], 60, PARAMS["Ri"], r)
+
+Ek_ncc = dist.Field(bases=basis.ball.radial_basis, name="Ek_ncc")
+Ek_deriv_ncc = dist.VectorField(coords, bases=basis.ball, name="Ek_deriv_ncc")
+Ek_ncc["g"]= Ek_profile
+Ek_deriv_ncc["g"][2] = Ek_deriv
+
+import matplotlib.pyplot as plt
+plt.scatter(r.ravel(), Ek_profile.ravel())
+plt.vlines(PARAMS["Ri"], PARAMS["Ek_crust"], PARAMS["Ek_core"])
+plt.show()
+breakpoint()
 omega_target = dist.VectorField(coords, name="omega_target", bases=basis.ball)
 omega_target = PARAMS["Delta_Omega"]*ez
 
@@ -126,7 +142,7 @@ problem.add_equation("integ(p_n) = 0")
 problem.add_equation("integ(p_s) = 0")
 
 problem.add_equation(
-    "dt(u_n) - Ek*lap(u_n) + grad(p_n) + lift(tau_u_n)= -u_n@grad(u_n) + x_s/x_n * F_mf"
+    "dt(u_n) - Ek_ncc*lap(u_n) + grad(p_n) + lift(tau_u_n) = Ek_deriv_ncc@strain_rate_n -u_n@grad(u_n) + x_s/x_n * F_mf"
     "- 2*cross(ez,u_n)"
 )
 problem.add_equation(
@@ -247,7 +263,7 @@ flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 @profile(PARAMS["profile"], PARAMS["output_dir"])
 def main_loop() -> None:
     """Decorate main loop."""
-    return track_vorticity(logger, flow, solver, CFL, PARAMS)
+    return track_vorticity(logger, flow, solver, CFL, PARAMS, AZ_avg)
 
 
 main_loop()

@@ -228,7 +228,7 @@ def extract_spectra(
 
     Caclulated quantity is proportional to kinetic energy.
 
-    :param u_r: Radial velocity component.ßß
+    :param u_r: Radial velocity component.
     :param u_t: Theta velocity component.
     :param u_p: Phi velocity component.
     """

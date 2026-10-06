@@ -12,6 +12,15 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Test on multiple OSes if we want to?
+        # need to change runs-on above to be ${{ matrix.os }} too, if so
+        # os:
+        #   - ubuntu-latest
+        #   - macos-latest
+        python-version:
+          - "3.11"
     steps:
       - name: Checkout source
         uses: actions/checkout@v6

@@ -76,7 +76,13 @@ mask_equator = basis.dist.Field(name="mask_equator", bases=basis.ball)
 mask_radial = basis.dist.Field(name="mask_radial", bases=basis.ball)
 
 sintheta["g"] = np.sin(theta)
-mask_equator["g"] = circle_on_sphere(theta, phi, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.1)
+mask_equator["g"] = circle_on_sphere(
+    theta,
+    phi,
+    PARAMS["radius_glitch"],
+    (PARAMS["center_theta"], PARAMS["center_phi"]),
+    0.1,
+)
 mask_radial["g"] = mask_r(r, PARAMS["width_r"])
 u_n_target = basis.dist.VectorField(coords, name="u_n_target", bases=basis.ball)
 u_n_target["g"][0] = PARAMS["Delta_Omega"] * r * np.sin(theta)

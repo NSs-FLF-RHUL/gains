@@ -68,7 +68,9 @@ if __name__ == "__main__":
     fig.savefig(f"{args['fig_dir']}/meridional_streamlines.png")
 
     path = "{}".format(args["output_dir"])
-    r_check, theta_check, phi_check = get_angular_coords(path + "/AZ_avg_equator_s1.h5", "u_n_phi")
+    r_check, theta_check, phi_check = get_angular_coords(
+        path + "/AZ_avg_equator_s1.h5", "u_n_phi"
+    )
 
     r = LabeledCoordinate(r_check, "r")
     theta = LabeledCoordinate(theta_check, "theta")

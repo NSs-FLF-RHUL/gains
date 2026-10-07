@@ -27,13 +27,13 @@ from dedalus.public import Curl
 from dedalus.public import DotProduct as Dot
 from mpi4py import MPI
 
+from gains.initial_conditions.single_component_spin_up import circle_on_sphere, mask_r
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import ShellBasis, SphericalBasis
 from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import SimulationCLI
 from gains.utils.profile import profile
-from gains.initial_conditions.single_component_spin_up import mask_r, circle_on_sphere
 
 # Setup
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ x_s_s = 0.95  # Neutron fraction - crust
 
 nu_hyper = 1e-6
 
-PARAMS["x_b_n"] = 0.05 #Added to params for saving purposes
+PARAMS["x_b_n"] = 0.05  # Added to params for saving purposes
 PARAMS["x_b_s"] = 0.95
 PARAMS["x_s_n"] = 0.05
 PARAMS["x_s_s"] = 0.95
@@ -103,12 +103,20 @@ u_s_s = dist.VectorField(coords, name="u_s_s", bases=basis_crust.shell)
 p_s_s = dist.Field(name="p_s_s", bases=basis_crust.shell)
 
 tau_p_s_n = dist.Field(name="tau_p_s_n")
-tau_u_s_n_1 = dist.VectorField(coords, name="tau_u_s_n_1", bases=basis_crust.shell.outer_surface)
-tau_u_s_n_2 = dist.VectorField(coords, name="tau_u_s_n_2", bases=basis_crust.shell.outer_surface)
+tau_u_s_n_1 = dist.VectorField(
+    coords, name="tau_u_s_n_1", bases=basis_crust.shell.outer_surface
+)
+tau_u_s_n_2 = dist.VectorField(
+    coords, name="tau_u_s_n_2", bases=basis_crust.shell.outer_surface
+)
 
 tau_p_s_s = dist.Field(name="tau_p_s_s")
-tau_u_s_s_1 = dist.VectorField(coords, name="tau_u_s_s_1", bases=basis_crust.shell.outer_surface)
-tau_u_s_s_2 = dist.VectorField(coords, name="tau_u_s_s_2", bases=basis_crust.shell.outer_surface)
+tau_u_s_s_1 = dist.VectorField(
+    coords, name="tau_u_s_s_1", bases=basis_crust.shell.outer_surface
+)
+tau_u_s_s_2 = dist.VectorField(
+    coords, name="tau_u_s_s_2", bases=basis_crust.shell.outer_surface
+)
 
 mask_radial = dist.Field(name="mask_radial", bases=basis_crust.shell)
 mask_circ = dist.Field(name="mask_circ", bases=basis_crust.shell)
@@ -134,7 +142,13 @@ u_target = dist.VectorField(coords, name="u_target", bases=basis_crust.shell)
 u_target["g"][0] = PARAMS["Delta_Omega"] * r_s * np.sin(theta_s)
 
 mask_radial["g"] = mask_r(r_s, PARAMS["width_r"])
-mask_circ["g"] = circle_on_sphere(theta_s, phi_s, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.1)
+mask_circ["g"] = circle_on_sphere(
+    theta_s,
+    phi_s,
+    PARAMS["radius_glitch"],
+    (PARAMS["center_theta"], PARAMS["center_phi"]),
+    0.1,
+)
 rvec_s = dist.VectorField(coords, bases=basis_crust.shell.radial_basis)
 rvec_s["g"][2] = r_s
 
@@ -161,7 +175,7 @@ omega_s_s = dist.VectorField(
 
 u_s_ns = u_s_n - u_s_s
 omega_s_s = Curl(u_s_s) + 2 * ez_s
-omega_unit_s = ez_s # Numerically unstable if fully normalised
+omega_unit_s = ez_s  # Numerically unstable if fully normalised
 F_mf_s = B * (Cross(omega_unit_s, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
@@ -190,12 +204,12 @@ omega_unit_b = ez_b
 F_mf_b = B * (Cross(omega_unit_b, Cross(omega_b_s, u_b_ns))) + Bprime * Cross(
     omega_b_s, u_b_ns
 )
-omega_unit_broken = omega_s_s / np.sqrt(Dot(omega_s_s, omega_s_s)+1e-14)
+omega_unit_broken = omega_s_s / np.sqrt(Dot(omega_s_s, omega_s_s) + 1e-14)
 F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
-delta = 0.5 # density_crust/density_core
-nu_s = 1e-6 # Prevent kelvin helmholtz singularity on the interface
+delta = 0.5  # density_crust/density_core
+nu_s = 1e-6  # Prevent kelvin helmholtz singularity on the interface
 
 # Problem
 problem = d3.IVP(
@@ -219,7 +233,7 @@ problem = d3.IVP(
         tau_p_b_s,
         tau_u_b_s_2,
     ],
-    namespace=locals()
+    namespace=locals(),
 )
 
 problem.add_equation("trace(grad_u_s_n) + tau_p_s_n = 0")
@@ -254,17 +268,21 @@ problem.add_equation("radial(u_s_s(r=Ro)) = 0")
 problem.add_equation("shear_stress_s_n_surface = 0")
 problem.add_equation("shear_stress_s_s_surface = 0")
 
-#Interface boundary conditions
-problem.add_equation("radial(u_b_n(r=Ri)) = 0") 
+# Interface boundary conditions
+problem.add_equation("radial(u_b_n(r=Ri)) = 0")
 problem.add_equation("radial(u_b_s(r=Ri)) = 0")
 problem.add_equation("radial(u_s_n(r=Ri)) = 0")
 problem.add_equation("radial(u_s_s(r=Ri)) = 0")
 
 problem.add_equation("angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0")
-problem.add_equation("Ek_ball*angular(radial(strain_b_n(r=Ri))) - Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0")
+problem.add_equation(
+    "Ek_ball*angular(radial(strain_b_n(r=Ri))) - Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0"
+)
 
 problem.add_equation("angular(u_b_s(r=Ri)) - angular(u_s_s(r=Ri)) = 0")
-problem.add_equation("angular(radial(strain_b_s(r=Ri))) - angular(radial(strain_s_s(r=Ri))) = 0")
+problem.add_equation(
+    "angular(radial(strain_b_s(r=Ri))) - angular(radial(strain_s_s(r=Ri))) = 0"
+)
 
 
 solver = problem.build_solver(timestepper, enforce_real_cadence=1)
@@ -322,13 +340,13 @@ u_s_s_phi = Dot(u_s_s, ephi)
 save_path: Path = PARAMS["output_dir"] / "su_equator"
 save_path.mkdir(parents=True, exist_ok=True)
 
-#Save velocity fields
+# Save velocity fields
 
 u_fields = solver.evaluator.add_file_handler(
     str(save_path / "AZ_avg_equator"),
     sim_dt=PARAMS["snapshot_dt"],
     max_writes=100,
-    mode='append'
+    mode="append",
 )
 u_fields.add_task(u_b_n_r, name="u_b_n_r")
 u_fields.add_task(u_b_n_theta, name="u_b_n_theta")
@@ -346,15 +364,20 @@ u_fields.add_task(u_s_s_r, name="u_s_s_r")
 u_fields.add_task(u_s_s_theta, name="u_s_s_theta")
 u_fields.add_task(u_s_s_phi, name="u_s_s_phi")
 
-u_fields.add_task(omega_s_s@ephi, name="omega_s_s_phi")
-u_fields.add_task(omega_s_s@etheta, name="omega_s_s_theta")
-u_fields.add_task(omega_s_s@er, name="omega_s_s_r")
+u_fields.add_task(omega_s_s @ ephi, name="omega_s_s_phi")
+u_fields.add_task(omega_s_s @ etheta, name="omega_s_s_theta")
+u_fields.add_task(omega_s_s @ er, name="omega_s_s_r")
 
 
-#Checkpoint
+# Checkpoint
 
-checkpoint = solver.evaluator.add_file_handler(PARAMS["output_dir"] / "checkpoint", wall_dt=PARAMS["checkpoint_cadence"], max_writes=1, parallel='gather')
-checkpoint.add_tasks(solver.state, layout='g')
+checkpoint = solver.evaluator.add_file_handler(
+    PARAMS["output_dir"] / "checkpoint",
+    wall_dt=PARAMS["checkpoint_cadence"],
+    max_writes=1,
+    parallel="gather",
+)
+checkpoint.add_tasks(solver.state, layout="g")
 
 
 CFL = d3.CFL(
@@ -374,5 +397,6 @@ flow.add_property(np.sqrt(omega_s_s @ omega_s_s), name="vorticity_mag")
 def main() -> Callable:
     """Create main loop with profiling."""
     return track_vorticity(logger, flow, solver, CFL, PARAMS, u_fields)
+
 
 main()

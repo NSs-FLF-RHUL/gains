@@ -1,5 +1,6 @@
 """Stores useful functions, applicable throughout the package."""
 
+import json
 import re
 import warnings
 from collections.abc import Callable, Iterable
@@ -8,10 +9,10 @@ from pathlib import Path
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+from mpi4py import MPI
 
 from gains.exceptions import MeshError
-from mpi4py import MPI
-import json
+
 
 def _get_ax_and_fig(ax: plt.Axes | None, *, polar: bool) -> tuple[plt.Figure, plt.Axes]:
     """Handle optional axes arguments in plotting functions."""
@@ -98,9 +99,7 @@ def mesh_cpus(ncpu: int) -> list[int] | None:
     raise MeshError
 
 
-def select_time(
-    target_time: float, output_dir: Path, **params
-) -> tuple[Path, int]:
+def select_time(target_time: float, output_dir: Path, **params) -> tuple[Path, int]:
     """
     Take a simulated time and locate its position in the output files.
 
@@ -282,6 +281,7 @@ def downsample_h5_file(
                 downsample_datasets=downsample_datasets,
             )
         )
+
 
 def save_simulation_params(output_dir, params) -> None:
     comm = MPI.COMM_WORLD

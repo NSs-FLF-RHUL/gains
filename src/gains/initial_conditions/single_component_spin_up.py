@@ -49,7 +49,14 @@ def mask_r(rs: np.ndarray, width: float) -> np.ndarray:
     delta_r = width / 2
     return np.exp(-(((rs - 1.0) / delta_r) ** 2))
 
-def circle_on_sphere(theta: np.ndarray, phi: np.ndarray, radius: float, center: tuple[float], width: float) -> np.ndarray:
+
+def circle_on_sphere(
+    theta: np.ndarray,
+    phi: np.ndarray,
+    radius: float,
+    center: tuple[float],
+    width: float,
+) -> np.ndarray:
     """
     Create circular mask defined on a sphere, with a smooth edge.
 
@@ -72,8 +79,8 @@ def circle_on_sphere(theta: np.ndarray, phi: np.ndarray, radius: float, center: 
     ctheta_0 = np.cos(theta_0)
     cdiff = np.cos(phi - phi_0)
 
-    cgamma = ctheta*ctheta_0 + stheta*stheta_0*cdiff
+    cgamma = ctheta * ctheta_0 + stheta * stheta_0 * cdiff
     gamma = np.arccos(np.clip(cgamma, -1, 1))
-    
-    g=np.exp(-gamma**2/(2*radius))
+
+    g = np.exp(-(gamma**2) / (2 * radius))
     return g

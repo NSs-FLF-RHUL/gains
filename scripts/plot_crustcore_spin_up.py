@@ -52,9 +52,17 @@ if __name__ == "__main__":
     )
     fig.tight_layout()
     plot_angular_velocity_sequence(
-        args["times_plot"], ax, args["output_dir"], ("u_b_n_phi", "u_s_n_phi"), True, cmap, **PARAMS
+        args["times_plot"],
+        ax,
+        args["output_dir"],
+        ("u_b_n_phi", "u_s_n_phi"),
+        True,
+        cmap,
+        **PARAMS,
     )
-    plt.savefig("{}/angular_speed_sequence_NF.png".format(args["fig_dir"]), bbox_inches='tight')
+    plt.savefig(
+        "{}/angular_speed_sequence_NF.png".format(args["fig_dir"]), bbox_inches="tight"
+    )
     plt.close()
 
     path_plot = args["output_dir"] / "AZ_avg_equator_s1.h5"
@@ -108,7 +116,7 @@ if __name__ == "__main__":
         ax = fig.gca()
         plot_against_time(
             r_crust,
-           "r",
+            "r",
             path,
             PARAMS["Ntheta"],
             targets_crust,
@@ -116,8 +124,10 @@ if __name__ == "__main__":
             ax=ax,
             colour="#9b111e",
         )
-        ax.set_ylabel("$\Delta \Omega$")
-        fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]), bbox_inches='tight')
+        ax.set_ylabel(r"$\Delta \Omega$")
+        fig.savefig(
+            "{}/radial_against_time.png".format(args["fig_dir"]), bbox_inches="tight"
+        )
     elif args["coordinate"] == "theta":
         path_list, fig = plot_against_time(
             theta_core,
@@ -166,7 +176,7 @@ if __name__ == "__main__":
                     True,
                     rotating=True,
                     delta_omega=PARAMS["Delta_Omega"],
-                    crustcore_boundary=PARAMS["Ri"]
+                    crustcore_boundary=PARAMS["Ri"],
                 )
                 save_path_angular = (
                     args["frame_dir"] / f"frame_spin_up_angular_{count:04d}.png"

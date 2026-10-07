@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import dedalus.public as d3
 import h5py
 import numpy as np
 import scipy.interpolate as inp
@@ -96,7 +97,7 @@ def calculate_angular_speed(
     """
     omega = np.zeros_like(u_phi)
     for i in range(len(rs)):
-        omega[:, i] = u_phi[:, i]/(rs[i] * np.sin(thetas)[:])
+        omega[:, i] = u_phi[:, i] / (rs[i] * np.sin(thetas)[:])
     return u_phi
 
 
@@ -153,8 +154,10 @@ def read_angular_velocity(
     """
     data = h5py.File(path, mode="r")
     r, theta, phi = get_angular_coords(path, target_field)
-    u_phi = data["tasks"][target_field][t, 0, :, :] #Assumes phi coordinate of glitch centre is 0
-    u_phi_back = data["tasks"][target_field][t, int(len(phi)/2), :, :]
+    u_phi = data["tasks"][target_field][
+        t, 0, :, :
+    ]  # Assumes phi coordinate of glitch centre is 0
+    u_phi_back = data["tasks"][target_field][t, int(len(phi) / 2), :, :]
     if not rotating:
         u_background = 1.0 * np.outer(np.sin(theta), r)
     else:
@@ -224,3 +227,30 @@ def get_angular_speed_vs_time(
             count += 1
 
     return omega_rs[:count], times[:count]
+
+
+def extract_spectra(
+    u_r: d3.Field, u_t: d3.Field, u_p: d3.Field
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Extract spectral index wise enrgy spectra from dedalus velocity fields.
+
+    Caclulated quantity is proportional to kinetic energy.
+
+    :param u_r: Radial velocity component.
+    :param u_t: Theta velocity component.
+    :param u_p: Phi velocity component.
+    """
+    u_r_coeff = u_r["c"]
+    u_theta_coeff = u_t["c"]
+    u_phi_coeff = u_p["c"]
+
+    energy_density = (
+        np.abs(u_r_coeff) ** 2 + np.abs(u_theta_coeff) ** 2 + np.abs(u_phi_coeff) ** 2
+    )
+
+    e_m = np.sum(energy_density, axis=(1, 2))
+    e_l = np.sum(energy_density, axis=(0, 2))
+    e_n = np.sum(energy_density, axis=(0, 1))
+
+    return e_m, e_l, e_n

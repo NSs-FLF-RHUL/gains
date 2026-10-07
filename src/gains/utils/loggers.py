@@ -1,12 +1,12 @@
 """Stores custom logging/main loops."""
 
+import gc
 from logging import Logger
 
 import dedalus
 import dedalus.public as d3
+
 from gains.utils.misc import save_simulation_params
-import gc
-import numpy as np
 
 
 def track_vorticity(
@@ -15,7 +15,7 @@ def track_vorticity(
     solver: dedalus.core.solvers.InitialValueSolver,
     cfl: d3.CFL,
     params: dict,
-    snapshot_handler
+    snapshot_handler,
 ) -> None:
     """
     Create main loop that tracks and logs the maximum superfluid vorticity.
@@ -37,22 +37,28 @@ def track_vorticity(
                 min_omega = flow.min("vorticity_mag")
                 logger.info(
                     "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f, min(omega_s)=%f"
-                    % (solver.iteration, solver.sim_time, timestep, max_omega, min_omega)
+                    % (
+                        solver.iteration,
+                        solver.sim_time,
+                        timestep,
+                        max_omega,
+                        min_omega,
+                    )
                 )
             if (solver.iteration) % 100 == 0:
                 n = gc.collect()
                 logger.info(f"collected: {n}")
     except:
         logger.info(
-                            "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f, min(omega_s)=%f"
-                            % (solver.iteration, solver.sim_time, timestep, max_omega, min_omega)
-                        )
+            "Iteration=%i, Time=%e, dt=%e, max(omega_s)=%f, min(omega_s)=%f"
+            % (solver.iteration, solver.sim_time, timestep, max_omega, min_omega)
+        )
         solver.evaluate_handlers()
         solver.evaluator.evaluate_handlers(
             [snapshot_handler],
             wall_time=solver.wall_time,
             sim_time=solver.sim_time,
-            iteration=solver.iteration
+            iteration=solver.iteration,
         )
         logger.exception("Exception raised, triggering end of main loop.")
         raise
@@ -66,7 +72,7 @@ def track_reynolds_n(
     flow: d3.GlobalFlowProperty,
     solver: dedalus.core.solvers.InitialValueSolver,
     cfl: d3.CFL,
-    params: dict
+    params: dict,
 ) -> None:
     """
     Create main loop that tracks and logs the maximum reynolds number.

@@ -96,13 +96,13 @@ def plot_angular(
         cmap = _make_cmap(colors)
     else:
         cmap = colors
-    
+
     r_m, theta_m = np.meshgrid(r, theta)
     mesh = ax.pcolormesh(
         theta_m,
         r_m,
         omega_values,
-        clim=(0,kwargs["Delta_Omega"]),
+        clim=(0, kwargs["Delta_Omega"]),
         cmap=cmap,
         edgecolors="face",
     )
@@ -150,10 +150,14 @@ def plot_angular_velocity(
     :returns mesh: pcolormesh for setting colourbar if this is wanted.
     """
     data = h5py.File(path, mode="r")
-    r, theta, omega, omega_back = read_angular_velocity(path, t, target_field, rotating=rotating)
+    r, theta, omega, omega_back = read_angular_velocity(
+        path, t, target_field, rotating=rotating
+    )
     omega_back = None if not full_sphere else omega_back
     time = np.array(data["scales/sim_time"])
-    mesh = plot_angular(ax, r, theta, omega, omega_back, colors,Delta_Omega=delta_omega)
+    mesh = plot_angular(
+        ax, r, theta, omega, omega_back, colors, Delta_Omega=delta_omega
+    )
     ax.set_ylim(r.min(), r.max())
     ax.set_title(r"$t =$" + str(time[t])[:4])
     return mesh
@@ -192,9 +196,13 @@ def plot_angular_velocity_split(
     time = np.array(data["scales/sim_time"])
 
     for field in [core_field, crust_field]:
-        r, theta, omega, omega_back = read_angular_velocity(path, t, field, rotating=rotating)
+        r, theta, omega, omega_back = read_angular_velocity(
+            path, t, field, rotating=rotating
+        )
         omega_back = None if not full_sphere else omega_back
-        mesh = plot_angular(ax, r, theta, omega, omega_back, colors, Delta_Omega=delta_omega)
+        mesh = plot_angular(
+            ax, r, theta, omega, omega_back, colors, Delta_Omega=delta_omega
+        )
         meshes.append(mesh)
 
     ax.set_ylim(0, 1.0)
@@ -203,7 +211,10 @@ def plot_angular_velocity_split(
         theta, np.full_like(theta, crustcore_boundary), linestyle="--", color="black"
     )
     ax.plot(
-        theta - np.pi, np.full_like(theta, crustcore_boundary), linestyle="--", color="black"
+        theta - np.pi,
+        np.full_like(theta, crustcore_boundary),
+        linestyle="--",
+        color="black",
     )
 
     return meshes
@@ -244,7 +255,7 @@ def plot_angular_velocity_sequence(
                 rotating=kwargs.get("rotating", True),
                 delta_omega=kwargs["Delta_Omega"],
             )
-            fig=ax[i].get_figure()
+            fig = ax[i].get_figure()
         else:
             mesh = plot_angular_velocity_split(
                 path,
@@ -258,7 +269,7 @@ def plot_angular_velocity_sequence(
                 delta_omega=kwargs["Delta_Omega"],
                 crustcore_boundary=kwargs["Ri"],
             )
-            fig=ax[i].get_figure()
+            fig = ax[i].get_figure()
     if isinstance(mesh, list):
         mesh_cbar = mesh[-1]
     else:
@@ -266,9 +277,9 @@ def plot_angular_velocity_sequence(
     fig.colorbar(
         mesh_cbar,
         ax=ax,
-        location='top',
-        orientation='horizontal',
+        location="top",
+        orientation="horizontal",
         fraction=0.05,
-        #pad=0.1
+        # pad=0.1
     )
     return mesh

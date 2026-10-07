@@ -15,13 +15,13 @@ from dedalus.public import Curl
 from dedalus.public import DotProduct as Dot
 from mpi4py import MPI
 
+from gains.initial_conditions.single_component_spin_up import circle_on_sphere, mask_r
 from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import SphericalBasis
 from gains.utils.loggers import track_vorticity
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import SimulationCLI
 from gains.utils.profile import profile
-from gains.initial_conditions.single_component_spin_up import mask_r, circle_on_sphere
 
 # Setup
 logger = logging.getLogger(__name__)
@@ -103,30 +103,47 @@ strain_rate_n = d3.grad(u_n) + d3.trans(d3.grad(u_n))
 shear_stress_n = d3.angular(d3.radial(strain_rate_n(r=1), index=1))
 
 mask_radial["g"] = mask_r(r, PARAMS["width_r"])
-mask_circ["g"] = circle_on_sphere(theta, phi, PARAMS["radius_glitch"], (PARAMS["center_theta"], PARAMS["center_phi"]), 0.1)
+mask_circ["g"] = circle_on_sphere(
+    theta,
+    phi,
+    PARAMS["radius_glitch"],
+    (PARAMS["center_theta"], PARAMS["center_phi"]),
+    0.1,
+)
 
-#mask_radial.low_pass_filter(scales=0.5)
-#mask_circ.low_pass_filter(scales=0.5)
+# mask_radial.low_pass_filter(scales=0.5)
+# mask_circ.low_pass_filter(scales=0.5)
+
 
 def viscosity_profile(Ek_crust, Ek_core, k, R_cci, r):
-    profile = (Ek_crust + Ek_core)/(np.exp(k*(r - R_cci)) + 1) + min(Ek_crust, Ek_core)
-    deriv = (Ek_crust + Ek_core)*(-k*np.exp(k*(r - R_cci))) / ((np.exp(k*(r - R_cci)) + 1)**2)
+    profile = (Ek_crust + Ek_core) / (np.exp(k * (r - R_cci)) + 1) + min(
+        Ek_crust, Ek_core
+    )
+    deriv = (
+        (Ek_crust + Ek_core)
+        * (-k * np.exp(k * (r - R_cci)))
+        / ((np.exp(k * (r - R_cci)) + 1) ** 2)
+    )
     return profile, deriv
 
-Ek_profile, Ek_deriv = viscosity_profile(PARAMS["Ek_crust"], PARAMS["Ek_core"], 60, PARAMS["Ri"], r)
+
+Ek_profile, Ek_deriv = viscosity_profile(
+    PARAMS["Ek_crust"], PARAMS["Ek_core"], 60, PARAMS["Ri"], r
+)
 
 Ek_ncc = dist.Field(bases=basis.ball.radial_basis, name="Ek_ncc")
 Ek_deriv_ncc = dist.VectorField(coords, bases=basis.ball, name="Ek_deriv_ncc")
-Ek_ncc["g"]= Ek_profile
+Ek_ncc["g"] = Ek_profile
 Ek_deriv_ncc["g"][2] = Ek_deriv
 
 import matplotlib.pyplot as plt
+
 plt.scatter(r.ravel(), Ek_profile.ravel())
 plt.vlines(PARAMS["Ri"], PARAMS["Ek_crust"], PARAMS["Ek_core"])
 plt.show()
 breakpoint()
 omega_target = dist.VectorField(coords, name="omega_target", bases=basis.ball)
-omega_target = PARAMS["Delta_Omega"]*ez
+omega_target = PARAMS["Delta_Omega"] * ez
 
 u_target = dist.VectorField(coords, name="u_target", bases=basis.ball)
 u_target = d3.CrossProduct(omega_target, r_vec)
@@ -215,26 +232,23 @@ slices.add_task(
 )
 
 forcing = solver.evaluator.add_file_handler(
-    str(save_path / "forcing"),
-    sim_dt = PARAMS["snapshot_dt"],
-    max_writes = 100
+    str(save_path / "forcing"), sim_dt=PARAMS["snapshot_dt"], max_writes=100
 )
 
 forcing.add_task(
-    Dot((mask_circ*mask_radial*(u_s - u_target)),(mask_circ*mask_radial*(u_s - u_target))), scales=PARAMS["dealias"], name="forcing_term"
+    Dot(
+        (mask_circ * mask_radial * (u_s - u_target)),
+        (mask_circ * mask_radial * (u_s - u_target)),
+    ),
+    scales=PARAMS["dealias"],
+    name="forcing_term",
 )
 
-forcing.add_task(
-    Dot(u_target, u_target), scales=PARAMS["dealias"], name="u_target"
-)
+forcing.add_task(Dot(u_target, u_target), scales=PARAMS["dealias"], name="u_target")
 
-forcing.add_task(
-    mask_circ, scales=PARAMS["dealias"], name="mask_circ"
-)
+forcing.add_task(mask_circ, scales=PARAMS["dealias"], name="mask_circ")
 
-forcing.add_task(
-    mask_radial, scales=PARAMS["dealias"], name = "mask_radial"
-)
+forcing.add_task(mask_radial, scales=PARAMS["dealias"], name="mask_radial")
 
 # Checkpoint
 checkpoint = solver.evaluator.add_file_handler(

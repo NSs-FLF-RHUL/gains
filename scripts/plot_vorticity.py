@@ -10,10 +10,8 @@ from gains.params.single_spin_up_rotating import parameters as default_params
 from gains.problems.bases import ShellBasis, SphericalBasis
 from gains.utils.misc import mesh_cpus
 from gains.utils.parsers import SimulationCLI
-
-path = (
-    "outputs/exact_normalisation_test/su_equator/AZ_avg_equator/AZ_avg_equator_s11s.h5"
-)
+from gains.plotting.polar import plot_angular
+from pathlib import Path
 
 ncpu = MPI.COMM_WORLD.size
 mesh = mesh_cpus(ncpu)
@@ -26,6 +24,8 @@ parser = SimulationCLI(
     sim_name="two_fluid_spin_up",
 )
 PARAMS = parser.parse_args_and_get_params(logger, default_params=default_params)
+
+path = Path(PARAMS["output_dir"]) / "AZ_avg_equator_s1.h5"
 
 dtype = np.float64
 
@@ -53,7 +53,7 @@ with h5py.File(path, "r") as data:
 vorticity_shell = d3.Curl(u_data_shell)
 vorticity_ball = d3.Curl(u_data_ball)
 
-vmag_shell = np.sqrt(vorticity_shell @ vorticity_shell)
+vmag_shell = np.sqrt(vorticity_shell @ vorticity_shell).evaluate()
 vmag_ball = vorticity_ball @ vorticity_ball
 
 print(np.max(vmag_shell["g"]))
@@ -63,8 +63,7 @@ flat_idx = np.argmax(vmag_shell["g"])
 coords = np.unravel_index(flat_idx, np.shape(vmag_shell["g"]))
 print(f"Index of blow up: {coords}")
 fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "polar"})
-"""
-breakpoint()
-mesh_plot = plot_angular(ax, r, theta, vmag_shell[coords[0]:,:,], **PARAMS)
-fig.show()
-"""
+vmag_shell.change_scales(1)
+
+mesh_plot = plot_angular(ax, r, theta, vmag_shell["g"][coords[0]], omega_back=None, **PARAMS)
+

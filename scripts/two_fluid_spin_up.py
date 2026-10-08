@@ -116,11 +116,9 @@ mask_circ["g"] = circle_on_sphere(
 
 
 def viscosity_profile(Ek_crust, Ek_core, k, R_cci, r):
-    profile = (Ek_crust + Ek_core) / (np.exp(k * (r - R_cci)) + 1) + min(
-        Ek_crust, Ek_core
-    )
+    profile = (Ek_core - Ek_crust) / (np.exp(k * (r - R_cci)) + 1) + Ek_crust
     deriv = (
-        (Ek_crust + Ek_core)
+        (Ek_core - Ek_crust)
         * (-k * np.exp(k * (r - R_cci)))
         / ((np.exp(k * (r - R_cci)) + 1) ** 2)
     )
@@ -128,7 +126,7 @@ def viscosity_profile(Ek_crust, Ek_core, k, R_cci, r):
 
 
 Ek_profile, Ek_deriv = viscosity_profile(
-    PARAMS["Ek_crust"], PARAMS["Ek_core"], 60, PARAMS["Ri"], r
+    PARAMS["Ek_crust"], PARAMS["Ek_core"], 30, PARAMS["Ri"], r
 )
 
 Ek_ncc = dist.Field(bases=basis.ball.radial_basis, name="Ek_ncc")
@@ -136,12 +134,19 @@ Ek_deriv_ncc = dist.VectorField(coords, bases=basis.ball, name="Ek_deriv_ncc")
 Ek_ncc["g"] = Ek_profile
 Ek_deriv_ncc["g"][2] = Ek_deriv
 
+
+
 import matplotlib.pyplot as plt
 
 plt.scatter(r.ravel(), Ek_profile.ravel())
-plt.vlines(PARAMS["Ri"], PARAMS["Ek_crust"], PARAMS["Ek_core"])
+plt.plot(r.ravel(), Ek_profile.ravel())
+plt.scatter(r.ravel(), Ek_deriv.ravel())
+plt.plot(r.ravel(), Ek_deriv.ravel())
+plt.hlines(PARAMS["Ek_core"], np.min(r), np.max(r))
+plt.hlines(PARAMS["Ek_crust"], np.min(r), np.max(r))
 plt.show()
 breakpoint()
+
 omega_target = dist.VectorField(coords, name="omega_target", bases=basis.ball)
 omega_target = PARAMS["Delta_Omega"] * ez
 

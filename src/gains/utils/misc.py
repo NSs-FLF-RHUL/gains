@@ -73,7 +73,7 @@ def read_logfile(path: Path, quantity: str) -> tuple[list[float], list[float]]:
         text = f.read()
 
     escaped_quantity = re.escape(quantity)
-    regex = escaped_quantity + "=" + r"([0-9.eE+-]+)"
+    regex = escaped_quantity + "=" + r"([0-9.eE+-]+|nan)"
     vals = re.findall(regex, text)
     vals = [float(val) for val in vals]
 

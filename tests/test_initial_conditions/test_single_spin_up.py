@@ -3,6 +3,7 @@ import pytest
 
 from gains.initial_conditions.single_component_spin_up import (
     ExpectPositiveError,
+    circle_on_sphere,
     mask_angular,
 )
 
@@ -10,6 +11,11 @@ from gains.initial_conditions.single_component_spin_up import (
 def thetas_full() -> np.ndarray:
     """Returns array from zero to pi."""
     return np.linspace(0, np.pi, 100)
+
+
+def phis_full() -> np.ndarray:
+    """Returns array from zero to pi."""
+    return np.linspace(0, 2 * np.pi, 100)
 
 
 @pytest.fixture
@@ -69,7 +75,22 @@ def test_window(
         pytest.param(thetas_full(), 0.0, np.float64, id="width is 0"),
     ],
 )
-def test_error(coords: np.ndarray, width: float, dtype: type) -> None:
+def test_error_mask_angular(coords: np.ndarray, width: float, dtype: type) -> None:
     """Confirms correct error is raised if width not configured correctly."""
     with pytest.raises(ExpectPositiveError):
         mask_angular(coords, width, dtype)
+
+
+@pytest.mark.parametrize(
+    ("theta", "phi", "radius", "center"),
+    [
+        pytest.param(thetas_full(), phis_full(), -3.0, (0, 0), id="Width is negative."),
+        pytest.param(thetas_full(), phis_full(), 0.0, (0, 0), id="width is 0"),
+    ],
+)
+def test_error_circle_on_sphere(
+    theta: np.ndarray, phi: np.ndarray, radius: float, center: tuple[float, float]
+) -> None:
+    """Confirms correct error is raised if width not configured correctly."""
+    with pytest.raises(ExpectPositiveError):
+        circle_on_sphere(theta, phi, radius, center)

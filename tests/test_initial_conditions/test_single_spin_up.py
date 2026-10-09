@@ -94,3 +94,44 @@ def test_error_circle_on_sphere(
     """Confirms correct error is raised if width not configured correctly."""
     with pytest.raises(ExpectPositiveError):
         circle_on_sphere(theta, phi, radius, center)
+
+
+@pytest.mark.parametrize(
+    ("theta", "phi", "centre", "radius", "expected_gamma"),
+    [
+        pytest.param(
+            thetas_full(),
+            np.zeros(100),
+            (0.0, 0.0),
+            1.0,
+            thetas_full(),
+            id="Check returned mask across full theta range.",
+        ),
+        pytest.param(
+            np.pi / 2 * np.ones(100),
+            phis_full(),
+            (np.pi / 2, 0.0),
+            1.0,
+            np.concatenate((phis_full()[0:50], phis_full()[49::-1])),
+            id="Check returned mask across full phi range",
+        ),
+    ],
+)
+def test_circle_on_sphere_gamma(
+    theta: np.ndarray,
+    phi: np.ndarray,
+    centre: tuple[float, float],
+    expected_gamma: np.ndarray,
+    radius: float,
+) -> None:
+    """
+    Run unit tests for circle_on_sphere.
+
+    Centres and coordinates are selected such that the expected great circle distances
+    are some variation of theta or phi.
+    """
+    expected_mask = np.exp(-(expected_gamma**2) / (2 * radius))
+
+    computed_mask = circle_on_sphere(theta, phi, radius, centre)
+
+    assert np.allclose(expected_mask, computed_mask)

@@ -70,12 +70,11 @@ def circle_on_sphere(
     :params center: Center of circle given as (theta, phi)
     :params width: Width of smoothing function at the edge of the region
     """
-    check = "radius"
     if radius <= 0:
+        check = "radius"
         raise ExpectPositiveError(check)
 
-    theta_0 = center[0]
-    phi_0 = center[1]
+    theta_0, phi_0 = centre
 
     ctheta = np.cos(theta)
     stheta = np.sin(theta)

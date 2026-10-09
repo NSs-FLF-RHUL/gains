@@ -209,7 +209,7 @@ F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime 
     omega_s_s, u_s_ns
 )
 delta = 0.5  # density_crust/density_core
-nu_s = 1e-6  # Prevent kelvin helmholtz singularity on the interface
+nu_s = 1e-7  # Prevent kelvin helmholtz singularity on the interface
 
 # Problem
 problem = d3.IVP(
@@ -276,10 +276,10 @@ problem.add_equation("radial(u_s_s(r=Ri)) = 0")
 
 problem.add_equation("angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0")
 problem.add_equation(
-    "Ek_ball*angular(radial(strain_b_n(r=Ri))) - Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0"
+    "Ek_ball*angular(radial(strain_b_n(r=Ri))) - delta*Ek_shell*angular(radial(strain_s_n(r=Ri))) = 0"
 )
 
-problem.add_equation("angular(u_b_s(r=Ri)) - angular(u_s_s(r=Ri)) = 0")
+problem.add_equation("angular(u_b_s(r=Ri)) - delta*angular(u_s_s(r=Ri)) = 0")
 problem.add_equation(
     "angular(radial(strain_b_s(r=Ri))) - angular(radial(strain_s_s(r=Ri))) = 0"
 )

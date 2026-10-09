@@ -138,12 +138,13 @@ Ek_deriv_ncc["g"][2] = Ek_deriv
 
 import matplotlib.pyplot as plt
 
-plt.scatter(r.ravel(), Ek_profile.ravel())
-plt.plot(r.ravel(), Ek_profile.ravel())
-plt.scatter(r.ravel(), Ek_deriv.ravel())
-plt.plot(r.ravel(), Ek_deriv.ravel())
-plt.hlines(PARAMS["Ek_core"], np.min(r), np.max(r))
-plt.hlines(PARAMS["Ek_crust"], np.min(r), np.max(r))
+plt.scatter(r.ravel(), Ek_profile.ravel(), color="#0072B2")
+plt.plot(r.ravel(), Ek_profile.ravel(), color="#0072B2")
+plt.scatter(r.ravel(), Ek_deriv.ravel(), color="#D55E00")
+plt.plot(r.ravel(), Ek_deriv.ravel(), color="#D55E00")
+plt.xlabel("r")
+#plt.hlines(PARAMS["Ek_core"], np.min(r), np.max(r))
+#plt.hlines(PARAMS["Ek_crust"], np.min(r), np.max(r))
 plt.show()
 breakpoint()
 

@@ -55,7 +55,7 @@ def circle_on_sphere(
     theta: np.ndarray,
     phi: np.ndarray,
     radius: float,
-    center: tuple[float, float],
+    centre: tuple[float, float],
 ) -> np.ndarray:
     """
     Create circular mask defined on a sphere, with a smooth edge.

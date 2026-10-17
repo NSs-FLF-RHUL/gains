@@ -3,6 +3,7 @@ import pytest
 
 from gains.initial_conditions.single_component_spin_up import (
     ExpectPositiveError,
+    circle_on_sphere,
     mask_angular,
 )
 
@@ -10,6 +11,11 @@ from gains.initial_conditions.single_component_spin_up import (
 def thetas_full() -> np.ndarray:
     """Returns array from zero to pi."""
     return np.linspace(0, np.pi, 100)
+
+
+def phis_full() -> np.ndarray:
+    """Returns array from zero to pi."""
+    return np.linspace(0, 2 * np.pi, 100)
 
 
 @pytest.fixture
@@ -69,7 +75,63 @@ def test_window(
         pytest.param(thetas_full(), 0.0, np.float64, id="width is 0"),
     ],
 )
-def test_error(coords: np.ndarray, width: float, dtype: type) -> None:
+def test_error_mask_angular(coords: np.ndarray, width: float, dtype: type) -> None:
     """Confirms correct error is raised if width not configured correctly."""
     with pytest.raises(ExpectPositiveError):
         mask_angular(coords, width, dtype)
+
+
+@pytest.mark.parametrize(
+    ("theta", "phi", "radius", "center"),
+    [
+        pytest.param(thetas_full(), phis_full(), -3.0, (0, 0), id="Width is negative."),
+        pytest.param(thetas_full(), phis_full(), 0.0, (0, 0), id="width is 0"),
+    ],
+)
+def test_error_circle_on_sphere(
+    theta: np.ndarray, phi: np.ndarray, radius: float, center: tuple[float, float]
+) -> None:
+    """Confirms correct error is raised if width not configured correctly."""
+    with pytest.raises(ExpectPositiveError):
+        circle_on_sphere(theta, phi, radius, center)
+
+
+@pytest.mark.parametrize(
+    ("theta", "phi", "centre", "radius", "expected_gamma"),
+    [
+        pytest.param(
+            thetas_full(),
+            np.zeros(100),
+            (0.0, 0.0),
+            1.0,
+            thetas_full(),
+            id="Check returned mask across full theta range.",
+        ),
+        pytest.param(
+            np.pi / 2 * np.ones(100),
+            phis_full(),
+            (np.pi / 2, 0.0),
+            1.0,
+            np.concatenate((phis_full()[0:50], phis_full()[49::-1])),
+            id="Check returned mask across full phi range",
+        ),
+    ],
+)
+def test_circle_on_sphere_gamma(
+    theta: np.ndarray,
+    phi: np.ndarray,
+    centre: tuple[float, float],
+    expected_gamma: np.ndarray,
+    radius: float,
+) -> None:
+    """
+    Run unit tests for circle_on_sphere.
+
+    Centres and coordinates are selected such that the expected great circle distances
+    are some variation of theta or phi.
+    """
+    expected_mask = np.exp(-(expected_gamma**2) / (2 * radius))
+
+    computed_mask = circle_on_sphere(theta, phi, radius, centre)
+
+    assert np.allclose(expected_mask, computed_mask)

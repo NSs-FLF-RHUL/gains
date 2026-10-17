@@ -54,8 +54,7 @@ def circle_on_sphere(
     theta: np.ndarray,
     phi: np.ndarray,
     radius: float,
-    center: tuple[float],
-    width: float,
+    centre: tuple[float, float],
 ) -> np.ndarray:
     """
     Create circular mask defined on a sphere, with a smooth edge.
@@ -70,8 +69,11 @@ def circle_on_sphere(
     :params center: Center of circle given as (theta, phi)
     :params width: Width of smoothing function at the edge of the region
     """
-    theta_0 = center[0]
-    phi_0 = center[1]
+    if radius <= 0:
+        check = "radius"
+        raise ExpectPositiveError(check)
+
+    theta_0, phi_0 = centre
 
     ctheta = np.cos(theta)
     stheta = np.sin(theta)
@@ -82,5 +84,4 @@ def circle_on_sphere(
     cgamma = ctheta * ctheta_0 + stheta * stheta_0 * cdiff
     gamma = np.arccos(np.clip(cgamma, -1, 1))
 
-    g = np.exp(-(gamma**2) / (2 * radius))
-    return g
+    return np.exp(-(gamma**2) / (2 * radius))

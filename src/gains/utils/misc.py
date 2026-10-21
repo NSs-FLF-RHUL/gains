@@ -97,9 +97,7 @@ def mesh_cpus(ncpu: int) -> list[int] | None:
     raise MeshError
 
 
-def select_time(
-    nwrites: int, target_time: float, output_dir: Path, **params
-) -> tuple[Path, int]:
+def select_time(target_time: float, output_dir: Path, **params) -> tuple[Path, int]:
     """
     Take a simulated time and locate its position in the output files.
 
@@ -112,9 +110,9 @@ def select_time(
     """
     saved_times = np.arange(0, params["stop_sim_time"], params["snapshot_dt"])
     target_index = get_arg_of_nearest(target_time, saved_times)[0]
-    file_suffix = target_index // nwrites + 1
-    file_index = target_index % nwrites
-    path = output_dir / f"su_equator/AZ_avg_equator/AZ_avg_equator_s{file_suffix}.h5"
+    file_suffix = int(target_index // params["nwrites"] + 1)
+    file_index = int(target_index % params["nwrites"])
+    path = output_dir / f"AZ_avg_equator_s{file_suffix}.h5"
     return path, file_index
 
 

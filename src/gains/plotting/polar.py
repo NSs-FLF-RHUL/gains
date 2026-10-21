@@ -206,7 +206,7 @@ def plot_angular_velocity_sequence(
     """
     for i in range(len(target_times)):
         time = target_times[i]
-        path, file_index = select_time(100, time, output_dir, **kwargs)
+        path, file_index = select_time(time, output_dir, **kwargs)
         if isinstance(target_field, str):
             mesh = plot_angular_velocity(
                 path,

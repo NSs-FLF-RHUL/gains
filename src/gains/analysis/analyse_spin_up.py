@@ -222,7 +222,7 @@ def get_angular_speed_vs_time(
     if save_path is not None:
         np.savetxt(
             save_path,
-            np.column_stack(times[:count], omega_rs[:count]),
+            np.column_stack((times[:count], omega_rs[:count])),
             delimiter=",",
             header="time,omega",
             comments="",

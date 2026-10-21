@@ -50,7 +50,7 @@ def plot_against_time(
     for i in range(len(targets)):
         target = targets[i]
         if save_path is not None:
-            save_path = Path(save_path) / f"{coord.label}_{target}.csv"
+            path_save = Path(save_path) / f"{coord.label}_{target}.csv"
         omega_r, times = get_angular_speed_vs_time(
             coord,
             target,
@@ -59,7 +59,7 @@ def plot_against_time(
             path_list,
             ntheta=ntheta,
             rotating=kwargs.get("rotating", True),
-            save_path=save_path,
+            save_path=path_save,
         )
         ax.plot(
             times,

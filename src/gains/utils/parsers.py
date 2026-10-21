@@ -2,10 +2,38 @@
 
 import argparse
 import json
+import os
 from datetime import datetime
 from logging import FileHandler, Logger
 from pathlib import Path
 from typing import Any
+
+
+def path_or_none(value: str) -> None | Path:
+    """
+    Convert a string to a Path, or returns None if explicitly requested.
+
+    Used as a custom type for command line arguments where a Path or None can be
+    provided.
+    """
+    if value.strip().lower() == "none":  # Catch None, none, NONE etc if provided.
+        return None
+    p = Path(value)
+
+    err_no_exist = f"The directory '{p.parent}' does not exist. Cannot save file here."
+    err_not_dir = f"{p.parent} is not a directory."
+    err_permission_denied = f"You do not have permission to save to {p.parent}"
+
+    if not p.parent.exists():
+        raise argparse.ArgumentTypeError(err_no_exist)
+
+    if not p.parent.is_dir():
+        raise argparse.ArgumentTypeError(err_not_dir)
+
+    if not os.access(p.parent, os.W_OK):
+        raise argparse.ArgumentTypeError(err_permission_denied)
+
+    return p
 
 
 class SimulationCLI(argparse.ArgumentParser):
@@ -224,6 +252,14 @@ def create_parser_analysis() -> argparse.ArgumentParser:
         nargs="*",
         default=[0.5, 4, 20],
         help="Two or more values of time to plot angular velocity at.",
+    )
+
+    parser.add_argument(
+        "--saved_data_path",
+        type=path_or_none,
+        default=None,
+        help="If provided, processed time series data are saved into "
+        "this path. If not provided, plots will be saved but time series will not.",
     )
 
     return parser

@@ -95,6 +95,7 @@ if __name__ == "__main__":
             args["targets"],
             "u_b_phi",
             rotating=True,
+            save_path=args["saved_data_path"],
         )
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
@@ -108,6 +109,7 @@ if __name__ == "__main__":
             args["targets"],
             "u_b_phi",
             rotating=True,
+            save_path=args["saved_data_path"],
         )
         fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
 

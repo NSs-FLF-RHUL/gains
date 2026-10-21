@@ -170,7 +170,7 @@ def get_angular_speed_vs_time(
     ntheta: int,
     *,
     rotating: bool = True,
-    save_path: str | Path | None = None
+    save_path: str | Path | None = None,
 ) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.

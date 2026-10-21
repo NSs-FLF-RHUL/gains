@@ -59,7 +59,7 @@ def plot_against_time(
             path_list,
             ntheta=ntheta,
             rotating=kwargs.get("rotating", True),
-            save_path=save_path
+            save_path=save_path,
         )
         ax.plot(
             times,

@@ -47,10 +47,13 @@ def plot_against_time(
     fig, ax = _get_ax_and_fig(ax, polar=False)
 
     colour = kwargs.get("colour", "#024cf7")
+    print(targets)
     for i in range(len(targets)):
         target = targets[i]
         if save_path is not None:
             path_save = Path(save_path) / f"{coord.label}_{target}.csv"
+        else:
+            path_save = None
         omega_r, times = get_angular_speed_vs_time(
             coord,
             target,

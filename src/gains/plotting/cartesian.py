@@ -18,6 +18,7 @@ def plot_against_time(
     target_field: str,
     ax: plt.Axes | None = None,
     ek: float = None,
+    save_path: str | Path | None = None,
     **kwargs,
 ) -> tuple[list[Path], plt.Figure]:
     """
@@ -32,6 +33,7 @@ def plot_against_time(
     against time.
     :param target_field: The group name of the target velocity field in the
     output file.
+    :param save_path: If provided, saves the time series as a csv file to this path
     :returns path_list: A list of only .h5 files in the specified path.
     :returns fig: Figure on which the plot was drawn.
     """
@@ -47,6 +49,8 @@ def plot_against_time(
     colour = kwargs.get("colour", "#024cf7")
     for i in range(len(targets)):
         target = targets[i]
+        if save_path is not None:
+            path_save = Path(save_path) / f"{coord.label}_{target}.csv"
         omega_r, times = get_angular_speed_vs_time(
             coord,
             target,
@@ -55,6 +59,7 @@ def plot_against_time(
             path_list,
             ntheta=ntheta,
             rotating=kwargs.get("rotating", True),
+            save_path=path_save,
         )
         ax.plot(
             times,

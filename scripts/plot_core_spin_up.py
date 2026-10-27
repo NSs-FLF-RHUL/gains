@@ -84,13 +84,20 @@ if __name__ == "__main__":
             path,
             PARAMS["Ntheta"],
             args["targets"],
-            "u_n_phi",
+            target_field="u_n_phi",
+            save_path=args["saved_data_path"],
         )
         fig.savefig("{}/radial_against_time.png".format(args["fig_dir"]))
 
     elif args["coordinate"] == "theta":
         path_list, fig = plot_against_time(
-            theta, "theta", path, PARAMS["Ek"], PARAMS["Ntheta"], args["targets"]
+            theta,
+            "theta",
+            path,
+            PARAMS["Ek"],
+            PARAMS["Ntheta"],
+            args["targets"],
+            save_path=args["saved_data_path"],
         )
         fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
 

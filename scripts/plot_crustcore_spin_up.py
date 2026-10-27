@@ -110,8 +110,10 @@ if __name__ == "__main__":
             "r",
             path,
             PARAMS["Ntheta"],
-            targets_core,
-            "u_b_n_phi",
+            args["targets"],
+            "u_b_phi",
+            rotating=True,
+            save_path=args["saved_data_path"],
         )
         ax = fig.gca()
         plot_against_time(
@@ -138,6 +140,7 @@ if __name__ == "__main__":
             args["targets"],
             "u_b_phi",
             rotating=True,
+            save_path=args["saved_data_path"],
         )
         fig.savefig("{}/meridional_against_time.png".format(args["fig_dir"]))
 

@@ -179,6 +179,7 @@ def get_angular_speed_vs_time(
     ntheta: int,
     *,
     rotating: bool = True,
+    save_path: str | Path | None = None,
 ) -> np.ndarray:
     """
     Find the angular speed at the equator at a given radius.
@@ -191,6 +192,7 @@ def get_angular_speed_vs_time(
     :param path_list: List of paths to files to analyse.
     :param ntheta: The number of theta values.
     :param rotating: Sets if simulation was done in the rotating frame. True by default
+    :param save_path: If provided, saves the time series as a csv file to this path
     :returns omega_rs: List of angular velocities at each time.
     :returns times: List of times data is saved at.
     """
@@ -225,6 +227,15 @@ def get_angular_speed_vs_time(
             omega_rs[count] = omega_r
             times[count] = time[j]
             count += 1
+
+    if save_path is not None:
+        np.savetxt(
+            save_path,
+            np.column_stack((times[:count], omega_rs[:count])),
+            delimiter=",",
+            header="time,omega",
+            comments="",
+        )
 
     return omega_rs[:count], times[:count]
 

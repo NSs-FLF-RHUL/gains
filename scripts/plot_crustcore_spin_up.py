@@ -110,8 +110,8 @@ if __name__ == "__main__":
             "r",
             path,
             PARAMS["Ntheta"],
-            args["targets"],
-            "u_b_phi",
+            targets_core,
+            "u_b_n_phi",
             rotating=True,
             save_path=args["saved_data_path"],
         )
@@ -138,7 +138,7 @@ if __name__ == "__main__":
             PARAMS["Ek"],
             PARAMS["Ntheta"],
             args["targets"],
-            "u_b_phi",
+            "u_b_n_phi",
             rotating=True,
             save_path=args["saved_data_path"],
         )

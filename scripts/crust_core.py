@@ -146,8 +146,7 @@ mask_circ["g"] = circle_on_sphere(
     theta_s,
     phi_s,
     PARAMS["radius_glitch"],
-    (PARAMS["center_theta"], PARAMS["center_phi"]),
-    0.1,
+    (PARAMS["center_theta"], PARAMS["center_phi"])
 )
 rvec_s = dist.VectorField(coords, bases=basis_crust.shell.radial_basis)
 rvec_s["g"][2] = r_s

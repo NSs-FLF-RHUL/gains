@@ -125,6 +125,7 @@ if __name__ == "__main__":
             "u_s_n_phi",
             ax=ax,
             colour="#9b111e",
+            save_path=args["saved_data_path"],
         )
         ax.set_ylabel(r"$\Delta \Omega$")
         fig.savefig(

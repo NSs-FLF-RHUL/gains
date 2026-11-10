@@ -122,7 +122,7 @@ if __name__ == "__main__":
             path,
             PARAMS["Ntheta"],
             targets_crust,
-            "u_b_n_phi",
+            "u_s_n_phi",
             ax=ax,
             colour="#9b111e",
             save_path=args["saved_data_path"],

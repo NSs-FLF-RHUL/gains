@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
     args["output_dir"] = Path(args["output_dir"])
     args["frame_dir"] = Path(args["frame_dir"])
-    targets_core = [t for t in args["targets"] if t <= 0.8]
-    targets_crust = [t for t in args["targets"] if t >= 0.8]
+    targets_core = [t for t in args["targets"] if t <= PARAMS["Ri"]]
+    targets_crust = [t for t in args["targets"] if t >= PARAMS["Ri"]]
     logger = logging.getLogger(__name__)
 
     Path.mkdir(Path(args["fig_dir"]), parents=True, exist_ok=True)

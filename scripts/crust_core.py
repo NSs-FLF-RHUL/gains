@@ -278,7 +278,7 @@ problem.add_equation(
     "Ek_ball*angular(radial(strain_b_n(r=Ri), index=1)) - delta*Ek_shell*angular(radial(strain_s_n(r=Ri), index=1)) = 0"
 )
 
-problem.add_equation("angular(u_b_s(r=Ri)) - delta*angular(u_s_s(r=Ri)) = 0")
+problem.add_equation("angular(u_b_s(r=Ri)) - angular(u_s_s(r=Ri)) = 0")
 problem.add_equation(
     "angular(radial(strain_b_s(r=Ri), index=1)) - angular(radial(strain_s_s(r=Ri), index=1)) = 0"
 )

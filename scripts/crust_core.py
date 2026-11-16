@@ -207,7 +207,7 @@ omega_unit_broken = omega_s_s / np.sqrt(Dot(omega_s_s, omega_s_s) + 1e-14)
 F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime * Cross(
     omega_s_s, u_s_ns
 )
-delta = 0.5  # density_crust/density_core
+
 nu_s = 1e-7  # Prevent kelvin helmholtz singularity on the interface
 
 # Problem
@@ -275,7 +275,7 @@ problem.add_equation("radial(u_s_s(r=Ri)) = 0")
 
 problem.add_equation("angular(u_b_n(r=Ri)) - angular(u_s_n(r=Ri)) = 0")
 problem.add_equation(
-    "Ek_ball*angular(radial(strain_b_n(r=Ri), index=1)) - delta*Ek_shell*angular(radial(strain_s_n(r=Ri), index=1)) = 0"
+    "Ek_ball*angular(radial(strain_b_n(r=Ri), index=1)) - Ek_shell*angular(radial(strain_s_n(r=Ri), index=1)) = 0"
 )
 
 problem.add_equation("angular(u_b_s(r=Ri)) - angular(u_s_s(r=Ri)) = 0")

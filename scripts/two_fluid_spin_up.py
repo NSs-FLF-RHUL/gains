@@ -39,7 +39,6 @@ max_timestep = 1e-2
 dtype = np.float64
 ncpu = MPI.COMM_WORLD.size
 
-Ek = PARAMS["Ek"]
 B = PARAMS["B"]
 Bprime = B / 2
 
@@ -261,7 +260,6 @@ CFL.add_velocity(u_s)
 
 # Flow properties
 flow = d3.GlobalFlowProperty(solver, cadence=10)
-flow.add_property(np.sqrt(u_n @ u_n) * PARAMS["Ek"], name="Re_n")
 flow.add_property(np.sqrt(omega_s @ omega_s), name="vorticity_mag")
 
 

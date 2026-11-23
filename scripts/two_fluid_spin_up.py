@@ -107,7 +107,6 @@ mask_circ["g"] = circle_on_sphere(
     phi,
     PARAMS["radius_glitch"],
     (PARAMS["center_theta"], PARAMS["center_phi"]),
-    0.1,
 )
 
 # mask_radial.low_pass_filter(scales=0.5)

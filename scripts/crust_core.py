@@ -211,7 +211,7 @@ F_mf_broken = B * (Cross(omega_unit_broken, Cross(omega_s_s, u_s_ns))) + Bprime 
 nu_s = 1e-7  # Prevent kelvin helmholtz singularity on the interface
 
 # Problem
-delta = 0.5
+delta = 1.0
 problem = d3.IVP(
     [
         u_s_n,
